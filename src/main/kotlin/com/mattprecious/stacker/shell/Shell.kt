@@ -7,5 +7,6 @@ interface Shell {
 		command: String,
 		vararg args: String,
 		input: Source? = null,
+		suppressErrors: Boolean = false,
 	): String
 }
