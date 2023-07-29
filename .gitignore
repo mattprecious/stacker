@@ -1,0 +1,10 @@
+# Gradle
+build
+.gradle
+/reports
+
+# IntelliJ
+.idea
+
+### Mac OS ###
+.DS_Store
