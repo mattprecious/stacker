@@ -11,6 +11,7 @@ repositories {
 
 dependencies {
 	implementation(libs.clikt)
+	implementation(libs.okio)
 }
 
 application {
