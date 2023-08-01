@@ -23,6 +23,10 @@ application {
 
 kotlin {
 	jvmToolchain(17)
+
+	compilerOptions {
+		freeCompilerArgs.add("-Xcontext-receivers")
+	}
 }
 
 spotless {

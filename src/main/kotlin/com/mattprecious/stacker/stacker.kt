@@ -1,9 +1,12 @@
 package com.mattprecious.stacker
 
+import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.YesNoPrompt
+import com.mattprecious.stacker.rendering.styleBranch
+import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.shell.RealShell
 import com.mattprecious.stacker.vc.BranchData
 import com.mattprecious.stacker.vc.GitVersionControl
@@ -41,10 +44,19 @@ class Stacker : CliktCommand(
 				configPath = configPath,
 				currentConfig = config,
 			),
+			Branch(
+				vc = vc,
+				config = config,
+			),
 		)
 	}
 
-	override fun run() = Unit
+	override fun run() {
+		if (config == null && currentContext.invokedSubcommand !is Init) {
+			error(message = "Stacker must be initialized, first. Please run ${"st init".styleCode()}.")
+			throw Abort()
+		}
+	}
 }
 
 class Init(
@@ -93,7 +105,59 @@ class Init(
 	}
 }
 
-private fun CliktCommand.selectBranch(
+private class Branch(
+	vc: VersionControl,
+	config: Config?,
+) : CliktCommand() {
+	init {
+		subcommands(
+			Track(vc, config),
+			Untrack(vc),
+		)
+	}
+
+	override fun run() = Unit
+
+	private class Track(
+		private val vc: VersionControl,
+		private val config: Config?,
+	) : CliktCommand() {
+		override fun run() {
+			if (vc.currentBranch.tracked) {
+				error(message = "Branch ${vc.currentBranch.name.styleBranch()} is already tracked.")
+				return
+			}
+
+			val parent = selectBranch(
+				"Select the parent branch for ${vc.currentBranch.name.styleBranch()}",
+				default = config!!.trailingTrunk ?: config.trunk,
+			)
+
+			vc.setMetadata(vc.currentBranch.name, BranchData(isTrunk = false, parentName = parent))
+		}
+	}
+
+	private class Untrack(
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			if (!vc.currentBranch.tracked) {
+				error(message = "Branch ${vc.currentBranch.name.styleBranch()} is already not tracked.")
+				return
+			}
+
+			vc.setMetadata(vc.currentBranch.name, null)
+		}
+	}
+}
+
+context(CliktCommand)
+private fun error(message: String) {
+	echo(message, err = true)
+}
+
+context(CliktCommand)
+private fun selectBranch(
 	text: String,
 	default: String? = null,
 ): String {
