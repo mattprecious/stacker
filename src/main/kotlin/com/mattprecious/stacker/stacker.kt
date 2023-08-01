@@ -2,6 +2,8 @@ package com.mattprecious.stacker
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.mordant.terminal.ConversionResult
+import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.mattprecious.stacker.shell.RealShell
 import com.mattprecious.stacker.vc.BranchData
 import com.mattprecious.stacker.vc.GitVersionControl
@@ -52,18 +54,21 @@ class Init(
 ) : CliktCommand() {
 	override fun run() {
 		// TODO: Infer.
-		echo("Enter the name of your trunk branch, which you open pull requests against. Default is main.")
-		val trunk = selectBranch(default = "main")
+		val trunk = selectBranch(
+			text = "Enter the name of your trunk branch, which you open pull requests against",
+			default = "main",
+		)
 
-		echo("Do you use a trailing-trunk workflow? Default is No.")
-		val useTrailing = readln().ifBlank { "n" }[0].lowercaseChar() == 'y'
+		val useTrailing = YesNoPrompt(
+			terminal = currentContext.terminal,
+			prompt = "Do you use a trailing-trunk workflow?",
+			default = false,
+		).ask() == true
 
 		val trailingTrunk = if (!useTrailing) {
 			null
 		} else {
-			echo()
-			echo("Enter the name of your trailing trunk branch, which you branch from.")
-			selectBranch()
+			selectBranch("Enter the name of your trailing trunk branch, which you branch from")
 		}
 
 		val config = Config(
@@ -88,16 +93,20 @@ class Init(
 	}
 }
 
-private fun selectBranch(
+private fun CliktCommand.selectBranch(
+	text: String,
 	default: String? = null,
 ): String {
 	// TODO: Branch picker.
-	val input = readln().trim()
-	return if (default == null) {
-		input.trim().also { require(it.isNotBlank()) }
-	} else {
-		input.ifBlank { default }
-	}
+	return prompt(
+		text = text,
+		default = default,
+	) {
+		when (it.isBlank()) {
+			false -> ConversionResult.Valid(it)
+			true -> ConversionResult.Invalid("Cannot be blank.")
+		}
+	}!!
 }
 
 fun main(args: Array<String>) = Stacker().main(args)
