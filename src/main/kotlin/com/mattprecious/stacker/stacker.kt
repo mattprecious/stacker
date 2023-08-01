@@ -53,9 +53,7 @@ class Init(
 	override fun run() {
 		// TODO: Infer.
 		println("Enter the name of your trunk branch, which you open pull requests against. Default is main.")
-
-		// TODO: Branch picker.
-		val trunk = readln().ifBlank { "main" }
+		val trunk = selectBranch(default = "main")
 
 		println("Do you use a trailing-trunk workflow? Default is No.")
 		val useTrailing = readln().ifBlank { "n" }[0].lowercaseChar() == 'y'
@@ -65,9 +63,7 @@ class Init(
 		} else {
 			println()
 			println("Enter the name of your trailing trunk branch, which you branch from.")
-
-			// TODO: Branch picker.
-			readln().trim().also { require(it.isNotBlank()) }
+			selectBranch()
 		}
 
 		val config = Config(
@@ -89,6 +85,18 @@ class Init(
 		if (trailingTrunk != null) {
 			vc.setMetadata(trailingTrunk, BranchData(isTrunk = true, parentName = null))
 		}
+	}
+}
+
+private fun selectBranch(
+	default: String? = null,
+): String {
+	// TODO: Branch picker.
+	val input = readln().trim()
+	return if (default == null) {
+		input.trim().also { require(it.isNotBlank()) }
+	} else {
+		input.ifBlank { default }
 	}
 }
 
