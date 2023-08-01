@@ -52,17 +52,17 @@ class Init(
 ) : CliktCommand() {
 	override fun run() {
 		// TODO: Infer.
-		println("Enter the name of your trunk branch, which you open pull requests against. Default is main.")
+		echo("Enter the name of your trunk branch, which you open pull requests against. Default is main.")
 		val trunk = selectBranch(default = "main")
 
-		println("Do you use a trailing-trunk workflow? Default is No.")
+		echo("Do you use a trailing-trunk workflow? Default is No.")
 		val useTrailing = readln().ifBlank { "n" }[0].lowercaseChar() == 'y'
 
 		val trailingTrunk = if (!useTrailing) {
 			null
 		} else {
-			println()
-			println("Enter the name of your trailing trunk branch, which you branch from.")
+			echo()
+			echo("Enter the name of your trailing trunk branch, which you branch from.")
 			selectBranch()
 		}
 
