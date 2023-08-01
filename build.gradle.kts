@@ -1,6 +1,7 @@
 plugins {
 	application
 	kotlin("jvm") version libs.versions.kotlin
+	kotlin("plugin.serialization") version libs.versions.kotlin
 
 	alias(libs.plugins.spotless)
 }
@@ -11,6 +12,7 @@ repositories {
 
 dependencies {
 	implementation(libs.clikt)
+	implementation(libs.kotlin.serialization.json)
 	implementation(libs.okio)
 }
 
