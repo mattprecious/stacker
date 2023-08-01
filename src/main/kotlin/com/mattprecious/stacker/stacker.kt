@@ -3,7 +3,9 @@ package com.mattprecious.stacker
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.mattprecious.stacker.shell.RealShell
+import com.mattprecious.stacker.vc.BranchData
 import com.mattprecious.stacker.vc.GitVersionControl
+import com.mattprecious.stacker.vc.VersionControl
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okio.buffer
@@ -32,7 +34,11 @@ class Stacker : CliktCommand(
 		}
 
 		subcommands(
-			Init(configPath),
+			Init(
+				vc = vc,
+				configPath = configPath,
+				currentConfig = config,
+			),
 		)
 	}
 
@@ -40,7 +46,9 @@ class Stacker : CliktCommand(
 }
 
 class Init(
+	private val vc: VersionControl,
 	private val configPath: Path,
+	private val currentConfig: Config?,
 ) : CliktCommand() {
 	override fun run() {
 		// TODO: Infer.
@@ -69,6 +77,18 @@ class Init(
 
 		configPath.createParentDirectories()
 		configPath.sink().buffer().use { it.writeUtf8(Json.encodeToString(config)) }
+
+		if (currentConfig != null) {
+			vc.setMetadata(currentConfig.trunk, null)
+			if (currentConfig.trailingTrunk != null) {
+				vc.setMetadata(currentConfig.trailingTrunk, null)
+			}
+		}
+
+		vc.setMetadata(trunk, BranchData(isTrunk = true, parentName = null))
+		if (trailingTrunk != null) {
+			vc.setMetadata(trailingTrunk, BranchData(isTrunk = true, parentName = null))
+		}
 	}
 }
 
