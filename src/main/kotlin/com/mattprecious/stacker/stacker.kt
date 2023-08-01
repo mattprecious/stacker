@@ -3,6 +3,7 @@ package com.mattprecious.stacker
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.mattprecious.stacker.rendering.styleBranch
@@ -113,6 +114,7 @@ private class Branch(
 		subcommands(
 			Track(vc, config),
 			Untrack(vc),
+			Create(vc),
 		)
 	}
 
@@ -147,6 +149,24 @@ private class Branch(
 			}
 
 			vc.setMetadata(vc.currentBranch.name, null)
+		}
+	}
+
+	private class Create(
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		private val branchName by argument()
+
+		override fun run() {
+			if (!vc.currentBranch.tracked) {
+				error(
+					message = "Cannot branch from ${vc.currentBranch.name.styleBranch()} since it is not tracked. " +
+						"Please track with ${"st branch track".styleCode()}.",
+				)
+				throw Abort()
+			}
+
+			vc.createBranchFromCurrent(branchName)
 		}
 	}
 }

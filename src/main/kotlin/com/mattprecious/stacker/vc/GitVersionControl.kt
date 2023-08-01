@@ -55,6 +55,12 @@ class GitVersionControl(
 		}
 	}
 
+	override fun createBranchFromCurrent(branchName: String) {
+		val parent = currentBranch
+		shell.exec(COMMAND, "checkout", "-b", branchName)
+		setMetadata(branchName, BranchData(isTrunk = false, parentName = parent.name))
+	}
+
 	private fun refPath(branchName: String): String {
 		return "refs/stacker/branch/$branchName"
 	}
