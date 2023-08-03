@@ -23,7 +23,7 @@ class Stacker : CliktCommand(
 	private val shell = RealShell()
 	private val vc = GitVersionControl(shell)
 	private val configManager = RealConfigManager(vc)
-	private val remote = GitHubRemote(configManager)
+	private val remote = GitHubRemote(vc.originUrl, configManager)
 
 	init {
 		subcommands(
@@ -171,6 +171,16 @@ private fun Remote.requireAuthenticated() {
 				else -> ConversionResult.Invalid("Invalid token.")
 			}
 		}
+	}
+
+	if (repoName == null) {
+		error("Unable to parse repository name from origin URL.")
+		throw Abort()
+	}
+
+	if (!hasRepoAccess) {
+		error("Personal token does not have access to $repoName.")
+		throw Abort()
 	}
 }
 

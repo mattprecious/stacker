@@ -22,6 +22,10 @@ class GitVersionControl(
 		Branch(vc = this, name = name)
 	}
 
+	override val originUrl: String by lazy {
+		shell.exec(COMMAND, "remote", "get-url", "origin")
+	}
+
 	override fun fallthrough(commands: List<String>) {
 		shell.exec(COMMAND, *commands.toTypedArray())
 	}

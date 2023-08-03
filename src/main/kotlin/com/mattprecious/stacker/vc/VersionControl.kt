@@ -6,6 +6,7 @@ interface VersionControl {
 	val root: Path
 	val configDirectory: Path
 	val currentBranch: Branch
+	val originUrl: String
 
 	fun fallthrough(commands: List<String>)
 
