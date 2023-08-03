@@ -8,6 +8,8 @@ import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.config.RealConfigManager
+import com.mattprecious.stacker.remote.GitHubRemote
+import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.shell.RealShell
@@ -21,6 +23,7 @@ class Stacker : CliktCommand(
 	private val shell = RealShell()
 	private val vc = GitVersionControl(shell)
 	private val configManager = RealConfigManager(vc)
+	private val remote = GitHubRemote(configManager)
 
 	init {
 		subcommands(
@@ -153,6 +156,22 @@ private fun selectBranch(
 			true -> ConversionResult.Invalid("Cannot be blank.")
 		}
 	}!!
+}
+
+context(CliktCommand)
+private fun Remote.requireAuthenticated() {
+	if (!isAuthenticated) {
+		prompt(
+			text = "Please enter a GitHub access token",
+			hideInput = true,
+		) {
+			when {
+				it.isBlank() -> ConversionResult.Invalid("Cannot be blank.")
+				setToken(it) -> ConversionResult.Valid(it)
+				else -> ConversionResult.Invalid("Invalid token.")
+			}
+		}
+	}
 }
 
 fun main(args: Array<String>) = Stacker().main(args)
