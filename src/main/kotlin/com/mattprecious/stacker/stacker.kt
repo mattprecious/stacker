@@ -6,54 +6,36 @@ import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.YesNoPrompt
+import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.config.RealConfigManager
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.shell.RealShell
 import com.mattprecious.stacker.vc.BranchData
 import com.mattprecious.stacker.vc.GitVersionControl
 import com.mattprecious.stacker.vc.VersionControl
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import okio.buffer
-import okio.sink
-import okio.source
-import java.nio.file.Path
-import kotlin.io.path.createParentDirectories
-import kotlin.io.path.div
-import kotlin.io.path.exists
 
 class Stacker : CliktCommand(
 	name = "st",
 ) {
 	private val shell = RealShell()
 	private val vc = GitVersionControl(shell)
-	private val config: Config?
+	private val configManager = RealConfigManager(vc)
 
 	init {
-		val configPath = vc.configDirectory / ".stacker_config"
-
-		config = if (configPath.exists()) {
-			val configJson = configPath.source().buffer().use { it.readUtf8() }
-			Json.decodeFromString(configJson)
-		} else {
-			null
-		}
-
 		subcommands(
 			Init(
-				vc = vc,
-				configPath = configPath,
-				currentConfig = config,
+				configManager = configManager,
 			),
 			Branch(
 				vc = vc,
-				config = config,
+				configManager = configManager,
 			),
 		)
 	}
 
 	override fun run() {
-		if (config == null && currentContext.invokedSubcommand !is Init) {
+		if (!configManager.repoInitialized && currentContext.invokedSubcommand !is Init) {
 			error(message = "Stacker must be initialized, first. Please run ${"st init".styleCode()}.")
 			throw Abort()
 		}
@@ -61,9 +43,7 @@ class Stacker : CliktCommand(
 }
 
 class Init(
-	private val vc: VersionControl,
-	private val configPath: Path,
-	private val currentConfig: Config?,
+	private val configManager: ConfigManager,
 ) : CliktCommand() {
 	override fun run() {
 		// TODO: Infer.
@@ -84,35 +64,17 @@ class Init(
 			selectBranch("Enter the name of your trailing trunk branch, which you branch from")
 		}
 
-		val config = Config(
-			trunk = trunk,
-			trailingTrunk = trailingTrunk,
-		)
-
-		configPath.createParentDirectories()
-		configPath.sink().buffer().use { it.writeUtf8(Json.encodeToString(config)) }
-
-		if (currentConfig != null) {
-			vc.setMetadata(currentConfig.trunk, null)
-			if (currentConfig.trailingTrunk != null) {
-				vc.setMetadata(currentConfig.trailingTrunk, null)
-			}
-		}
-
-		vc.setMetadata(trunk, BranchData(isTrunk = true, parentName = null))
-		if (trailingTrunk != null) {
-			vc.setMetadata(trailingTrunk, BranchData(isTrunk = true, parentName = null))
-		}
+		configManager.initializeRepo(trunk = trunk, trailingTrunk = trailingTrunk)
 	}
 }
 
 private class Branch(
 	vc: VersionControl,
-	config: Config?,
+	configManager: ConfigManager,
 ) : CliktCommand() {
 	init {
 		subcommands(
-			Track(vc, config),
+			Track(vc, configManager),
 			Untrack(vc),
 			Create(vc),
 		)
@@ -122,7 +84,7 @@ private class Branch(
 
 	private class Track(
 		private val vc: VersionControl,
-		private val config: Config?,
+		private val configManager: ConfigManager,
 	) : CliktCommand() {
 		override fun run() {
 			if (vc.currentBranch.tracked) {
@@ -132,7 +94,7 @@ private class Branch(
 
 			val parent = selectBranch(
 				"Select the parent branch for ${vc.currentBranch.name.styleBranch()}",
-				default = config!!.trailingTrunk ?: config.trunk,
+				default = configManager.trailingTrunk ?: configManager.trunk,
 			)
 
 			vc.setMetadata(vc.currentBranch.name, BranchData(isTrunk = false, parentName = parent))
