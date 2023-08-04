@@ -1,6 +1,8 @@
 package com.mattprecious.stacker.remote
 
 import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.remote.Remote.PrInfo
+import com.mattprecious.stacker.remote.Remote.PrResult
 import org.kohsuke.github.GHFileNotFoundException
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GitHub
@@ -40,6 +42,25 @@ class GitHubRemote(
 			true
 		} else {
 			false
+		}
+	}
+
+	override fun openOrRetargetPullRequest(
+		branchName: String,
+		targetName: String,
+		prInfo: () -> PrInfo,
+	): PrResult {
+		val pr = repo!!.queryPullRequests().head(branchName).list().firstOrNull()
+		return if (pr == null) {
+			val info = prInfo()
+
+			// TODO: Drafts. Need to somehow know whether drafts are supported in the repo.
+			val createdPr = repo!!.createPullRequest(info.title, branchName, targetName, info.body)
+
+			PrResult.Created(url = createdPr.htmlUrl.toString())
+		} else {
+			pr.setBaseBranch(targetName)
+			PrResult.Updated(pr.htmlUrl.toString())
 		}
 	}
 
