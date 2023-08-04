@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.vc
 
 import com.mattprecious.stacker.shell.Shell
+import com.mattprecious.stacker.vc.VersionControl.CommitInfo
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okio.Buffer
@@ -25,6 +26,17 @@ class GitVersionControl(
 	override val originUrl: String by lazy {
 		shell.exec(COMMAND, "remote", "get-url", "origin")
 	}
+
+	override val latestCommitInfo: CommitInfo
+		get() {
+			val title = shell.exec(COMMAND, "log", "-1", "--format=format:%s").trim()
+			val body = shell.exec(COMMAND, "log", "-1", "--format=format:%b").ifBlank { null }
+
+			return CommitInfo(
+				title = title,
+				body = body,
+			)
+		}
 
 	override fun fallthrough(commands: List<String>) {
 		shell.exec(COMMAND, *commands.toTypedArray())

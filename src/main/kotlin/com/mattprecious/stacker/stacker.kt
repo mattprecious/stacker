@@ -33,6 +33,7 @@ class Stacker : CliktCommand(
 			Branch(
 				vc = vc,
 				configManager = configManager,
+				remote = remote,
 			),
 		)
 	}
@@ -74,12 +75,14 @@ class Init(
 private class Branch(
 	vc: VersionControl,
 	configManager: ConfigManager,
+	remote: Remote,
 ) : CliktCommand() {
 	init {
 		subcommands(
 			Track(vc, configManager),
 			Untrack(vc),
 			Create(vc),
+			Submit(remote, vc),
 		)
 	}
 
@@ -132,6 +135,42 @@ private class Branch(
 			}
 
 			vc.createBranchFromCurrent(branchName)
+		}
+	}
+
+	private class Submit(
+		private val remote: Remote,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			if (!vc.currentBranch.tracked) {
+				error(
+					message = "Cannot create a pull request from ${vc.currentBranch.name.styleBranch()} since it is " +
+						"not tracked. Please track with ${"st branch track".styleCode()}.",
+				)
+				throw Abort()
+			}
+
+			remote.requireAuthenticated()
+
+			vc.pushCurrentBranch()
+
+			val result = remote.openOrRetargetPullRequest(
+				branchName = vc.currentBranch.name,
+				targetName = vc.currentBranch.parent!!.name,
+			) {
+				// TODO: Figure out what to put when there's multiple commits on this branch.
+				val info = vc.latestCommitInfo
+				Remote.PrInfo(
+					title = info.title,
+					body = info.body,
+				)
+			}
+
+			when (result) {
+				is Remote.PrResult.Created -> echo("Pull request created: ${result.url}")
+				is Remote.PrResult.Updated -> echo("Pull request updated: ${result.url}")
+			}
 		}
 	}
 }
