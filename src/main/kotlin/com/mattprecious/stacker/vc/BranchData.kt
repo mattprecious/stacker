@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 data class BranchData(
 	val isTrunk: Boolean,
 	val parentName: String?,
+	val children: List<String>,
 )

@@ -4,7 +4,7 @@ class Branch internal constructor(
 	private val vc: VersionControl,
 	val name: String,
 ) {
-	private val metadata: BranchData? = vc.getMetadata(branchName = name)
+	val metadata: BranchData? = vc.getMetadata(branchName = name)
 
 	val tracked = metadata != null
 
@@ -12,5 +12,9 @@ class Branch internal constructor(
 
 	val parent: Branch? by lazy {
 		metadata?.parentName?.let { Branch(vc = vc, name = it) }
+	}
+
+	val children: List<Branch> by lazy {
+		metadata?.children?.map { Branch(vc = vc, name = it) } ?: emptyList()
 	}
 }

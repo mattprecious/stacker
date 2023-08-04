@@ -57,9 +57,9 @@ class RealConfigManager(
 			}
 		}
 
-		vc.setMetadata(trunk, BranchData(isTrunk = true, parentName = null))
+		vc.setMetadata(trunk, BranchData(isTrunk = true, parentName = null, children = listOfNotNull(trailingTrunk)))
 		if (trailingTrunk != null) {
-			vc.setMetadata(trailingTrunk, BranchData(isTrunk = true, parentName = null))
+			vc.setMetadata(trailingTrunk, BranchData(isTrunk = true, parentName = trunk, children = emptyList()))
 		}
 	}
 }

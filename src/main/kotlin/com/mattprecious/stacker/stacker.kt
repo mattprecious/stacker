@@ -103,7 +103,9 @@ private class Branch(
 				default = configManager.trailingTrunk ?: configManager.trunk,
 			)
 
-			vc.setMetadata(vc.currentBranch.name, BranchData(isTrunk = false, parentName = parent))
+			val parentData = vc.getMetadata(parent)
+			vc.setMetadata(parent, parentData!!.copy(children = parentData.children + vc.currentBranch.name))
+			vc.setMetadata(vc.currentBranch.name, BranchData(isTrunk = false, parentName = parent, children = emptyList()))
 		}
 	}
 

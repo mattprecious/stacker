@@ -27,16 +27,16 @@ class GitVersionControl(
 		shell.exec(COMMAND, "remote", "get-url", "origin")
 	}
 
-	override val latestCommitInfo: CommitInfo
-		get() {
-			val title = shell.exec(COMMAND, "log", "-1", "--format=format:%s").trim()
-			val body = shell.exec(COMMAND, "log", "-1", "--format=format:%b").ifBlank { null }
+   override val latestCommitInfo: CommitInfo
+	   get() {
+		   val title = shell.exec(COMMAND, "log", "-1", "--format=format:%s").trim()
+		   val body = shell.exec(COMMAND, "log", "-1", "--format=format:%b").ifBlank { null }
 
-			return CommitInfo(
-				title = title,
-				body = body,
-			)
-		}
+		   return CommitInfo(
+			   title = title,
+			   body = body,
+		   )
+	   }
 
 	override fun fallthrough(commands: List<String>) {
 		shell.exec(COMMAND, *commands.toTypedArray())
@@ -73,8 +73,11 @@ class GitVersionControl(
 
 	override fun createBranchFromCurrent(branchName: String) {
 		val parent = currentBranch
+		val parentData = parent.metadata!!
+
 		shell.exec(COMMAND, "checkout", "-b", branchName)
-		setMetadata(branchName, BranchData(isTrunk = false, parentName = parent.name))
+		setMetadata(parent.name, parentData.copy(children = parent.metadata.children + branchName))
+		setMetadata(branchName, BranchData(isTrunk = false, parentName = parent.name, children = emptyList()))
 	}
 
 	override fun pushCurrentBranch() {
