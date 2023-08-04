@@ -82,7 +82,7 @@ private class Branch(
 			Track(vc, configManager),
 			Untrack(vc),
 			Create(vc),
-			Submit(remote, vc),
+			Submit(configManager, remote, vc),
 		)
 	}
 
@@ -139,6 +139,7 @@ private class Branch(
 	}
 
 	private class Submit(
+		private val configManager: ConfigManager,
 		private val remote: Remote,
 		private val vc: VersionControl,
 	) : CliktCommand() {
@@ -151,13 +152,28 @@ private class Branch(
 				throw Abort()
 			}
 
+			if (vc.currentBranch.isTrunk) {
+				error(
+					message = "Cannot create a pull request from trunk branch ${vc.currentBranch.name.styleBranch()}.",
+				)
+				throw Abort()
+			}
+
 			remote.requireAuthenticated()
 
 			vc.pushCurrentBranch()
 
+			val target = vc.currentBranch.parent!!.name.let {
+				if (it == configManager.trailingTrunk) {
+					configManager.trunk!!
+				} else {
+					it
+				}
+			}
+
 			val result = remote.openOrRetargetPullRequest(
 				branchName = vc.currentBranch.name,
-				targetName = vc.currentBranch.parent!!.name,
+				targetName = target,
 			) {
 				// TODO: Figure out what to put when there's multiple commits on this branch.
 				val info = vc.latestCommitInfo
