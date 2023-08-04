@@ -16,6 +16,7 @@ import com.mattprecious.stacker.shell.RealShell
 import com.mattprecious.stacker.vc.BranchData
 import com.mattprecious.stacker.vc.GitVersionControl
 import com.mattprecious.stacker.vc.VersionControl
+import com.mattprecious.stacker.vc.Branch as VcBranch
 
 class Stacker : CliktCommand(
 	name = "st",
@@ -31,6 +32,11 @@ class Stacker : CliktCommand(
 				configManager = configManager,
 			),
 			Branch(
+				vc = vc,
+				configManager = configManager,
+				remote = remote,
+			),
+			Stack(
 				vc = vc,
 				configManager = configManager,
 				remote = remote,
@@ -164,31 +170,50 @@ private class Branch(
 			remote.requireAuthenticated()
 
 			vc.pushCurrentBranch()
+			vc.currentBranch.submit(configManager, remote, vc)
+		}
+	}
+}
 
-			val target = vc.currentBranch.parent!!.name.let {
-				if (it == configManager.trailingTrunk) {
-					configManager.trunk!!
-				} else {
-					it
-				}
-			}
+private class Stack(
+	configManager: ConfigManager,
+	remote: Remote,
+	vc: VersionControl,
+) : CliktCommand() {
+	init {
+		subcommands(
+			Submit(configManager, remote, vc),
+		)
+	}
 
-			val result = remote.openOrRetargetPullRequest(
-				branchName = vc.currentBranch.name,
-				targetName = target,
-			) {
-				// TODO: Figure out what to put when there's multiple commits on this branch.
-				val info = vc.latestCommitInfo
-				Remote.PrInfo(
-					title = info.title,
-					body = info.body,
+	override fun run() = Unit
+
+	private class Submit(
+		private val configManager: ConfigManager,
+		private val remote: Remote,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			if (!vc.currentBranch.tracked) {
+				error(
+					message = "Cannot create a pull request from ${vc.currentBranch.name.styleBranch()} since it is " +
+						"not tracked. Please track with ${"st branch track".styleCode()}.",
 				)
+				throw Abort()
 			}
 
-			when (result) {
-				is Remote.PrResult.Created -> echo("Pull request created: ${result.url}")
-				is Remote.PrResult.Updated -> echo("Pull request updated: ${result.url}")
+			if (vc.currentBranch.isTrunk) {
+				error(
+					message = "Cannot create a pull request from trunk branch ${vc.currentBranch.name.styleBranch()}.",
+				)
+				throw Abort()
 			}
+
+			remote.requireAuthenticated()
+
+			val branchesToSubmit = vc.currentBranch.flattenStack()
+			vc.pushBranches(branchesToSubmit)
+			branchesToSubmit.forEach { it.submit(configManager, remote, vc) }
 		}
 	}
 }
@@ -238,6 +263,60 @@ private fun Remote.requireAuthenticated() {
 	if (!hasRepoAccess) {
 		error("Personal token does not have access to $repoName.")
 		throw Abort()
+	}
+}
+
+context(CliktCommand)
+private fun VcBranch.submit(
+	configManager: ConfigManager,
+	remote: Remote,
+	vc: VersionControl,
+) {
+	val target = parent!!.name.let {
+		if (it == configManager.trailingTrunk) {
+			configManager.trunk!!
+		} else {
+			it
+		}
+	}
+
+	val result = remote.openOrRetargetPullRequest(
+		branchName = name,
+		targetName = target,
+	) {
+		// TODO: Figure out what to put when there's multiple commits on this branch.
+		val info = vc.latestCommitInfo(this)
+		Remote.PrInfo(
+			title = info.title,
+			body = info.body,
+		)
+	}
+
+	when (result) {
+		is Remote.PrResult.Created -> echo("Pull request created: ${result.url}")
+		is Remote.PrResult.Updated -> echo("Pull request updated: ${result.url}")
+	}
+}
+
+private fun VcBranch.flattenStack(): List<VcBranch> {
+	return buildList {
+		fun VcBranch.addParents() {
+			if (!parent!!.isTrunk) {
+				parent!!.addParents()
+				add(parent!!)
+			}
+		}
+
+		fun VcBranch.addChildren() {
+			children.forEach {
+				add(it)
+				it.addChildren()
+			}
+		}
+
+		addParents()
+		add(this@flattenStack)
+		addChildren()
 	}
 }
 

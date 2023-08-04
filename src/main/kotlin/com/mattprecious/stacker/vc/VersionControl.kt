@@ -7,7 +7,6 @@ interface VersionControl {
 	val configDirectory: Path
 	val currentBranch: Branch
 	val originUrl: String
-	val latestCommitInfo: CommitInfo
 
 	fun fallthrough(commands: List<String>)
 
@@ -21,6 +20,10 @@ interface VersionControl {
 	fun createBranchFromCurrent(branchName: String)
 
 	fun pushCurrentBranch()
+
+	fun pushBranches(branches: List<Branch>)
+
+	fun latestCommitInfo(branch: Branch = currentBranch): CommitInfo
 
 	data class CommitInfo(
 		val title: String,

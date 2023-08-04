@@ -27,17 +27,6 @@ class GitVersionControl(
 		shell.exec(COMMAND, "remote", "get-url", "origin")
 	}
 
-   override val latestCommitInfo: CommitInfo
-	   get() {
-		   val title = shell.exec(COMMAND, "log", "-1", "--format=format:%s").trim()
-		   val body = shell.exec(COMMAND, "log", "-1", "--format=format:%b").ifBlank { null }
-
-		   return CommitInfo(
-			   title = title,
-			   body = body,
-		   )
-	   }
-
 	override fun fallthrough(commands: List<String>) {
 		shell.exec(COMMAND, *commands.toTypedArray())
 	}
@@ -86,6 +75,24 @@ class GitVersionControl(
 		}
 
 		shell.exec(COMMAND, "push", "-f", "origin", currentBranch.name)
+	}
+
+	override fun pushBranches(branches: List<Branch>) {
+		require(branches.none { it.isTrunk }) {
+			"Will not push trunk branch: ${branches.first { it.isTrunk }}."
+		}
+
+		shell.exec(COMMAND, "push", "-f", "--atomic", "origin", *branches.map { it.name }.toTypedArray())
+	}
+
+	override fun latestCommitInfo(branch: Branch): CommitInfo {
+		val title = shell.exec(COMMAND, "log", "-1", "--format=format:%s", branch.name).trim()
+		val body = shell.exec(COMMAND, "log", "-1", "--format=format:%b", branch.name).ifBlank { null }
+
+		return CommitInfo(
+			title = title,
+			body = body,
+		)
 	}
 
 	private fun refPath(branchName: String): String {
