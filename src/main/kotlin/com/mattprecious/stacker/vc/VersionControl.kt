@@ -18,4 +18,6 @@ interface VersionControl {
 	fun getMetadata(branchName: String): BranchData?
 
 	fun createBranchFromCurrent(branchName: String)
+
+	fun pushCurrentBranch()
 }

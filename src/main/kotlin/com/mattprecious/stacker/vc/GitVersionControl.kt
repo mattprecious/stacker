@@ -65,6 +65,14 @@ class GitVersionControl(
 		setMetadata(branchName, BranchData(isTrunk = false, parentName = parent.name))
 	}
 
+	override fun pushCurrentBranch() {
+		require(!currentBranch.isTrunk) {
+			"Will not push trunk branch: ${currentBranch.name}."
+		}
+
+		shell.exec(COMMAND, "push", "-f", "origin", currentBranch.name)
+	}
+
 	private fun refPath(branchName: String): String {
 		return "refs/stacker/branch/$branchName"
 	}
