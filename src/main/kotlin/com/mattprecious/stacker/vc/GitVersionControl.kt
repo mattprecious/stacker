@@ -18,10 +18,11 @@ class GitVersionControl(
 	override val configDirectory: Path
 		get() = root / ".git/stacker"
 
-	override val currentBranch: Branch by lazy {
-		val name = shell.exec(COMMAND, "branch", "--show-current")
-		Branch(vc = this, name = name)
-	}
+	override val currentBranch: Branch
+		get() {
+			val name = shell.exec(COMMAND, "branch", "--show-current")
+			return Branch(vc = this, name = name)
+		}
 
 	override val originUrl: String by lazy {
 		shell.exec(COMMAND, "remote", "get-url", "origin")
@@ -60,13 +61,26 @@ class GitVersionControl(
 		}
 	}
 
+	override fun getBranch(branchName: String): Branch {
+		return Branch(this, branchName)
+	}
+
+	override fun track(
+		branch: Branch,
+		isTrunk: Boolean,
+	) {
+		setMetadata(branch.name, BranchData(isTrunk = isTrunk, parentName = null, children = emptyList()))
+	}
+
+	override fun untrack(branch: Branch) {
+		setMetadata(branch.name, null)
+	}
+
 	override fun createBranchFromCurrent(branchName: String) {
 		val parent = currentBranch
-		val parentData = parent.metadata!!
 
 		shell.exec(COMMAND, "checkout", "-b", branchName)
-		setMetadata(parent.name, parentData.copy(children = parent.metadata.children + branchName))
-		setMetadata(branchName, BranchData(isTrunk = false, parentName = parent.name, children = emptyList()))
+		currentBranch.track(parent)
 	}
 
 	override fun pushCurrentBranch() {

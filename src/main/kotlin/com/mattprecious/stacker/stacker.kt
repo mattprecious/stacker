@@ -13,7 +13,6 @@ import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.shell.RealShell
-import com.mattprecious.stacker.vc.BranchData
 import com.mattprecious.stacker.vc.GitVersionControl
 import com.mattprecious.stacker.vc.VersionControl
 import com.mattprecious.stacker.vc.Branch as VcBranch
@@ -99,19 +98,18 @@ private class Branch(
 		private val configManager: ConfigManager,
 	) : CliktCommand() {
 		override fun run() {
-			if (vc.currentBranch.tracked) {
-				error(message = "Branch ${vc.currentBranch.name.styleBranch()} is already tracked.")
+			val branch = vc.currentBranch
+			if (branch.tracked) {
+				error(message = "Branch ${branch.name.styleBranch()} is already tracked.")
 				return
 			}
 
 			val parent = selectBranch(
-				"Select the parent branch for ${vc.currentBranch.name.styleBranch()}",
+				"Select the parent branch for ${branch.name.styleBranch()}",
 				default = configManager.trailingTrunk ?: configManager.trunk,
 			)
 
-			val parentData = vc.getMetadata(parent)
-			vc.setMetadata(parent, parentData!!.copy(children = parentData.children + vc.currentBranch.name))
-			vc.setMetadata(vc.currentBranch.name, BranchData(isTrunk = false, parentName = parent, children = emptyList()))
+			branch.track(vc.getBranch(parent))
 		}
 	}
 
@@ -119,12 +117,13 @@ private class Branch(
 		private val vc: VersionControl,
 	) : CliktCommand() {
 		override fun run() {
-			if (!vc.currentBranch.tracked) {
-				error(message = "Branch ${vc.currentBranch.name.styleBranch()} is already not tracked.")
+			val branch = vc.currentBranch
+			if (!branch.tracked) {
+				error(message = "Branch ${branch.name.styleBranch()} is already not tracked.")
 				return
 			}
 
-			vc.setMetadata(vc.currentBranch.name, null)
+			branch.untrack()
 		}
 	}
 
