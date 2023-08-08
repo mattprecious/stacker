@@ -30,6 +30,10 @@ class Stacker : CliktCommand(
 			Init(
 				configManager = configManager,
 			),
+			Log(
+				configManager = configManager,
+				vc = vc,
+			),
 			Branch(
 				vc = vc,
 				configManager = configManager,
@@ -217,6 +221,15 @@ private class Stack(
 	}
 }
 
+private class Log(
+	private val configManager: ConfigManager,
+	private val vc: VersionControl,
+) : CliktCommand() {
+	override fun run() {
+		vc.getBranch(configManager.trunk!!).echo()
+	}
+}
+
 context(CliktCommand)
 private fun error(message: String) {
 	echo(message, err = true)
@@ -317,6 +330,43 @@ private fun VcBranch.flattenStack(): List<VcBranch> {
 		add(this@flattenStack)
 		addChildren()
 	}
+}
+
+context(CliktCommand)
+private fun VcBranch.echo() {
+	echo(inset = 0, treeWidth = treeWidth())
+}
+
+context(CliktCommand)
+private fun VcBranch.echo(
+	inset: Int,
+	treeWidth: Int,
+) {
+	children.forEachIndexed { index, child ->
+		child.echo(inset + index, treeWidth)
+	}
+
+	echo(
+		buildString {
+			repeat(inset) { append("│ ") }
+			append("○")
+
+			val horizontalBranches = (children.size - 1).coerceAtLeast(0)
+			if (horizontalBranches > 0) {
+				repeat(horizontalBranches - 1) { append("─┴") }
+				append("─┘")
+			}
+
+			repeat(treeWidth - inset - horizontalBranches - 1) { append("  ") }
+
+			append(" ")
+			append(name)
+		},
+	)
+}
+
+private fun VcBranch.treeWidth(): Int {
+	return children.sumOf { it.treeWidth() }.coerceAtLeast(1)
 }
 
 fun main(args: Array<String>) = Stacker().main(args)
