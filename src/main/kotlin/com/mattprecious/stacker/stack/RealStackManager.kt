@@ -43,6 +43,13 @@ class RealStackManager(
 		branchQueries.remove(branch.name)
 	}
 
+	override fun renameBranch(branch: Branch, newName: String) {
+		branchQueries.rename(
+			oldName = branch.name,
+			newName = newName,
+		)
+	}
+
 	private fun getTree(): Map<String?, List<String>> {
 		return branchQueries.selectAll().executeAsList().groupBy(
 			keySelector = { it.parent },

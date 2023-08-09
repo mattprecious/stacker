@@ -1,7 +1,7 @@
 CREATE TABLE branch (
 	name TEXT NOT NULL PRIMARY KEY,
 	parent TEXT,
-	FOREIGN KEY(parent) REFERENCES branch(name) ON DELETE CASCADE
+	FOREIGN KEY(parent) REFERENCES branch(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 insert:
@@ -11,6 +11,11 @@ VALUES (?, ?);
 remove:
 DELETE FROM branch
 WHERE name = ?;
+
+rename:
+UPDATE branch
+SET name = :newName
+WHERE name = :oldName;
 
 selectAll:
 SELECT *

@@ -3,12 +3,16 @@ package com.mattprecious.stacker
 import app.cash.sqldelight.db.QueryResult
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.mattprecious.stacker.db.RepoDatabase
+import java.util.Properties
 
 inline fun withDatabase(
 	path: String,
 	crossinline block: (db: RepoDatabase) -> Unit,
 ) {
-	JdbcSqliteDriver("jdbc:sqlite:$path").use { driver ->
+	JdbcSqliteDriver(
+		url = "jdbc:sqlite:$path",
+		properties = Properties().apply { put("foreign_keys", "true") },
+	).use { driver ->
 		migrateIfNeeded(driver)
 		block(
 			RepoDatabase(

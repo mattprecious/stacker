@@ -96,6 +96,7 @@ private class Branch(
 			Track(configManager, stackManager, vc),
 			Untrack(stackManager, vc),
 			Create(stackManager, vc),
+			Rename(stackManager, vc),
 			Submit(configManager, remote, stackManager, vc),
 		)
 	}
@@ -156,6 +157,28 @@ private class Branch(
 			}
 
 			vc.createBranchFromCurrent(branchName)
+		}
+	}
+
+	private class Rename(
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		private val newName by argument()
+
+		override fun run() {
+			val currentBranchName = vc.currentBranchName
+			val currentBranch = stackManager.getBranch(currentBranchName)
+			if (currentBranch == null) {
+				error(
+					message = "Cannot rename ${currentBranchName.styleBranch()} since it is not tracked. " +
+						"Please track with ${"st branch track".styleCode()}.",
+				)
+				throw Abort()
+			}
+
+			vc.renameBranch(currentBranch, newName)
+			stackManager.renameBranch(currentBranch, newName)
 		}
 	}
 

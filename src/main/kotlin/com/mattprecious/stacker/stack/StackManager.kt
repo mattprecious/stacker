@@ -12,4 +12,9 @@ interface StackManager {
 	fun untrackBranch(
 		branch: Branch,
 	)
+
+	fun renameBranch(
+		branch: Branch,
+		newName: String,
+	)
 }
