@@ -13,36 +13,40 @@ import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.shell.RealShell
+import com.mattprecious.stacker.stack.RealStackManager
+import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.GitVersionControl
 import com.mattprecious.stacker.vc.VersionControl
-import com.mattprecious.stacker.vc.Branch as VcBranch
+import kotlin.io.path.div
+import com.mattprecious.stacker.stack.Branch as StackBranch
 
-class Stacker : CliktCommand(
+class Stacker(
+	private val configManager: ConfigManager,
+	remote: Remote,
+	stackManager: StackManager,
+	vc: VersionControl,
+) : CliktCommand(
 	name = "st",
 ) {
-	private val shell = RealShell()
-	private val vc = GitVersionControl(shell)
-	private val configManager = RealConfigManager(vc)
-	private val remote = GitHubRemote(vc.originUrl, configManager)
-
 	init {
 		subcommands(
 			Init(
 				configManager = configManager,
 			),
 			Log(
-				configManager = configManager,
-				vc = vc,
+				stackManager = stackManager,
 			),
 			Branch(
 				vc = vc,
 				configManager = configManager,
 				remote = remote,
+				stackManager = stackManager,
 			),
 			Stack(
-				vc = vc,
 				configManager = configManager,
 				remote = remote,
+				stackManager = stackManager,
+				vc = vc,
 			),
 		)
 	}
@@ -82,64 +86,70 @@ class Init(
 }
 
 private class Branch(
-	vc: VersionControl,
 	configManager: ConfigManager,
 	remote: Remote,
+	stackManager: StackManager,
+	vc: VersionControl,
 ) : CliktCommand() {
 	init {
 		subcommands(
-			Track(vc, configManager),
-			Untrack(vc),
-			Create(vc),
-			Submit(configManager, remote, vc),
+			Track(configManager, stackManager, vc),
+			Untrack(stackManager, vc),
+			Create(stackManager, vc),
+			Submit(configManager, remote, stackManager, vc),
 		)
 	}
 
 	override fun run() = Unit
 
 	private class Track(
-		private val vc: VersionControl,
 		private val configManager: ConfigManager,
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
 	) : CliktCommand() {
 		override fun run() {
-			val branch = vc.currentBranch
-			if (branch.tracked) {
-				error(message = "Branch ${branch.name.styleBranch()} is already tracked.")
+			val currentBranchName = vc.currentBranchName
+			val currentBranch = stackManager.getBranch(currentBranchName)
+			if (currentBranch != null) {
+				error(message = "Branch ${currentBranch.name.styleBranch()} is already tracked.")
 				return
 			}
 
 			val parent = selectBranch(
-				"Select the parent branch for ${branch.name.styleBranch()}",
+				"Select the parent branch for ${currentBranchName.styleBranch()}",
 				default = configManager.trailingTrunk ?: configManager.trunk,
 			)
 
-			branch.track(vc.getBranch(parent))
+			stackManager.trackBranch(currentBranchName, parent)
 		}
 	}
 
 	private class Untrack(
+		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
 		override fun run() {
-			val branch = vc.currentBranch
-			if (!branch.tracked) {
-				error(message = "Branch ${branch.name.styleBranch()} is already not tracked.")
+			val currentBranch = stackManager.getBranch(vc.currentBranchName)
+			if (currentBranch == null) {
+				error(message = "Branch ${vc.currentBranchName.styleBranch()} is already not tracked.")
 				return
 			}
 
-			branch.untrack()
+			stackManager.untrackBranch(currentBranch)
 		}
 	}
 
 	private class Create(
+		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
 		private val branchName by argument()
 
 		override fun run() {
-			if (!vc.currentBranch.tracked) {
+			val currentBranch = stackManager.getBranch(vc.currentBranchName)
+			if (currentBranch == null) {
 				error(
-					message = "Cannot branch from ${vc.currentBranch.name.styleBranch()} since it is not tracked. " +
+					message = "Cannot branch from ${vc.currentBranchName.styleBranch()} since it is not tracked. " +
 						"Please track with ${"st branch track".styleCode()}.",
 				)
 				throw Abort()
@@ -152,28 +162,30 @@ private class Branch(
 	private class Submit(
 		private val configManager: ConfigManager,
 		private val remote: Remote,
+		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
 		override fun run() {
-			if (!vc.currentBranch.tracked) {
+			val currentBranch = stackManager.getBranch(vc.currentBranchName)
+			if (currentBranch == null) {
 				error(
-					message = "Cannot create a pull request from ${vc.currentBranch.name.styleBranch()} since it is " +
+					message = "Cannot create a pull request from ${vc.currentBranchName.styleBranch()} since it is " +
 						"not tracked. Please track with ${"st branch track".styleCode()}.",
 				)
 				throw Abort()
 			}
 
-			if (vc.currentBranch.isTrunk) {
+			if (currentBranch.name == configManager.trunk || currentBranch.name == configManager.trailingTrunk) {
 				error(
-					message = "Cannot create a pull request from trunk branch ${vc.currentBranch.name.styleBranch()}.",
+					message = "Cannot create a pull request from trunk branch ${currentBranch.name.styleBranch()}.",
 				)
 				throw Abort()
 			}
 
 			remote.requireAuthenticated()
 
-			vc.pushCurrentBranch()
-			vc.currentBranch.submit(configManager, remote, vc)
+			vc.pushBranches(listOf(currentBranch))
+			currentBranch.submit(configManager, remote, vc)
 		}
 	}
 }
@@ -181,11 +193,12 @@ private class Branch(
 private class Stack(
 	configManager: ConfigManager,
 	remote: Remote,
+	stackManager: StackManager,
 	vc: VersionControl,
 ) : CliktCommand() {
 	init {
 		subcommands(
-			Submit(configManager, remote, vc),
+			Submit(configManager, remote, stackManager, vc),
 		)
 	}
 
@@ -194,27 +207,30 @@ private class Stack(
 	private class Submit(
 		private val configManager: ConfigManager,
 		private val remote: Remote,
+		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
 		override fun run() {
-			if (!vc.currentBranch.tracked) {
+			val currentBranch = stackManager.getBranch(vc.currentBranchName)
+			if (currentBranch == null) {
 				error(
-					message = "Cannot create a pull request from ${vc.currentBranch.name.styleBranch()} since it is " +
+					message = "Cannot create a pull request from ${vc.currentBranchName.styleBranch()} since it is " +
 						"not tracked. Please track with ${"st branch track".styleCode()}.",
 				)
 				throw Abort()
 			}
 
-			if (vc.currentBranch.isTrunk) {
+			if (currentBranch.name == configManager.trunk || currentBranch.name == configManager.trailingTrunk) {
 				error(
-					message = "Cannot create a pull request from trunk branch ${vc.currentBranch.name.styleBranch()}.",
+					message = "Cannot create a pull request from trunk branch ${currentBranch.name.styleBranch()}.",
 				)
 				throw Abort()
 			}
 
 			remote.requireAuthenticated()
 
-			val branchesToSubmit = vc.currentBranch.flattenStack()
+			val branchesToSubmit = currentBranch.flattenStack()
+				.filterNot { it.name == configManager.trunk || it.name == configManager.trailingTrunk }
 			vc.pushBranches(branchesToSubmit)
 			branchesToSubmit.forEach { it.submit(configManager, remote, vc) }
 		}
@@ -222,11 +238,10 @@ private class Stack(
 }
 
 private class Log(
-	private val configManager: ConfigManager,
-	private val vc: VersionControl,
+	private val stackManager: StackManager,
 ) : CliktCommand() {
 	override fun run() {
-		vc.getBranch(configManager.trunk!!).echo()
+		stackManager.getBase()?.echo()
 	}
 }
 
@@ -279,7 +294,7 @@ private fun Remote.requireAuthenticated() {
 }
 
 context(CliktCommand)
-private fun VcBranch.submit(
+private fun StackBranch.submit(
 	configManager: ConfigManager,
 	remote: Remote,
 	vc: VersionControl,
@@ -310,16 +325,16 @@ private fun VcBranch.submit(
 	}
 }
 
-private fun VcBranch.flattenStack(): List<VcBranch> {
+private fun StackBranch.flattenStack(): List<StackBranch> {
 	return buildList {
-		fun VcBranch.addParents() {
-			if (!parent!!.isTrunk) {
+		fun StackBranch.addParents() {
+			if (parent != null) {
 				parent!!.addParents()
 				add(parent!!)
 			}
 		}
 
-		fun VcBranch.addChildren() {
+		fun StackBranch.addChildren() {
 			children.forEach {
 				add(it)
 				it.addChildren()
@@ -333,12 +348,12 @@ private fun VcBranch.flattenStack(): List<VcBranch> {
 }
 
 context(CliktCommand)
-private fun VcBranch.echo() {
+private fun StackBranch.echo() {
 	echo(inset = 0, treeWidth = treeWidth())
 }
 
 context(CliktCommand)
-private fun VcBranch.echo(
+private fun StackBranch.echo(
 	inset: Int,
 	treeWidth: Int,
 ) {
@@ -365,8 +380,25 @@ private fun VcBranch.echo(
 	)
 }
 
-private fun VcBranch.treeWidth(): Int {
+private fun StackBranch.treeWidth(): Int {
 	return children.sumOf { it.treeWidth() }.coerceAtLeast(1)
 }
 
-fun main(args: Array<String>) = Stacker().main(args)
+fun main(args: Array<String>) {
+	val shell = RealShell()
+	val vc = GitVersionControl(shell)
+
+	val dbPath = vc.configDirectory / "stacker.db"
+	withDatabase(dbPath.toString()) { db ->
+		val stackManager = RealStackManager(db)
+		val configManager = RealConfigManager(db, stackManager)
+		val remote = GitHubRemote(vc.originUrl, configManager)
+
+		Stacker(
+			configManager = configManager,
+			remote = remote,
+			stackManager = stackManager,
+			vc = vc,
+		).main(args)
+	}
+}
