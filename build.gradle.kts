@@ -3,6 +3,8 @@ plugins {
 	kotlin("jvm") version libs.versions.kotlin
 	kotlin("plugin.serialization") version libs.versions.kotlin
 
+	id("app.cash.sqldelight") version libs.versions.sqldelight
+
 	alias(libs.plugins.spotless)
 }
 
@@ -15,6 +17,7 @@ dependencies {
 	implementation(libs.github)
 	implementation(libs.kotlin.serialization.json)
 	implementation(libs.okio)
+	implementation(libs.sqldelight.driver)
 }
 
 application {
@@ -27,6 +30,15 @@ kotlin {
 
 	compilerOptions {
 		freeCompilerArgs.add("-Xcontext-receivers")
+	}
+}
+
+sqldelight {
+	databases {
+		create("RepoDatabase") {
+			packageName.set("com.mattprecious.stacker.db")
+			dialect("app.cash.sqldelight:sqlite-3-38-dialect:2.0.0")
+		}
 	}
 }
 

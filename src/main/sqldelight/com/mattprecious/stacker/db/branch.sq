@@ -1,0 +1,22 @@
+CREATE TABLE branch (
+	name TEXT NOT NULL PRIMARY KEY,
+	parent TEXT,
+	FOREIGN KEY(parent) REFERENCES branch(name) ON DELETE CASCADE
+);
+
+insert:
+INSERT INTO branch
+VALUES (?, ?);
+
+remove:
+DELETE FROM branch
+WHERE name = ?;
+
+selectAll:
+SELECT *
+FROM branch;
+
+contains:
+SELECT COUNT(*) > 0
+FROM branch
+WHERE name = ?;
