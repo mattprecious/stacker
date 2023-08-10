@@ -25,6 +25,9 @@ class GitVersionControl(
 		shell.exec(COMMAND, "remote", "get-url", "origin")
 	}
 
+	override val branches: List<String>
+		get() = shell.exec(COMMAND, "branch", "--format=%(refname:short)").split('\n')
+
 	override fun fallthrough(commands: List<String>) {
 		shell.exec(COMMAND, *commands.toTypedArray())
 	}

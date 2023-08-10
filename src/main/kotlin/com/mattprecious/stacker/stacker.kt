@@ -10,6 +10,7 @@ import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.config.RealConfigManager
 import com.mattprecious.stacker.remote.GitHubRemote
 import com.mattprecious.stacker.remote.Remote
+import com.mattprecious.stacker.rendering.interactivePrompt
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.shell.RealShell
@@ -32,6 +33,7 @@ class Stacker(
 		subcommands(
 			Init(
 				configManager = configManager,
+				vc = vc,
 			),
 			Log(
 				stackManager = stackManager,
@@ -61,24 +63,31 @@ class Stacker(
 
 class Init(
 	private val configManager: ConfigManager,
+	private val vc: VersionControl,
 ) : CliktCommand() {
 	override fun run() {
-		// TODO: Infer.
-		val trunk = selectBranch(
-			text = "Enter the name of your trunk branch, which you open pull requests against",
-			default = "main",
+		val branches = vc.branches
+		val trunk = interactivePrompt(
+			message = "Select your trunk branch, which you open pull requests against",
+			options = branches,
+			// TODO: Infer without hard coding.
+			default = configManager.trunk ?: "main",
 		)
 
 		val useTrailing = YesNoPrompt(
 			terminal = currentContext.terminal,
 			prompt = "Do you use a trailing-trunk workflow?",
-			default = false,
+			default = configManager.trailingTrunk != null,
 		).ask() == true
 
 		val trailingTrunk = if (!useTrailing) {
 			null
 		} else {
-			selectBranch("Enter the name of your trailing trunk branch, which you branch from")
+			interactivePrompt(
+				message = "Select your trailing trunk branch, which you branch from",
+				options = branches.filterNot { it == trunk },
+				default = configManager.trailingTrunk,
+			)
 		}
 
 		configManager.initializeRepo(trunk = trunk, trailingTrunk = trailingTrunk)
@@ -116,8 +125,11 @@ private class Branch(
 				return
 			}
 
-			val parent = selectBranch(
-				"Select the parent branch for ${currentBranchName.styleBranch()}",
+			// TODO: Only show tracked branches and use the tree format from Log.
+			val branches = vc.branches
+			val parent = interactivePrompt(
+				message = "Select the parent branch for ${currentBranchName.styleBranch()}",
+				options = branches.filterNot { it == currentBranchName },
 				default = configManager.trailingTrunk ?: configManager.trunk,
 			)
 
@@ -271,23 +283,6 @@ private class Log(
 context(CliktCommand)
 private fun error(message: String) {
 	echo(message, err = true)
-}
-
-context(CliktCommand)
-private fun selectBranch(
-	text: String,
-	default: String? = null,
-): String {
-	// TODO: Branch picker.
-	return prompt(
-		text = text,
-		default = default,
-	) {
-		when (it.isBlank()) {
-			false -> ConversionResult.Valid(it)
-			true -> ConversionResult.Invalid("Cannot be blank.")
-		}
-	}!!
 }
 
 context(CliktCommand)

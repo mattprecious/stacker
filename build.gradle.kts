@@ -15,6 +15,7 @@ repositories {
 dependencies {
 	implementation(libs.clikt)
 	implementation(libs.github)
+	implementation(libs.jline.terminal)
 	implementation(libs.kotlin.serialization.json)
 	implementation(libs.okio)
 	implementation(libs.sqldelight.driver)
