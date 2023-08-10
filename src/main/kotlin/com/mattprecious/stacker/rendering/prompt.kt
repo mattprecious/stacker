@@ -13,6 +13,11 @@ fun interactivePrompt(
 	options: List<String>,
 	default: String? = null,
 ): String {
+	require(options.isNotEmpty())
+	if (options.size == 1) {
+		return options.single()
+	}
+
 	val builder = StringBuilder(options.size)
 	val outputTerminal = currentContext.terminal
 
