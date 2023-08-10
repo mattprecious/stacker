@@ -8,11 +8,13 @@ import com.mattprecious.stacker.rendering.Ansi.underline
 import org.jline.terminal.TerminalBuilder
 
 context(CliktCommand)
-fun interactivePrompt(
+fun <T> interactivePrompt(
 	message: String,
-	options: List<String>,
-	default: String? = null,
-): String {
+	options: List<T>,
+	default: T? = null,
+	displayTransform: (T) -> String = { it.toString() },
+	valueTransform: (T) -> String = { it.toString() },
+): T {
 	require(options.isNotEmpty())
 	if (options.size == 1) {
 		return options.single()
@@ -43,7 +45,7 @@ fun interactivePrompt(
 
 				selected?.let {
 					val result = options[it]
-					appendLine(" $result")
+					appendLine(" ${valueTransform(result)}")
 					outputTerminal.rawPrint(toString())
 					return result
 				}
@@ -51,10 +53,11 @@ fun interactivePrompt(
 				appendLine()
 
 				options.forEachIndexed { index, option ->
+					val display = displayTransform(option)
 					if (highlighted == index) {
-						appendLine("❯ $underline$option$reset")
+						appendLine("❯ $underline$display$reset")
 					} else {
-						appendLine("  $option")
+						appendLine("  $display")
 					}
 				}
 

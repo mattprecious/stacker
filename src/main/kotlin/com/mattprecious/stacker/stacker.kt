@@ -125,15 +125,18 @@ private class Branch(
 				return
 			}
 
-			// TODO: Only show tracked branches and use the tree format from Log.
-			val branches = vc.branches
+			val defaultName = configManager.trailingTrunk ?: configManager.trunk
+
+			val options = stackManager.getBase()!!.prettyTree()
 			val parent = interactivePrompt(
 				message = "Select the parent branch for ${currentBranchName.styleBranch()}",
-				options = branches.filterNot { it == currentBranchName },
-				default = configManager.trailingTrunk ?: configManager.trunk,
+				options = options,
+				default = options.find { it.branch.name == defaultName },
+				displayTransform = { it.pretty },
+				valueTransform = { it.branch.name },
 			)
 
-			stackManager.trackBranch(currentBranchName, parent)
+			stackManager.trackBranch(currentBranchName, parent.branch.name)
 		}
 	}
 
@@ -276,7 +279,7 @@ private class Log(
 	private val stackManager: StackManager,
 ) : CliktCommand() {
 	override fun run() {
-		stackManager.getBase()?.echo()
+		echo(stackManager.getBase()?.prettyTree()?.joinToString("\n") { it.pretty })
 	}
 }
 
@@ -365,36 +368,44 @@ private fun StackBranch.flattenStack(): List<StackBranch> {
 	}
 }
 
-context(CliktCommand)
-private fun StackBranch.echo() {
-	echo(inset = 0, treeWidth = treeWidth())
+private class PrettyBranch(
+	val branch: StackBranch,
+	val pretty: String,
+)
+
+private fun StackBranch.prettyTree(): List<PrettyBranch> {
+	return buildList { prettyTree(this, inset = 0, treeWidth = treeWidth()) }
 }
 
-context(CliktCommand)
-private fun StackBranch.echo(
+context(MutableList<PrettyBranch>)
+private fun StackBranch.prettyTree(
+	builder: MutableList<PrettyBranch>,
 	inset: Int,
 	treeWidth: Int,
 ) {
 	children.forEachIndexed { index, child ->
-		child.echo(inset + index, treeWidth)
+		child.prettyTree(builder, inset + index, treeWidth)
 	}
 
-	echo(
-		buildString {
-			repeat(inset) { append("│ ") }
-			append("○")
+	val pretty = buildString {
+		repeat(inset) { append("│ ") }
+		append("○")
 
-			val horizontalBranches = (children.size - 1).coerceAtLeast(0)
-			if (horizontalBranches > 0) {
-				repeat(horizontalBranches - 1) { append("─┴") }
-				append("─┘")
-			}
+		val horizontalBranches = (children.size - 1).coerceAtLeast(0)
+		if (horizontalBranches > 0) {
+			repeat(horizontalBranches - 1) { append("─┴") }
+			append("─┘")
+		}
 
-			repeat(treeWidth - inset - horizontalBranches - 1) { append("  ") }
+		repeat(treeWidth - inset - horizontalBranches - 1) { append("  ") }
 
-			append(" ")
-			append(name)
-		},
+		append(" ")
+		append(name)
+	}
+
+	builder += PrettyBranch(
+		branch = this,
+		pretty = pretty,
 	)
 }
 
