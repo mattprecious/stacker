@@ -38,4 +38,20 @@ class RealShell : Shell {
 
 		return process.inputStream.source().buffer().use { it.readUtf8().trim() }
 	}
+
+	override fun execStatus(
+		command: String,
+		vararg args: String,
+	): Boolean {
+		val process = ProcessBuilder(command, *args).run {
+			redirectOutput(ProcessBuilder.Redirect.INHERIT)
+			redirectError(ProcessBuilder.Redirect.INHERIT)
+		}.start()
+
+		check(process.waitFor(20, TimeUnit.SECONDS)) {
+			"Process $command took more than 20 seconds"
+		}
+
+		return process.exitValue() == 0
+	}
 }

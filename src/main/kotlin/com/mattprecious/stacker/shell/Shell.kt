@@ -9,4 +9,9 @@ interface Shell {
 		input: Source? = null,
 		suppressErrors: Boolean = false,
 	): String
+
+	fun execStatus(
+		command: String,
+		vararg args: String,
+	): Boolean
 }
