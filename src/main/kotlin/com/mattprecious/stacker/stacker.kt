@@ -51,6 +51,11 @@ class Stacker(
 				stackManager = stackManager,
 				vc = vc,
 			),
+			Upstack(
+				configManager = configManager,
+				stackManager = stackManager,
+				vc = vc,
+			),
 		)
 	}
 
@@ -272,6 +277,56 @@ private class Stack(
 				.filterNot { it.name == configManager.trunk || it.name == configManager.trailingTrunk }
 			vc.pushBranches(branchesToSubmit)
 			branchesToSubmit.forEach { it.submit(configManager, remote, vc) }
+		}
+	}
+}
+
+private class Upstack(
+	configManager: ConfigManager,
+	stackManager: StackManager,
+	vc: VersionControl,
+) : CliktCommand() {
+	init {
+		subcommands(
+			Onto(configManager, stackManager, vc),
+		)
+	}
+
+	override fun run() = Unit
+
+	private class Onto(
+		private val configManager: ConfigManager,
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			val currentBranchName = vc.currentBranchName
+			val currentBranch = stackManager.getBranch(currentBranchName)
+			if (currentBranch == null) {
+				error(
+					message = "Cannot retarget ${currentBranchName.styleBranch()} since it is not tracked. " +
+						"Please track with ${"st branch track".styleCode()}.",
+				)
+				throw Abort()
+			}
+
+			if (currentBranchName == configManager.trunk || currentBranchName == configManager.trailingTrunk) {
+				error(message = "Cannot retarget a trunk branch.")
+				throw Abort()
+			}
+
+			val options = stackManager.getBase()!!.prettyTree { it.name != currentBranchName }
+			val newParent = interactivePrompt(
+				message = "Select the parent branch for ${currentBranchName.styleBranch()}",
+				options = options,
+				default = options.find { it.branch.name == currentBranch.parent!!.name },
+				displayTransform = { it.pretty },
+				valueTransform = { it.branch.name },
+			).branch
+
+			// TODO: Somehow resume a failed rebase with st --continue? Do we need some sort of (figurative) lock file?
+			vc.restack(currentBranch, newParent)
+			stackManager.updateParent(currentBranch, newParent)
 		}
 	}
 }

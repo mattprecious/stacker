@@ -17,4 +17,9 @@ interface StackManager {
 		branch: Branch,
 		newName: String,
 	)
+
+	fun updateParent(
+		branch: Branch,
+		parent: Branch,
+	)
 }

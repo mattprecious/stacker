@@ -50,6 +50,13 @@ class RealStackManager(
 		)
 	}
 
+	override fun updateParent(branch: Branch, parent: Branch) {
+		branchQueries.updateParent(
+			branch = branch.name,
+			parent = parent.name,
+		)
+	}
+
 	private fun getTree(): Map<String?, List<String>> {
 		return branchQueries.selectAll().executeAsList().groupBy(
 			keySelector = { it.parent },

@@ -17,6 +17,11 @@ UPDATE branch
 SET name = :newName
 WHERE name = :oldName;
 
+updateParent:
+UPDATE branch
+SET parent = :parent
+WHERE name = :branch;
+
 selectAll:
 SELECT *
 FROM branch;
