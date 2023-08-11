@@ -58,6 +58,11 @@ class GitVersionControl(
 		return shell.execStatus(COMMAND, "merge-base", "--is-ancestor", possibleAncestor.name, branchName)
 	}
 
+	override fun needsRestack(branch: Branch): Boolean {
+		val parent = branch.parent ?: return false
+		return !isAncestor(branch.name, parent)
+	}
+
 	companion object {
 		private const val COMMAND = "git"
 	}

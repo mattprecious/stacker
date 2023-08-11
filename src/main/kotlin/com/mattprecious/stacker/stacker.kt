@@ -37,6 +37,7 @@ class Stacker(
 			),
 			Log(
 				stackManager = stackManager,
+				vc = vc,
 			),
 			Branch(
 				vc = vc,
@@ -277,9 +278,18 @@ private class Stack(
 
 private class Log(
 	private val stackManager: StackManager,
+	private val vc: VersionControl,
 ) : CliktCommand() {
 	override fun run() {
-		echo(stackManager.getBase()?.prettyTree()?.joinToString("\n") { it.pretty })
+		echo(
+			stackManager.getBase()?.prettyTree()?.joinToString("\n") {
+				if (vc.needsRestack(it.branch)) {
+					"${it.pretty} (needs restack)"
+				} else {
+					it.pretty
+				}
+			},
+		)
 	}
 }
 

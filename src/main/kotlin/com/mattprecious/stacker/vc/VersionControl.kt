@@ -22,6 +22,8 @@ interface VersionControl {
 
 	fun isAncestor(branchName: String, possibleAncestor: Branch): Boolean
 
+	fun needsRestack(branch: Branch): Boolean
+
 	data class CommitInfo(
 		val title: String,
 		val body: String?,
