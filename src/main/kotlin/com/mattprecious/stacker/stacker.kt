@@ -282,7 +282,9 @@ private class Log(
 ) : CliktCommand() {
 	override fun run() {
 		echo(
-			stackManager.getBase()?.prettyTree()?.joinToString("\n") {
+			stackManager.getBase()?.prettyTree(
+				selected = stackManager.getBranch(vc.currentBranchName),
+			)?.joinToString("\n") {
 				if (vc.needsRestack(it.branch)) {
 					"${it.pretty} (needs restack)"
 				} else {
@@ -384,12 +386,21 @@ private class PrettyBranch(
 )
 
 private fun StackBranch.prettyTree(
+	selected: StackBranch? = null,
 	filter: (StackBranch) -> Boolean = { true },
 ): List<PrettyBranch> {
 	return if (!filter(this)) {
 		emptyList()
 	} else {
-		buildList { prettyTree(this, inset = 0, treeWidth = treeWidth(filter), filter = filter) }
+		buildList {
+			prettyTree(
+				builder = this,
+				inset = 0,
+				treeWidth = treeWidth(filter),
+				selected = selected,
+				filter = filter,
+			)
+		}
 	}
 }
 
@@ -398,16 +409,22 @@ private fun StackBranch.prettyTree(
 	builder: MutableList<PrettyBranch>,
 	inset: Int,
 	treeWidth: Int,
+	selected: StackBranch? = null,
 	filter: (StackBranch) -> Boolean,
 ) {
 	val filteredChildren = children.filter(filter)
 	filteredChildren.forEachIndexed { index, child ->
-		child.prettyTree(builder, inset + index, treeWidth, filter)
+		child.prettyTree(builder, inset + index, treeWidth, selected, filter)
 	}
 
 	val pretty = buildString {
 		repeat(inset) { append("│ ") }
-		append("○")
+
+		if (this@prettyTree.name == selected?.name) {
+			append("◉")
+		} else {
+			append("○")
+		}
 
 		val horizontalBranches = (filteredChildren.size - 1).coerceAtLeast(0)
 		if (horizontalBranches > 0) {
