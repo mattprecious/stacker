@@ -127,7 +127,7 @@ private class Branch(
 
 			val defaultName = configManager.trailingTrunk ?: configManager.trunk
 
-			val options = stackManager.getBase()!!.prettyTree()
+			val options = stackManager.getBase()!!.prettyTree { vc.isAncestor(currentBranchName, it) }
 			val parent = interactivePrompt(
 				message = "Select the parent branch for ${currentBranchName.styleBranch()}",
 				options = options,
@@ -373,8 +373,14 @@ private class PrettyBranch(
 	val pretty: String,
 )
 
-private fun StackBranch.prettyTree(): List<PrettyBranch> {
-	return buildList { prettyTree(this, inset = 0, treeWidth = treeWidth()) }
+private fun StackBranch.prettyTree(
+	filter: (StackBranch) -> Boolean = { true },
+): List<PrettyBranch> {
+	return if (!filter(this)) {
+		emptyList()
+	} else {
+		buildList { prettyTree(this, inset = 0, treeWidth = treeWidth(filter), filter = filter) }
+	}
 }
 
 context(MutableList<PrettyBranch>)
@@ -382,16 +388,18 @@ private fun StackBranch.prettyTree(
 	builder: MutableList<PrettyBranch>,
 	inset: Int,
 	treeWidth: Int,
+	filter: (StackBranch) -> Boolean,
 ) {
-	children.forEachIndexed { index, child ->
-		child.prettyTree(builder, inset + index, treeWidth)
+	val filteredChildren = children.filter(filter)
+	filteredChildren.forEachIndexed { index, child ->
+		child.prettyTree(builder, inset + index, treeWidth, filter)
 	}
 
 	val pretty = buildString {
 		repeat(inset) { append("│ ") }
 		append("○")
 
-		val horizontalBranches = (children.size - 1).coerceAtLeast(0)
+		val horizontalBranches = (filteredChildren.size - 1).coerceAtLeast(0)
 		if (horizontalBranches > 0) {
 			repeat(horizontalBranches - 1) { append("─┴") }
 			append("─┘")
@@ -409,8 +417,14 @@ private fun StackBranch.prettyTree(
 	)
 }
 
-private fun StackBranch.treeWidth(): Int {
-	return children.sumOf { it.treeWidth() }.coerceAtLeast(1)
+private fun StackBranch.treeWidth(
+	filter: ((StackBranch) -> Boolean),
+): Int {
+	return if (!filter(this)) {
+		0
+	} else {
+		children.sumOf { it.treeWidth(filter) }.coerceAtLeast(1)
+	}
 }
 
 fun main(args: Array<String>) {

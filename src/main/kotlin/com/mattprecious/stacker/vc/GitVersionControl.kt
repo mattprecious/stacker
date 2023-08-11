@@ -54,6 +54,10 @@ class GitVersionControl(
 		)
 	}
 
+	override fun isAncestor(branchName: String, possibleAncestor: Branch): Boolean {
+		return shell.execStatus(COMMAND, "merge-base", "--is-ancestor", possibleAncestor.name, branchName)
+	}
+
 	companion object {
 		private const val COMMAND = "git"
 	}

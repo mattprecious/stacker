@@ -20,6 +20,8 @@ interface VersionControl {
 
 	fun latestCommitInfo(branch: Branch): CommitInfo
 
+	fun isAncestor(branchName: String, possibleAncestor: Branch): Boolean
+
 	data class CommitInfo(
 		val title: String,
 		val body: String?,
