@@ -60,7 +60,7 @@ class GitVersionControl(
 
 	override fun needsRestack(branch: Branch): Boolean {
 		val parent = branch.parent ?: return false
-		return !isAncestor(branch.name, parent)
+		return needsRestack(parent) || !isAncestor(branch.name, parent)
 	}
 
 	companion object {
