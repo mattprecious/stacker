@@ -24,6 +24,8 @@ interface VersionControl {
 
 	fun needsRestack(branch: Branch): Boolean
 
+	fun restack(branch: Branch, newParent: Branch? = null)
+
 	data class CommitInfo(
 		val title: String,
 		val body: String?,

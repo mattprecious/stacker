@@ -63,6 +63,31 @@ class GitVersionControl(
 		return needsRestack(parent) || !isAncestor(branch.name, parent)
 	}
 
+	override fun restack(branch: Branch, newParent: Branch?) {
+		val startingBranch = currentBranchName
+		performRestack(branch, newParent)
+
+		if (startingBranch != currentBranchName) {
+			shell.exec(COMMAND, "checkout", startingBranch)
+		}
+	}
+
+	private fun performRestack(
+		branch: Branch,
+		newParent: Branch?,
+	) {
+		val currentParent = branch.parent!!
+		val rebaseOnto = newParent ?: currentParent
+
+		// I have absolutely no idea if these commands are sufficient. It seems too easy. But let's try it out.
+		val forkPoint = shell.exec(COMMAND, "merge-base", "--fork-point", currentParent.name, branch.name)
+
+		// TODO: Conflicts?
+		shell.exec(COMMAND, "rebase", "--onto", rebaseOnto.name, forkPoint, branch.name)
+
+		branch.children.forEach { performRestack(it, null) }
+	}
+
 	companion object {
 		private const val COMMAND = "git"
 	}
