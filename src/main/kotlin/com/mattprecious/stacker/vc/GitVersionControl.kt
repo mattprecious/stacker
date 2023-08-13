@@ -4,17 +4,12 @@ import com.mattprecious.stacker.shell.Shell
 import com.mattprecious.stacker.stack.Branch
 import com.mattprecious.stacker.vc.VersionControl.CommitInfo
 import java.nio.file.Path
-import kotlin.io.path.div
 
 class GitVersionControl(
 	private val shell: Shell,
 ) : VersionControl {
-	override val root: Path by lazy {
-		Path.of(shell.exec(COMMAND, "rev-parse", "--show-toplevel"))
-	}
-
 	override val configDirectory: Path
-		get() = root / ".git"
+		get() = Path.of(shell.exec(COMMAND, "rev-parse", "--git-dir"))
 
 	override val currentBranchName: String
 		get() {

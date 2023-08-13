@@ -4,7 +4,6 @@ import com.mattprecious.stacker.stack.Branch
 import java.nio.file.Path
 
 interface VersionControl {
-	val root: Path
 	val configDirectory: Path
 	val currentBranchName: String
 	val originUrl: String
