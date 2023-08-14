@@ -183,6 +183,8 @@ private class Branch(
 			Checkout(stackManager, vc),
 			Up(stackManager, vc),
 			Down(stackManager, vc),
+			Top(stackManager, vc),
+			Bottom(configManager, stackManager, vc),
 			Submit(configManager, remote, stackManager, vc),
 		)
 	}
@@ -321,6 +323,47 @@ private class Branch(
 			}
 
 			vc.checkout(parent)
+		}
+	}
+
+	private class Top(
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			val options = stackManager.getBranch(vc.currentBranchName)!!.leaves()
+			val branch = interactivePrompt(
+				message = "Choose which top",
+				options = options,
+				displayTransform = { it.name },
+				valueTransform = { it.name },
+			)
+
+			vc.checkout(branch)
+		}
+	}
+
+	private class Bottom(
+		private val configManager: ConfigManager,
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			val trunk = configManager.trunk
+			val trailingTrunk = configManager.trailingTrunk
+			val currentBranch = stackManager.getBranch(vc.currentBranchName)!!
+
+			if (currentBranch.name == trailingTrunk || currentBranch.name == trunk) {
+				error("Not in a stack.")
+				throw Abort()
+			}
+
+			var bottom = currentBranch
+			while (bottom.parent!!.name != trailingTrunk) {
+				bottom = bottom.parent!!
+			}
+
+			vc.checkout(bottom)
 		}
 	}
 
@@ -639,6 +682,14 @@ private fun StackBranch.treeWidth(
 		0
 	} else {
 		children.sumOf { it.treeWidth(filter) }.coerceAtLeast(1)
+	}
+}
+
+private fun StackBranch.leaves(): List<StackBranch> {
+	return if (children.isEmpty()) {
+		listOf(this)
+	} else {
+		children.flatMap { it.leaves() }
 	}
 }
 
