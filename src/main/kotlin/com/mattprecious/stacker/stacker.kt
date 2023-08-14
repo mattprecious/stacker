@@ -257,6 +257,7 @@ private class Branch(
 			}
 
 			vc.createBranchFromCurrent(branchName)
+			stackManager.trackBranch(branchName, currentBranch.name)
 		}
 	}
 
