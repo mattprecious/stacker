@@ -42,6 +42,12 @@ class Stacker(
 
 	init {
 		subcommands(
+			Branch(
+				vc = vc,
+				configManager = configManager,
+				remote = remote,
+				stackManager = stackManager,
+			),
 			Init(
 				configManager = configManager,
 				vc = vc,
@@ -49,12 +55,6 @@ class Stacker(
 			Log(
 				stackManager = stackManager,
 				vc = vc,
-			),
-			Branch(
-				vc = vc,
-				configManager = configManager,
-				remote = remote,
-				stackManager = stackManager,
 			),
 			Stack(
 				configManager = configManager,
@@ -176,16 +176,16 @@ private class Branch(
 ) : CliktCommand() {
 	init {
 		subcommands(
+			Bottom(configManager, stackManager, vc),
+			Checkout(stackManager, vc),
+			Create(stackManager, vc),
+			Down(stackManager, vc),
+			Rename(stackManager, vc),
+			Submit(configManager, remote, stackManager, vc),
+			Top(stackManager, vc),
 			Track(configManager, stackManager, vc),
 			Untrack(stackManager, vc),
-			Create(stackManager, vc),
-			Rename(stackManager, vc),
-			Checkout(stackManager, vc),
 			Up(stackManager, vc),
-			Down(stackManager, vc),
-			Top(stackManager, vc),
-			Bottom(configManager, stackManager, vc),
-			Submit(configManager, remote, stackManager, vc),
 		)
 	}
 
