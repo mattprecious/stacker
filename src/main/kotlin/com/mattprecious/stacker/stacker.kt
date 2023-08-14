@@ -140,18 +140,24 @@ class Init(
 	private val vc: VersionControl,
 ) : CliktCommand() {
 	override fun run() {
+		val (currentTrunk, currentTrailingTrunk) = if (configManager.repoInitialized) {
+			configManager.trunk to configManager.trailingTrunk
+		} else {
+			null to null
+		}
+
 		val branches = vc.branches
 		val trunk = interactivePrompt(
 			message = "Select your trunk branch, which you open pull requests against",
 			options = branches,
 			// TODO: Infer without hard coding.
-			default = configManager.trunk ?: "main",
+			default = currentTrunk ?: "main",
 		)
 
 		val useTrailing = YesNoPrompt(
 			terminal = currentContext.terminal,
 			prompt = "Do you use a trailing-trunk workflow?",
-			default = configManager.trailingTrunk != null,
+			default = currentTrailingTrunk != null,
 		).ask() == true
 
 		val trailingTrunk = if (!useTrailing) {
@@ -160,7 +166,7 @@ class Init(
 			interactivePrompt(
 				message = "Select your trailing trunk branch, which you branch from",
 				options = branches.filterNot { it == trunk },
-				default = configManager.trailingTrunk,
+				default = currentTrailingTrunk,
 			)
 		}
 
