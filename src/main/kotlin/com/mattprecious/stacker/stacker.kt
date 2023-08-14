@@ -180,6 +180,7 @@ private class Branch(
 			Untrack(stackManager, vc),
 			Create(stackManager, vc),
 			Rename(stackManager, vc),
+			Checkout(stackManager, vc),
 			Submit(configManager, remote, stackManager, vc),
 		)
 	}
@@ -268,6 +269,24 @@ private class Branch(
 
 			vc.renameBranch(currentBranch, newName)
 			stackManager.renameBranch(currentBranch, newName)
+		}
+	}
+
+	private class Checkout(
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			val options = stackManager.getBase()!!.prettyTree()
+			val branch = interactivePrompt(
+				message = "Checkout a branch",
+				options = options,
+				default = options.find { it.branch.name == vc.currentBranchName },
+				displayTransform = { it.pretty },
+				valueTransform = { it.branch.name },
+			)
+
+			vc.checkout(branch.branch)
 		}
 	}
 

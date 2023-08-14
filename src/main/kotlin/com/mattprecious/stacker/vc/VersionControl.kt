@@ -11,6 +11,8 @@ interface VersionControl {
 
 	fun fallthrough(commands: List<String>)
 
+	fun checkout(branch: Branch)
+
 	fun createBranchFromCurrent(branchName: String)
 
 	fun renameBranch(branch: Branch, newName: String)

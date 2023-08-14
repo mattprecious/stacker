@@ -30,6 +30,10 @@ class GitVersionControl(
 		shell.exec(COMMAND, *commands.toTypedArray())
 	}
 
+	override fun checkout(branch: Branch) {
+		shell.exec(COMMAND, "checkout", branch.name)
+	}
+
 	override fun createBranchFromCurrent(branchName: String) {
 		shell.exec(COMMAND, "checkout", "-b", branchName)
 	}
