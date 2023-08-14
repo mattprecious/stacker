@@ -85,8 +85,7 @@ class GitVersionControl(
 
 	override fun reset(branches: List<BranchInfo>) {
 		// So incredibly gross...
-		val rebaseInProgress = (configDirectory / "rebase_in_progress").exists() ||
-			(configDirectory / "interactive_rebase_in_progress").exists()
+		val rebaseInProgress = (configDirectory / "rebase-merge").exists()
 		if (rebaseInProgress) {
 			shell.exec(COMMAND, "rebase", "--abort")
 		}
