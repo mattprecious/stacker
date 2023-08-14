@@ -2,12 +2,18 @@ package com.mattprecious.stacker
 
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.PrintHelpMessage
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.config.RealConfigManager
+import com.mattprecious.stacker.lock.BranchState
+import com.mattprecious.stacker.lock.Locker
+import com.mattprecious.stacker.lock.RealLocker
 import com.mattprecious.stacker.remote.GitHubRemote
 import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.interactivePrompt
@@ -23,12 +29,17 @@ import com.mattprecious.stacker.stack.Branch as StackBranch
 
 class Stacker(
 	private val configManager: ConfigManager,
+	private val locker: Locker,
 	remote: Remote,
-	stackManager: StackManager,
-	vc: VersionControl,
+	private val stackManager: StackManager,
+	private val vc: VersionControl,
 ) : CliktCommand(
 	name = "st",
+	invokeWithoutSubcommand = true,
 ) {
+	private val abort: Boolean by option().flag()
+	private val cont by option("--continue").flag()
+
 	init {
 		subcommands(
 			Init(
@@ -53,6 +64,7 @@ class Stacker(
 			),
 			Upstack(
 				configManager = configManager,
+				locker = locker,
 				stackManager = stackManager,
 				vc = vc,
 			),
@@ -60,11 +72,67 @@ class Stacker(
 	}
 
 	override fun run() {
+		if (currentContext.invokedSubcommand == null) {
+			when {
+				abort -> abortOperation()
+				cont -> continueOperation()
+				else -> throw PrintHelpMessage(currentContext, error = true)
+			}
+		}
+
 		if (!configManager.repoInitialized && currentContext.invokedSubcommand !is Init) {
 			error(message = "Stacker must be initialized, first. Please run ${"st init".styleCode()}.")
 			throw Abort()
 		}
+
+		if (locker.hasLock()) {
+			error(
+				"A restack is currently in progress. Please run ${"st --abort".styleCode()} or resolve any " +
+					"conflicts and run ${"st --continue".styleCode()}.",
+			)
+			throw Abort()
+		}
 	}
+
+	private fun abortOperation() {
+		if (!locker.hasLock()) {
+			error("Nothing to abort.")
+			throw Abort()
+		}
+
+		vc.reset(locker.getLockedBranches().map { it.toInfo() })
+		locker.cancelOperation()
+	}
+
+	private fun continueOperation() {
+		if (!locker.hasLock()) {
+			error("Nothing to continue.")
+			throw Abort()
+		}
+
+		// TODO: This is a complete re-implementation of the beginOperation block. These should share code.
+		locker.continueOperation { operation ->
+			when (operation) {
+				is Locker.Operation.Restack -> {
+					val branch = stackManager.getBranch(operation.branchName)!!
+					val newParent = stackManager.getBranch(operation.ontoName)!!
+					val nextBranch = stackManager.getBranch(operation.nextBranchToRebase)!!
+
+					val parentForRestack = if (nextBranch == branch) newParent else null
+					vc.restack(nextBranch, parentForRestack) {
+						updateOperation(operation.copy(nextBranchToRebase = it.name))
+					}
+
+					stackManager.updateParent(branch, newParent)
+				}
+			}
+		}
+	}
+
+	private fun BranchState.toInfo() = VersionControl.BranchInfo(
+		name = name,
+		sha = sha,
+	)
 }
 
 class Init(
@@ -283,12 +351,13 @@ private class Stack(
 
 private class Upstack(
 	configManager: ConfigManager,
+	locker: Locker,
 	stackManager: StackManager,
 	vc: VersionControl,
 ) : CliktCommand() {
 	init {
 		subcommands(
-			Onto(configManager, stackManager, vc),
+			Onto(configManager, locker, stackManager, vc),
 		)
 	}
 
@@ -296,6 +365,7 @@ private class Upstack(
 
 	private class Onto(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
@@ -324,9 +394,19 @@ private class Upstack(
 				valueTransform = { it.branch.name },
 			).branch
 
-			// TODO: Somehow resume a failed rebase with st --continue? Do we need some sort of (figurative) lock file?
-			vc.restack(currentBranch, newParent)
-			stackManager.updateParent(currentBranch, newParent)
+			val operation = Locker.Operation.Restack(
+				branchName = currentBranchName,
+				ontoName = newParent.name,
+				nextBranchToRebase = currentBranchName,
+			)
+
+			locker.beginOperation(operation) {
+				vc.restack(currentBranch, newParent) {
+					updateOperation(operation.copy(nextBranchToRebase = it.name))
+				}
+
+				stackManager.updateParent(currentBranch, newParent)
+			}
 		}
 	}
 }
@@ -517,10 +597,12 @@ fun main(args: Array<String>) {
 	withDatabase(dbPath.toString()) { db ->
 		val stackManager = RealStackManager(db)
 		val configManager = RealConfigManager(db, stackManager)
+		val locker = RealLocker(db, stackManager, vc)
 		val remote = GitHubRemote(vc.originUrl, configManager)
 
 		Stacker(
 			configManager = configManager,
+			locker = locker,
 			remote = remote,
 			stackManager = stackManager,
 			vc = vc,

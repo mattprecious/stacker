@@ -2,8 +2,11 @@ package com.mattprecious.stacker.vc
 
 import com.mattprecious.stacker.shell.Shell
 import com.mattprecious.stacker.stack.Branch
+import com.mattprecious.stacker.vc.VersionControl.BranchInfo
 import com.mattprecious.stacker.vc.VersionControl.CommitInfo
 import java.nio.file.Path
+import kotlin.io.path.div
+import kotlin.io.path.exists
 
 class GitVersionControl(
 	private val shell: Shell,
@@ -58,18 +61,46 @@ class GitVersionControl(
 		return needsRestack(parent) || !isAncestor(branch.name, parent)
 	}
 
-	override fun restack(branch: Branch, newParent: Branch?) {
+	override fun restack(branch: Branch, newParent: Branch?, beforeRebase: (Branch) -> Unit) {
 		val startingBranch = currentBranchName
-		performRestack(branch, newParent)
+		performRestack(branch, newParent, beforeRebase)
 
 		if (startingBranch != currentBranchName) {
 			shell.exec(COMMAND, "checkout", startingBranch)
 		}
 	}
 
+	override fun getShas(branches: List<String>): List<BranchInfo> {
+		return branches.map {
+			BranchInfo(
+				name = it,
+				sha = shell.exec(COMMAND, "rev-parse", it),
+			)
+		}
+	}
+
+	override fun reset(branches: List<BranchInfo>) {
+		// So incredibly gross...
+		val rebaseInProgress = (configDirectory / "rebase_in_progress").exists() ||
+			(configDirectory / "interactive_rebase_in_progress").exists()
+		if (rebaseInProgress) {
+			shell.exec(COMMAND, "rebase", "--abort")
+		}
+
+		val current = currentBranchName
+		branches.forEach {
+			if (it.name == current) {
+				shell.exec(COMMAND, "reset", "--hard", it.sha)
+			} else {
+				shell.exec(COMMAND, "branch", "-f", it.name, it.sha)
+			}
+		}
+	}
+
 	private fun performRestack(
 		branch: Branch,
 		newParent: Branch?,
+		beforeRebase: (Branch) -> Unit,
 	) {
 		val currentParent = branch.parent!!
 		val rebaseOnto = newParent ?: currentParent
@@ -77,10 +108,13 @@ class GitVersionControl(
 		// I have absolutely no idea if these commands are sufficient. It seems too easy. But let's try it out.
 		val forkPoint = shell.exec(COMMAND, "merge-base", "--fork-point", currentParent.name, branch.name)
 
-		// TODO: Conflicts?
+		beforeRebase(branch)
+
+		// TODO: Detect that a merge conflict has occured and intercept the error message, replacing it with one that
+		//  suggests st commands instead of git rebase commands.
 		shell.exec(COMMAND, "rebase", "--onto", rebaseOnto.name, forkPoint, branch.name)
 
-		branch.children.forEach { performRestack(it, null) }
+		branch.children.forEach { performRestack(it, null, beforeRebase) }
 	}
 
 	companion object {

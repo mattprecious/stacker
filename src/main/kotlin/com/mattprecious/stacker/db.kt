@@ -2,7 +2,9 @@ package com.mattprecious.stacker
 
 import app.cash.sqldelight.db.QueryResult
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.mattprecious.stacker.db.Lock
 import com.mattprecious.stacker.db.RepoDatabase
+import com.mattprecious.stacker.db.jsonAdapter
 import java.util.Properties
 
 inline fun withDatabase(
@@ -17,6 +19,10 @@ inline fun withDatabase(
 		block(
 			RepoDatabase(
 				driver = driver,
+				lockAdapter = Lock.Adapter(
+					branchesAdapter = jsonAdapter(),
+					operationAdapter = jsonAdapter(),
+				),
 			),
 		)
 	}

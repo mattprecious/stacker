@@ -7,6 +7,9 @@ class RealStackManager(
 ) : StackManager {
 	private val branchQueries = db.branchQueries
 
+	override val trackedBranchNames: List<String>
+		get() = branchQueries.names().executeAsList()
+
 	override fun getBase(): Branch? {
 		val tree = getTree()
 		val baseName = tree[null]?.single() ?: return null

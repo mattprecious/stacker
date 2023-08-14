@@ -26,6 +26,10 @@ selectAll:
 SELECT *
 FROM branch;
 
+names:
+SELECT name
+FROM branch;
+
 contains:
 SELECT COUNT(*) > 0
 FROM branch

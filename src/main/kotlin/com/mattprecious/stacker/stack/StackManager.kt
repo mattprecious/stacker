@@ -1,6 +1,8 @@
 package com.mattprecious.stacker.stack
 
 interface StackManager {
+	val trackedBranchNames: List<String>
+
 	fun getBase(): Branch?
 	fun getBranch(branchName: String): Branch?
 

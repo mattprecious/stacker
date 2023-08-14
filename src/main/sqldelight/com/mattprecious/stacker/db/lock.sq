@@ -1,0 +1,27 @@
+import com.mattprecious.stacker.lock.BranchState;
+import com.mattprecious.stacker.lock.Locker.Operation;
+import kotlin.collections.List;
+
+CREATE TABLE lock (
+	branches Text AS List<BranchState> NOT NULL,
+	operation Text AS Operation NOT NULL
+);
+
+hasLock:
+SELECT COUNT(*) > 0
+FROM lock;
+
+lock:
+INSERT INTO lock
+VALUES (?, ?);
+
+updateOperation:
+UPDATE lock
+SET operation = ?;
+
+select:
+SELECT *
+FROM lock;
+
+delete:
+DELETE FROM lock;
