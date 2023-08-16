@@ -44,6 +44,7 @@ class Stacker(
 			Branch(
 				vc = vc,
 				configManager = configManager,
+				locker = locker,
 				remote = remote,
 				stackManager = stackManager,
 			),
@@ -164,6 +165,7 @@ class Init(
 
 private class Branch(
 	configManager: ConfigManager,
+	locker: Locker,
 	remote: Remote,
 	stackManager: StackManager,
 	vc: VersionControl,
@@ -175,6 +177,7 @@ private class Branch(
 			Create(stackManager, vc),
 			Down(stackManager, vc),
 			Rename(stackManager, vc),
+			Restack(locker, stackManager, vc),
 			Submit(configManager, remote, stackManager, vc),
 			Top(stackManager, vc),
 			Track(configManager, stackManager, vc),
@@ -361,6 +364,32 @@ private class Branch(
 			}
 
 			vc.checkout(bottom)
+		}
+	}
+
+	private class Restack(
+		private val locker: Locker,
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			val currentBranchName = vc.currentBranchName
+			if (stackManager.getBranch(currentBranchName) == null) {
+				error(
+					message = "Cannot restack ${currentBranchName.styleBranch()} since it is not tracked. " +
+						"Please track with ${"st branch track".styleCode()}.",
+				)
+				throw Abort()
+			}
+
+			val operation = Locker.Operation.Restack(
+				startingBranch = currentBranchName,
+				branches = listOf(currentBranchName),
+			)
+
+			locker.beginOperation(operation) {
+				operation.perform(stackManager, vc)
+			}
 		}
 	}
 
