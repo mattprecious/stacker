@@ -480,10 +480,38 @@ private class Upstack(
 	init {
 		subcommands(
 			Onto(configManager, locker, stackManager, vc),
+			Restack(locker, stackManager, vc),
 		)
 	}
 
 	override fun run() = Unit
+
+	private class Restack(
+		private val locker: Locker,
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			val currentBranchName = vc.currentBranchName
+			val currentBranch = stackManager.getBranch(currentBranchName)
+			if (currentBranch == null) {
+				error(
+					message = "Cannot restack ${currentBranchName.styleBranch()} since it is not tracked. " +
+						"Please track with ${"st branch track".styleCode()}.",
+				)
+				throw Abort()
+			}
+
+			val operation = Locker.Operation.Restack(
+				startingBranch = currentBranch.name,
+				currentBranch.flattenUp().map { it.name },
+			)
+
+			locker.beginOperation(operation) {
+				operation.perform(stackManager, vc)
+			}
+		}
+	}
 
 	private class Onto(
 		private val configManager: ConfigManager,
