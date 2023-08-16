@@ -12,6 +12,7 @@ interface ConfigManager {
 
 	fun initializeRepo(
 		trunk: String,
+		trunkSha: String,
 		trailingTrunk: String?,
 	)
 }

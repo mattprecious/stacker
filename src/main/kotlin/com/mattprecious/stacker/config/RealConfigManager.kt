@@ -46,6 +46,7 @@ class RealConfigManager(
 
 	override fun initializeRepo(
 		trunk: String,
+		trunkSha: String,
 		trailingTrunk: String?,
 	) {
 		val currentConfig = if (repoInitialized) repoConfig else null
@@ -76,11 +77,11 @@ class RealConfigManager(
 		)
 
 		if (trunkChanging) {
-			stackManager.trackBranch(branchName = trunk, parentName = null)
+			stackManager.trackBranch(branchName = trunk, parentName = null, parentSha = null)
 		}
 
 		if (trailingTrunkChanging) {
-			trailingTrunk?.let { stackManager.trackBranch(branchName = it, parentName = trunk) }
+			trailingTrunk?.let { stackManager.trackBranch(branchName = it, parentName = trunk, parentSha = trunkSha) }
 		}
 	}
 }

@@ -3,7 +3,6 @@ import com.mattprecious.stacker.lock.Locker.Operation;
 import kotlin.collections.List;
 
 CREATE TABLE lock (
-	branches Text AS List<BranchState> NOT NULL,
 	operation Text AS Operation NOT NULL
 );
 
@@ -13,7 +12,7 @@ FROM lock;
 
 lock:
 INSERT INTO lock
-VALUES (?, ?);
+VALUES (?);
 
 updateOperation:
 UPDATE lock

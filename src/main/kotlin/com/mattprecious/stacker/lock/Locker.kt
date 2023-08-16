@@ -7,27 +7,25 @@ interface Locker {
 
 	fun <T : Operation> beginOperation(
 		operation: T,
-		block: LockScope<T>.() -> Unit,
+		block: LockScope.() -> Unit,
 	)
 
 	fun continueOperation(
-		block: LockScope<Operation>.(operation: Operation) -> Unit,
+		block: LockScope.(operation: Operation) -> Unit,
 	)
 
 	fun cancelOperation()
-	fun getLockedBranches(): List<BranchState>
 
-	interface LockScope<T : Operation> {
-		fun updateOperation(operation: T)
+	interface LockScope {
+		fun updateOperation(operation: Operation)
 	}
 
 	@Serializable
 	sealed interface Operation {
 		@Serializable
 		data class Restack(
-			val branchName: String,
-			val ontoName: String,
-			val nextBranchToRebase: String,
+			val startingBranch: String,
+			val branches: List<String>,
 		) : Operation
 	}
 }

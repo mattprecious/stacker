@@ -12,29 +12,30 @@ class RealStackManager(
 
 	override fun getBase(): Branch? {
 		val tree = getTree()
-		val baseName = tree[null]?.single() ?: return null
+		val base = tree.root ?: return null
 
 		return StackBranch(
-			name = baseName,
+			name = base.name,
+			parentSha = base.parentSha,
 			tree = tree,
 		)
 	}
 
 	override fun getBranch(branchName: String): Branch? {
-		if (!branchQueries.contains(branchName).executeAsOne()) {
-			return null
-		}
+		val branch = branchQueries.select(branchName).executeAsOneOrNull() ?: return null
 
 		return StackBranch(
-			name = branchName,
+			name = branch.name,
+			parentSha = branch.parentSha,
 			tree = getTree(),
 		)
 	}
 
-	override fun trackBranch(branchName: String, parentName: String?) {
+	override fun trackBranch(branchName: String, parentName: String?, parentSha: String?) {
 		branchQueries.insert(
 			name = branchName,
 			parent = parentName,
+			parentSha = parentSha,
 		)
 	}
 
@@ -60,29 +61,45 @@ class RealStackManager(
 		)
 	}
 
-	private fun getTree(): Map<String?, List<String>> {
-		return branchQueries.selectAll().executeAsList().groupBy(
-			keySelector = { it.parent },
-			valueTransform = { it.name },
+	override fun updateParentSha(branch: Branch, parentSha: String) {
+		branchQueries.updateParentSha(
+			branch = branch.name,
+			parentSha = parentSha,
 		)
 	}
 
+	private fun getTree(): Tree {
+		val branches = branchQueries.selectAll().executeAsList()
+		val treeBranches = branches.map { TreeBranch(it.name, it.parentSha) }.associateBy { it.name }
+		return Tree(
+			root = treeBranches[branches.single { it.parent == null }.name],
+			parents = branches.associateBy({ it.name }, { treeBranches[it.parent] }),
+			children = branches.groupBy({ it.parent }, { treeBranches[it.name]!! }),
+		)
+	}
+
+	private class Tree(
+		val root: TreeBranch?,
+		val parents: Map<String, TreeBranch?>,
+		val children: Map<String?, List<TreeBranch>>,
+	)
+
+	private data class TreeBranch(
+		val name: String,
+		val parentSha: String?,
+	)
+
 	private class StackBranch(
 		override val name: String,
-		tree: Map<String?, List<String>>,
+		override val parentSha: String?,
+		tree: Tree,
 	) : Branch {
 		override val parent: Branch? by lazy {
-			tree.firstNotNullOfOrNull { entry ->
-				if (entry.value.contains(name)) {
-					entry.key
-				} else {
-					null
-				}?.let { StackBranch(it, tree) }
-			}
+			tree.parents[name]?.let { StackBranch(it.name, it.parentSha, tree) }
 		}
 
 		override val children by lazy {
-			tree[name]?.map { StackBranch(it, tree) } ?: emptyList()
+			tree.children[name]?.map { StackBranch(it.name, it.parentSha, tree) } ?: emptyList()
 		}
 
 		override fun toString(): String {

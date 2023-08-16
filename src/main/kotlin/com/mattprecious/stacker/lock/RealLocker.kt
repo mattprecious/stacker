@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.lock
 
 import com.mattprecious.stacker.db.RepoDatabase
+import com.mattprecious.stacker.lock.Locker.Operation
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
@@ -15,23 +16,16 @@ class RealLocker(
 		return lockQueries.hasLock().executeAsOne()
 	}
 
-	override fun <T : Locker.Operation> beginOperation(
+	override fun <T : Operation> beginOperation(
 		operation: T,
-		block: Locker.LockScope<T>.() -> Unit,
+		block: Locker.LockScope.() -> Unit,
 	) {
 		require(!hasLock())
 
-		val branchStates = vc.getShas(stackManager.trackedBranchNames).map {
-			BranchState(it.name, it.sha)
-		}
+		lockQueries.lock(operation = operation)
 
-		lockQueries.lock(
-			branches = branchStates,
-			operation = operation,
-		)
-
-		val scope = object : Locker.LockScope<T> {
-			override fun updateOperation(operation: T) {
+		val scope = object : Locker.LockScope {
+			override fun updateOperation(operation: Operation) {
 				lockQueries.updateOperation(operation)
 			}
 		}
@@ -41,25 +35,21 @@ class RealLocker(
 		lockQueries.delete()
 	}
 
-	override fun continueOperation(block: Locker.LockScope<Locker.Operation>.(operation: Locker.Operation) -> Unit) {
-		val lock = lockQueries.select().executeAsOne()
+	override fun continueOperation(block: Locker.LockScope.(operation: Operation) -> Unit) {
+		val operation = lockQueries.select().executeAsOne()
 
-		val scope = object : Locker.LockScope<Locker.Operation> {
-			override fun updateOperation(operation: Locker.Operation) {
+		val scope = object : Locker.LockScope {
+			override fun updateOperation(operation: Operation) {
 				lockQueries.updateOperation(operation)
 			}
 		}
 
-		with(scope) { block(lock.operation) }
+		with(scope) { block(operation) }
 
 		lockQueries.delete()
 	}
 
 	override fun cancelOperation() {
 		lockQueries.delete()
-	}
-
-	override fun getLockedBranches(): List<BranchState> {
-		return lockQueries.select().executeAsOne().branches
 	}
 }

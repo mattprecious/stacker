@@ -25,16 +25,13 @@ interface VersionControl {
 
 	fun needsRestack(branch: Branch): Boolean
 
-	fun restack(branch: Branch, newParent: Branch? = null, beforeRebase: (Branch) -> Unit)
+	fun restack(branch: Branch)
 
-	fun getShas(branches: List<String>): List<BranchInfo>
+	fun getSha(branch: String): String
 
-	fun reset(branches: List<BranchInfo>)
+	fun abortRebase()
 
-	data class BranchInfo(
-		val name: String,
-		val sha: String,
-	)
+	fun continueRebase()
 
 	data class CommitInfo(
 		val title: String,

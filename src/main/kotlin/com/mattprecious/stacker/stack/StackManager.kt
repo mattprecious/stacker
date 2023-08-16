@@ -9,6 +9,7 @@ interface StackManager {
 	fun trackBranch(
 		branchName: String,
 		parentName: String?,
+		parentSha: String?,
 	)
 
 	fun untrackBranch(
@@ -23,5 +24,10 @@ interface StackManager {
 	fun updateParent(
 		branch: Branch,
 		parent: Branch,
+	)
+
+	fun updateParentSha(
+		branch: Branch,
+		parentSha: String,
 	)
 }

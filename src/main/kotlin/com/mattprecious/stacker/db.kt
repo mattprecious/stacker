@@ -20,7 +20,6 @@ inline fun withDatabase(
 			RepoDatabase(
 				driver = driver,
 				lockAdapter = Lock.Adapter(
-					branchesAdapter = jsonAdapter(),
 					operationAdapter = jsonAdapter(),
 				),
 			),

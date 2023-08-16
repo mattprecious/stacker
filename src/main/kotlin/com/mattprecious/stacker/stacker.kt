@@ -11,7 +11,6 @@ import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.config.RealConfigManager
-import com.mattprecious.stacker.lock.BranchState
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.lock.RealLocker
 import com.mattprecious.stacker.remote.GitHubRemote
@@ -100,7 +99,7 @@ class Stacker(
 			throw Abort()
 		}
 
-		vc.reset(locker.getLockedBranches().map { it.toInfo() })
+		vc.abortRebase()
 		locker.cancelOperation()
 	}
 
@@ -114,25 +113,12 @@ class Stacker(
 		locker.continueOperation { operation ->
 			when (operation) {
 				is Locker.Operation.Restack -> {
-					val branch = stackManager.getBranch(operation.branchName)!!
-					val newParent = stackManager.getBranch(operation.ontoName)!!
-					val nextBranch = stackManager.getBranch(operation.nextBranchToRebase)!!
-
-					val parentForRestack = if (nextBranch == branch) newParent else null
-					vc.restack(nextBranch, parentForRestack) {
-						updateOperation(operation.copy(nextBranchToRebase = it.name))
-					}
-
-					stackManager.updateParent(branch, newParent)
+					vc.continueRebase()
+					operation.perform(stackManager, vc)
 				}
 			}
 		}
 	}
-
-	private fun BranchState.toInfo() = VersionControl.BranchInfo(
-		name = name,
-		sha = sha,
-	)
 }
 
 class Init(
@@ -154,6 +140,8 @@ class Init(
 			default = currentTrunk ?: "main",
 		)
 
+		val trunkSha = vc.getSha(trunk)
+
 		val useTrailing = YesNoPrompt(
 			terminal = currentContext.terminal,
 			prompt = "Do you use a trailing-trunk workflow?",
@@ -170,7 +158,7 @@ class Init(
 			)
 		}
 
-		configManager.initializeRepo(trunk = trunk, trailingTrunk = trailingTrunk)
+		configManager.initializeRepo(trunk = trunk, trunkSha = trunkSha, trailingTrunk = trailingTrunk)
 	}
 }
 
@@ -219,9 +207,11 @@ private class Branch(
 				default = options.find { it.branch.name == defaultName },
 				displayTransform = { it.pretty },
 				valueTransform = { it.branch.name },
-			)
+			).branch.name
 
-			stackManager.trackBranch(currentBranchName, parent.branch.name)
+			val parentSha = vc.getSha(parent)
+
+			stackManager.trackBranch(currentBranchName, parent, parentSha)
 		}
 	}
 
@@ -257,7 +247,7 @@ private class Branch(
 			}
 
 			vc.createBranchFromCurrent(branchName)
-			stackManager.trackBranch(branchName, currentBranch.name)
+			stackManager.trackBranch(branchName, currentBranch.name, vc.getSha(currentBranch.name))
 		}
 	}
 
@@ -497,19 +487,18 @@ private class Upstack(
 				valueTransform = { it.branch.name },
 			).branch
 
+			stackManager.updateParent(currentBranch, newParent)
+
 			val operation = Locker.Operation.Restack(
-				branchName = currentBranchName,
-				ontoName = newParent.name,
-				nextBranchToRebase = currentBranchName,
+				startingBranch = currentBranch.name,
+				currentBranch.flattenUp().map { it.name },
 			)
 
 			locker.beginOperation(operation) {
-				vc.restack(currentBranch, newParent) {
-					updateOperation(operation.copy(nextBranchToRebase = it.name))
-				}
-
-				stackManager.updateParent(currentBranch, newParent)
+				operation.perform(stackManager, vc)
 			}
+
+			vc.checkout(stackManager.getBranch(operation.startingBranch)!!)
 		}
 	}
 }
@@ -618,6 +607,20 @@ private fun StackBranch.flattenStack(): List<StackBranch> {
 	}
 }
 
+private fun StackBranch.flattenUp(): List<StackBranch> {
+	return buildList {
+		fun StackBranch.addChildren() {
+			children.forEach {
+				add(it)
+				it.addChildren()
+			}
+		}
+
+		add(this@flattenUp)
+		addChildren()
+	}
+}
+
 private class PrettyBranch(
 	val branch: StackBranch,
 	val pretty: String,
@@ -698,6 +701,21 @@ private fun StackBranch.leaves(): List<StackBranch> {
 	} else {
 		children.flatMap { it.leaves() }
 	}
+}
+
+context(Locker.LockScope)
+private fun Locker.Operation.Restack.perform(
+	stackManager: StackManager,
+	vc: VersionControl,
+) {
+	branches.forEachIndexed { index, branchName ->
+		val branch = stackManager.getBranch(branchName)!!
+		vc.restack(branch)
+		stackManager.updateParentSha(branch, vc.getSha(branch.parent!!.name))
+		updateOperation(copy(branches = branches.subList(index + 1, branches.size)))
+	}
+
+	vc.checkout(stackManager.getBranch(startingBranch)!!)
 }
 
 fun main(args: Array<String>) {

@@ -1,12 +1,13 @@
 CREATE TABLE branch (
 	name TEXT NOT NULL PRIMARY KEY,
 	parent TEXT,
+	parentSha TEXT,
 	FOREIGN KEY(parent) REFERENCES branch(name) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 insert:
 INSERT INTO branch
-VALUES (?, ?);
+VALUES (?, ?, ?);
 
 remove:
 DELETE FROM branch
@@ -22,9 +23,19 @@ UPDATE branch
 SET parent = :parent
 WHERE name = :branch;
 
+updateParentSha:
+UPDATE branch
+SET parentSha = :parentSha
+WHERE name = :branch;
+
 selectAll:
 SELECT *
 FROM branch;
+
+select:
+SELECT *
+FROM branch
+WHERE name = ?;
 
 names:
 SELECT name
