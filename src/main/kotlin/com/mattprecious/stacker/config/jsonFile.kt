@@ -1,5 +1,6 @@
 package com.mattprecious.stacker.config
 
+import com.mattprecious.stacker.delegates.Optional
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -9,7 +10,7 @@ import okio.source
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.attribute.PosixFilePermissions
-import java.util.*
+import java.util.EnumSet
 import kotlin.io.path.createFile
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.exists
@@ -66,9 +67,4 @@ class JsonFileDelegate<T : Any?>(
 
 		this.value = Optional.Some(value)
 	}
-}
-
-private sealed interface Optional<out T : Any?> {
-	data class Some<T : Any?>(val value: T) : Optional<T>
-	data object None : Optional<Nothing>
 }

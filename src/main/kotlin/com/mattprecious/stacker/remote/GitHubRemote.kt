@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.remote
 
 import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.delegates.mutableLazy
 import com.mattprecious.stacker.remote.Remote.PrInfo
 import com.mattprecious.stacker.remote.Remote.PrResult
 import org.kohsuke.github.GHFileNotFoundException
@@ -32,7 +33,7 @@ class GitHubRemote(
 		}
 	}
 
-	private var gitHub = createGitHub(configManager.githubToken)
+	private var gitHub: GitHub by mutableLazy { createGitHub(configManager.githubToken) }
 
 	override fun setToken(token: String): Boolean {
 		val newGitHub = createGitHub(token)
