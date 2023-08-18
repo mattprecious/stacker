@@ -2,6 +2,7 @@ package com.mattprecious.stacker.config
 
 import com.mattprecious.stacker.db.RepoConfig
 import com.mattprecious.stacker.db.RepoDatabase
+import com.mattprecious.stacker.delegates.jsonFile
 import com.mattprecious.stacker.stack.StackManager
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission

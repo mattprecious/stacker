@@ -1,6 +1,5 @@
-package com.mattprecious.stacker.config
+package com.mattprecious.stacker.delegates
 
-import com.mattprecious.stacker.delegates.Optional
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
