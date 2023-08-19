@@ -23,6 +23,7 @@ import com.mattprecious.stacker.stack.RealStackManager
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.GitVersionControl
 import com.mattprecious.stacker.vc.VersionControl
+import java.lang.foreign.Arena
 import kotlin.io.path.div
 import com.mattprecious.stacker.stack.Branch as StackBranch
 
@@ -100,8 +101,14 @@ class Stacker(
 			throw Abort()
 		}
 
-		vc.abortRebase()
-		locker.cancelOperation()
+		locker.cancelOperation { operation ->
+			when (operation) {
+				is Locker.Operation.Restack -> {
+					vc.abortRebase()
+					vc.checkout(operation.startingBranch)
+				}
+			}
+		}
 	}
 
 	private fun continueOperation() {
@@ -110,12 +117,11 @@ class Stacker(
 			throw Abort()
 		}
 
-		// TODO: This is a complete re-implementation of the beginOperation block. These should share code.
 		locker.continueOperation { operation ->
 			when (operation) {
 				is Locker.Operation.Restack -> {
-					vc.continueRebase()
-					operation.perform(stackManager, vc)
+					vc.continueRebase(operation.branches.first())
+					operation.perform(stackManager, vc, continuing = true)
 				}
 			}
 		}
@@ -290,7 +296,7 @@ private class Branch(
 				valueTransform = { it.branch.name },
 			)
 
-			vc.checkout(branch.branch)
+			vc.checkout(branch.branch.name)
 		}
 	}
 
@@ -307,7 +313,7 @@ private class Branch(
 				valueTransform = { it.name },
 			)
 
-			vc.checkout(branch)
+			vc.checkout(branch.name)
 		}
 	}
 
@@ -322,7 +328,7 @@ private class Branch(
 				throw Abort()
 			}
 
-			vc.checkout(parent)
+			vc.checkout(parent.name)
 		}
 	}
 
@@ -339,7 +345,7 @@ private class Branch(
 				valueTransform = { it.name },
 			)
 
-			vc.checkout(branch)
+			vc.checkout(branch.name)
 		}
 	}
 
@@ -363,7 +369,7 @@ private class Branch(
 				bottom = bottom.parent!!
 			}
 
-			vc.checkout(bottom)
+			vc.checkout(bottom.name)
 		}
 	}
 
@@ -554,8 +560,6 @@ private class Upstack(
 			locker.beginOperation(operation) {
 				operation.perform(stackManager, vc)
 			}
-
-			vc.checkout(stackManager.getBranch(operation.startingBranch)!!)
 		}
 	}
 }
@@ -764,34 +768,41 @@ context(Locker.LockScope)
 private fun Locker.Operation.Restack.perform(
 	stackManager: StackManager,
 	vc: VersionControl,
+	continuing: Boolean = false,
 ) {
 	branches.forEachIndexed { index, branchName ->
 		val branch = stackManager.getBranch(branchName)!!
-		vc.restack(branch)
+		if (!continuing || index > 0) {
+			vc.restack(branch)
+		}
+
 		stackManager.updateParentSha(branch, vc.getSha(branch.parent!!.name))
 		updateOperation(copy(branches = branches.subList(index + 1, branches.size)))
 	}
 
-	vc.checkout(stackManager.getBranch(startingBranch)!!)
+	vc.checkout(startingBranch)
 }
 
 fun main(args: Array<String>) {
-	val shell = RealShell()
-	val vc = GitVersionControl(shell)
+	Arena.openConfined().use { arena ->
+		val shell = RealShell()
+		GitVersionControl(arena, shell).use { vc ->
 
-	val dbPath = vc.configDirectory / "stacker.db"
-	withDatabase(dbPath.toString()) { db ->
-		val stackManager = RealStackManager(db)
-		val configManager = RealConfigManager(db, stackManager)
-		val locker = RealLocker(db, stackManager, vc)
-		val remote = GitHubRemote(vc.originUrl, configManager)
+			val dbPath = vc.configDirectory / "stacker.db"
+			withDatabase(dbPath.toString()) { db ->
+				val stackManager = RealStackManager(db)
+				val configManager = RealConfigManager(db, stackManager)
+				val locker = RealLocker(db, stackManager, vc)
+				val remote = GitHubRemote(vc.originUrl, configManager)
 
-		Stacker(
-			configManager = configManager,
-			locker = locker,
-			remote = remote,
-			stackManager = stackManager,
-			vc = vc,
-		).main(args)
+				Stacker(
+					configManager = configManager,
+					locker = locker,
+					remote = remote,
+					stackManager = stackManager,
+					vc = vc,
+				).main(args)
+			}
+		}
 	}
 }

@@ -13,6 +13,8 @@ repositories {
 }
 
 dependencies {
+	implementation(files("libs/libgit2j.jar"))
+
 	implementation(libs.clikt)
 	implementation(libs.github)
 	implementation(libs.jline.terminal)
@@ -24,10 +26,12 @@ dependencies {
 application {
 	applicationName = "st"
 	mainClass.set("com.mattprecious.stacker.StackerKt")
+
+	applicationDefaultJvmArgs = listOf("--enable-preview", "--enable-native-access=ALL-UNNAMED")
 }
 
 kotlin {
-	jvmToolchain(17)
+	jvmToolchain(20)
 
 	compilerOptions {
 		freeCompilerArgs.add("-Xcontext-receivers")
@@ -59,4 +63,12 @@ tasks.named("distTar").configure {
 }
 tasks.named("assemble").configure {
 	dependsOn(tasks.named("installDist"))
+}
+
+tasks.withType<JavaExec>().all {
+	jvmArgs("--enable-preview")
+}
+
+tasks.withType<JavaCompile>().all {
+	options.compilerArgs!! += "--enable-preview"
 }
