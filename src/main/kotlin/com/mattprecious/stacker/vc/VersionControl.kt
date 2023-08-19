@@ -3,7 +3,7 @@ package com.mattprecious.stacker.vc
 import com.mattprecious.stacker.stack.Branch
 import java.nio.file.Path
 
-interface VersionControl {
+interface VersionControl : AutoCloseable {
 	val configDirectory: Path
 	val currentBranchName: String
 	val originUrl: String
@@ -11,7 +11,7 @@ interface VersionControl {
 
 	fun fallthrough(commands: List<String>)
 
-	fun checkout(branch: Branch)
+	fun checkout(branchName: String)
 
 	fun createBranchFromCurrent(branchName: String)
 
@@ -31,7 +31,7 @@ interface VersionControl {
 
 	fun abortRebase()
 
-	fun continueRebase()
+	fun continueRebase(branchName: String)
 
 	data class CommitInfo(
 		val title: String,

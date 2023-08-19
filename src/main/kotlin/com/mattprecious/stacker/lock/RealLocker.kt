@@ -49,7 +49,11 @@ class RealLocker(
 		lockQueries.delete()
 	}
 
-	override fun cancelOperation() {
+	override fun cancelOperation(
+		block: (operation: Operation) -> Unit,
+	) {
+		val operation = lockQueries.select().executeAsOne()
+		block(operation)
 		lockQueries.delete()
 	}
 }

@@ -14,7 +14,9 @@ interface Locker {
 		block: LockScope.(operation: Operation) -> Unit,
 	)
 
-	fun cancelOperation()
+	fun cancelOperation(
+		block: (operation: Operation) -> Unit,
+	)
 
 	interface LockScope {
 		fun updateOperation(operation: Operation)
