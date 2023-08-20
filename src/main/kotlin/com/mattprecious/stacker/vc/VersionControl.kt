@@ -1,6 +1,5 @@
 package com.mattprecious.stacker.vc
 
-import com.mattprecious.stacker.stack.Branch
 import java.nio.file.Path
 
 interface VersionControl : AutoCloseable {
@@ -17,19 +16,17 @@ interface VersionControl : AutoCloseable {
 
 	fun createBranchFromCurrent(branchName: String)
 
-	fun renameBranch(branch: Branch, newName: String)
+	fun renameBranch(branchName: String, newName: String)
 
 	fun delete(branchName: String)
 
-	fun pushBranches(branches: List<Branch>)
+	fun pushBranches(branchNames: List<String>)
 
-	fun latestCommitInfo(branch: Branch): CommitInfo
+	fun latestCommitInfo(branchName: String): CommitInfo
 
-	fun isAncestor(branchName: String, possibleAncestor: Branch): Boolean
+	fun isAncestor(branchName: String, possibleAncestorName: String): Boolean
 
-	fun needsRestack(branch: Branch): Boolean
-
-	fun restack(branch: Branch): Boolean
+	fun restack(branchName: String, parentName: String, parentSha: String): Boolean
 
 	fun getSha(branch: String): String
 

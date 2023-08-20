@@ -173,7 +173,12 @@ private class Branch(
 
 			val defaultName = configManager.trailingTrunk ?: configManager.trunk
 
-			val options = stackManager.getBase()!!.prettyTree { vc.isAncestor(currentBranchName, it) }
+			val options = stackManager.getBase()!!.prettyTree {
+				vc.isAncestor(
+					branchName = currentBranchName,
+					possibleAncestorName = it.name,
+				)
+			}
 			val parent = interactivePrompt(
 				message = "Select the parent branch for ${currentBranchName.styleBranch()}",
 				options = options,
@@ -241,7 +246,7 @@ private class Branch(
 				throw Abort()
 			}
 
-			vc.renameBranch(currentBranch, newName)
+			vc.renameBranch(branchName = currentBranch.name, newName = newName)
 			stackManager.renameBranch(currentBranch, newName)
 		}
 	}
@@ -415,7 +420,7 @@ private class Branch(
 
 			remote.requireAuthenticated()
 
-			vc.pushBranches(listOf(currentBranch))
+			vc.pushBranches(listOf(currentBranch.name))
 			currentBranch.submit(configManager, remote, vc)
 		}
 	}
@@ -462,7 +467,7 @@ private class Stack(
 
 			val branchesToSubmit = currentBranch.flattenStack()
 				.filterNot { it.name == configManager.trunk || it.name == configManager.trailingTrunk }
-			vc.pushBranches(branchesToSubmit)
+			vc.pushBranches(branchesToSubmit.map { it.name })
 			branchesToSubmit.forEach { it.submit(configManager, remote, vc) }
 		}
 	}
@@ -614,7 +619,16 @@ private class Log(
 			stackManager.getBase()?.prettyTree(
 				selected = stackManager.getBranch(vc.currentBranchName),
 			)?.joinToString("\n") {
-				if (vc.needsRestack(it.branch)) {
+				val needsRestack = run {
+					val parent = it.branch.parent ?: return@run false
+					val parentSha = vc.getSha(parent.name)
+					return@run it.branch.parentSha != parentSha || !vc.isAncestor(
+						branchName = it.branch.name,
+						possibleAncestorName = parent.name,
+					)
+				}
+
+				if (needsRestack) {
 					"${it.pretty} (needs restack)"
 				} else {
 					it.pretty
@@ -680,7 +694,7 @@ private fun StackBranch.submit(
 		targetName = target,
 	) {
 		// TODO: Figure out what to put when there's multiple commits on this branch.
-		val info = vc.latestCommitInfo(this)
+		val info = vc.latestCommitInfo(name)
 		Remote.PrInfo(
 			title = info.title,
 			body = info.body,
@@ -820,7 +834,7 @@ private fun Locker.Operation.Restack.perform(
 	branches.forEachIndexed { index, branchName ->
 		val branch = stackManager.getBranch(branchName)!!
 		if (!continuing || index > 0) {
-			if (!vc.restack(branch)) {
+			if (!vc.restack(branchName = branch.name, parentName = branch.parent!!.name, parentSha = branch.parentSha!!)) {
 				error(
 					"Merge conflict. Resolve all conflicts manually and then run ${"st rebase --continue".styleCode()}. " +
 						"To abort, run ${"st rebase --abort".styleCode()}",
