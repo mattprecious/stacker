@@ -13,6 +13,10 @@ remove:
 DELETE FROM branch
 WHERE name = ?;
 
+removeAllOf:
+DELETE FROM branch
+WHERE name IN :names;
+
 rename:
 UPDATE branch
 SET name = :newName
