@@ -25,13 +25,13 @@ interface VersionControl : AutoCloseable {
 
 	fun needsRestack(branch: Branch): Boolean
 
-	fun restack(branch: Branch)
+	fun restack(branch: Branch): Boolean
 
 	fun getSha(branch: String): String
 
 	fun abortRebase()
 
-	fun continueRebase(branchName: String)
+	fun continueRebase(branchName: String): Boolean
 
 	data class CommitInfo(
 		val title: String,
