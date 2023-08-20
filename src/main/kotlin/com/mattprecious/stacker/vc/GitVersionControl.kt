@@ -12,6 +12,7 @@ import com.github.git2_h.GIT_REMOTE_CALLBACKS_VERSION
 import com.github.git2_h.git_annotated_commit_from_revspec
 import com.github.git2_h.git_annotated_commit_lookup
 import com.github.git2_h.git_branch_create
+import com.github.git2_h.git_branch_delete
 import com.github.git2_h.git_branch_iterator_free
 import com.github.git2_h.git_branch_iterator_new
 import com.github.git2_h.git_branch_move
@@ -150,6 +151,10 @@ class GitVersionControl(
 		withAllocate { checkError(git_branch_move(it, getBranch(branch.name), allocate(newName), 0)) }
 	}
 
+	override fun delete(branchName: String): Unit = arena {
+		checkError(git_branch_delete(getBranch(branchName)))
+	}
+
 	override fun latestCommitInfo(branch: Branch): CommitInfo = arena {
 		val commit = getCommitForBranch(branch.name)
 		val title = git_commit_summary(commit).utf8()
@@ -283,6 +288,7 @@ class GitVersionControl(
 		return withAllocate { checkError(git_repository_head(it, repo)) }.deref()
 	}
 
+	/** @return git_reference* */
 	context(Arena)
 	private fun getBranch(branchName: String): MemorySegment {
 		return withAllocate { checkError(git_reference_lookup(it, repo, allocate(branchName.asBranchRevSpec()))) }.deref()
