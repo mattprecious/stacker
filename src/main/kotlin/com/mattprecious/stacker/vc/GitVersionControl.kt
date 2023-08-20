@@ -74,7 +74,6 @@ import com.github.git_remote_callbacks
 import com.github.git_strarray
 import com.github.git_transport_certificate_check_cb
 import com.mattprecious.stacker.shell.Shell
-import com.mattprecious.stacker.stack.Branch
 import com.mattprecious.stacker.vc.VersionControl.CommitInfo
 import java.lang.foreign.Arena
 import java.lang.foreign.MemoryLayout
@@ -151,16 +150,16 @@ class GitVersionControl(
 		checkout(branchName, commit)
 	}
 
-	override fun renameBranch(branch: Branch, newName: String): Unit = arena {
-		withAllocate { checkError(git_branch_move(it, getBranch(branch.name), allocate(newName), 0)) }
+	override fun renameBranch(branchName: String, newName: String): Unit = arena {
+		withAllocate { checkError(git_branch_move(it, getBranch(branchName), allocate(newName), 0)) }
 	}
 
 	override fun delete(branchName: String): Unit = arena {
 		checkError(git_branch_delete(getBranch(branchName)))
 	}
 
-	override fun latestCommitInfo(branch: Branch): CommitInfo = arena {
-		val commit = getCommitForBranch(branch.name)
+	override fun latestCommitInfo(branchName: String): CommitInfo = arena {
+		val commit = getCommitForBranch(branchName)
 		val title = git_commit_summary(commit).utf8()
 		val body = git_commit_body(commit).utf8OrNull()
 
@@ -170,9 +169,9 @@ class GitVersionControl(
 		)
 	}
 
-	override fun isAncestor(branchName: String, possibleAncestor: Branch): Boolean = arena {
+	override fun isAncestor(branchName: String, possibleAncestorName: String): Boolean = arena {
 		val branchCommitId = getCommitId(branchName)
-		val possibleAncestorCommitId = getCommitId(possibleAncestor.name)
+		val possibleAncestorCommitId = getCommitId(possibleAncestorName)
 
 		val base = withAllocate(git_oid.`$LAYOUT`()) {
 			val code = git_merge_base(it, repo, possibleAncestorCommitId, branchCommitId)
@@ -183,25 +182,19 @@ class GitVersionControl(
 		return@arena git_oid_equal(base, possibleAncestorCommitId) == 1
 	}
 
-	override fun needsRestack(branch: Branch): Boolean {
-		val parent = branch.parent ?: return false
-		val parentSha = getSha(parent.name)
-		return branch.parentSha != parentSha || !isAncestor(branch.name, parent)
-	}
-
-	override fun restack(branch: Branch): Boolean = arena {
-		val branchCommit = getAnnotatedCommit(branch.name)
-		val ontoCommit = getAnnotatedCommit(branch.parent!!.name)
+	override fun restack(branchName: String, parentName: String, parentSha: String): Boolean = arena {
+		val branchCommit = getAnnotatedCommit(branchName)
+		val ontoCommit = getAnnotatedCommit(parentName)
 
 		val upstreamId =
-			withAllocate(git_oid.`$LAYOUT`()) { checkError(git_oid_fromstr(it, allocate(branch.parentSha!!))) }
+			withAllocate(git_oid.`$LAYOUT`()) { checkError(git_oid_fromstr(it, allocate(parentSha))) }
 		val upstreamCommit = withAllocate { checkError(git_annotated_commit_lookup(it, repo, upstreamId)) }.deref()
 
 		val rebase = withAllocate {
 			checkError(git_rebase_init(it, repo, branchCommit, upstreamCommit, ontoCommit, NULL))
 		}.deref()
 
-		val result = rebase.performRebase(branch.name)
+		val result = rebase.performRebase(branchName)
 		git_rebase_free(rebase)
 		return@arena result
 	}
@@ -223,8 +216,8 @@ class GitVersionControl(
 		return@arena result
 	}
 
-	override fun pushBranches(branches: List<Branch>): Unit = arena {
-		val strings = allocate(branches.map { "+${it.name.asBranchRevSpec()}:${it.name.asBranchRevSpec()}" })
+	override fun pushBranches(branchNames: List<String>): Unit = arena {
+		val strings = allocate(branches.map { it.asBranchRevSpec() }.map { "+$it:$it" })
 
 		val refs = allocate(git_strarray.`$LAYOUT`())
 		git_strarray.`count$set`(refs, branches.size.toLong())
