@@ -31,15 +31,11 @@ class Stacker(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	remote: Remote,
-	private val stackManager: StackManager,
-	private val vc: VersionControl,
+	stackManager: StackManager,
+	vc: VersionControl,
 ) : CliktCommand(
 	name = "st",
-	invokeWithoutSubcommand = true,
 ) {
-	private val abort: Boolean by option().flag()
-	private val cont by option("--continue").flag()
-
 	init {
 		subcommands(
 			Branch(
@@ -54,6 +50,11 @@ class Stacker(
 				vc = vc,
 			),
 			Log(
+				stackManager = stackManager,
+				vc = vc,
+			),
+			Rebase(
+				locker = locker,
 				stackManager = stackManager,
 				vc = vc,
 			),
@@ -73,57 +74,17 @@ class Stacker(
 	}
 
 	override fun run() {
-		if (currentContext.invokedSubcommand == null) {
-			when {
-				abort -> abortOperation()
-				cont -> continueOperation()
-				else -> throw PrintHelpMessage(currentContext, error = true)
-			}
-		}
-
 		if (!configManager.repoInitialized && currentContext.invokedSubcommand !is Init) {
 			error(message = "Stacker must be initialized, first. Please run ${"st init".styleCode()}.")
 			throw Abort()
 		}
 
-		if (locker.hasLock()) {
+		if (locker.hasLock() && currentContext.invokedSubcommand !is Rebase) {
 			error(
-				"A restack is currently in progress. Please run ${"st --abort".styleCode()} or resolve any " +
-					"conflicts and run ${"st --continue".styleCode()}.",
+				"A restack is currently in progress. Please run ${"st rebase --abort".styleCode()} or resolve any " +
+					"conflicts and run ${"st rebase --continue".styleCode()}.",
 			)
 			throw Abort()
-		}
-	}
-
-	private fun abortOperation() {
-		if (!locker.hasLock()) {
-			error("Nothing to abort.")
-			throw Abort()
-		}
-
-		locker.cancelOperation { operation ->
-			when (operation) {
-				is Locker.Operation.Restack -> {
-					vc.abortRebase()
-					vc.checkout(operation.startingBranch)
-				}
-			}
-		}
-	}
-
-	private fun continueOperation() {
-		if (!locker.hasLock()) {
-			error("Nothing to continue.")
-			throw Abort()
-		}
-
-		locker.continueOperation { operation ->
-			when (operation) {
-				is Locker.Operation.Restack -> {
-					vc.continueRebase(operation.branches.first())
-					operation.perform(stackManager, vc, continuing = true)
-				}
-			}
 		}
 	}
 }
@@ -559,6 +520,55 @@ private class Upstack(
 
 			locker.beginOperation(operation) {
 				operation.perform(stackManager, vc)
+			}
+		}
+	}
+}
+
+private class Rebase(
+	private val locker: Locker,
+	private val stackManager: StackManager,
+	private val vc: VersionControl,
+) : CliktCommand() {
+	private val abort: Boolean by option().flag()
+	private val cont by option("--continue").flag()
+
+	override fun run() {
+		when {
+			abort -> abortOperation()
+			cont -> continueOperation()
+			else -> throw PrintHelpMessage(currentContext, error = true)
+		}
+	}
+
+	private fun abortOperation() {
+		if (!locker.hasLock()) {
+			error("Nothing to abort.")
+			throw Abort()
+		}
+
+		locker.cancelOperation { operation ->
+			when (operation) {
+				is Locker.Operation.Restack -> {
+					vc.abortRebase()
+					vc.checkout(operation.startingBranch)
+				}
+			}
+		}
+	}
+
+	private fun continueOperation() {
+		if (!locker.hasLock()) {
+			error("Nothing to continue.")
+			throw Abort()
+		}
+
+		locker.continueOperation { operation ->
+			when (operation) {
+				is Locker.Operation.Restack -> {
+					vc.continueRebase(operation.branches.first())
+					operation.perform(stackManager, vc, continuing = true)
+				}
 			}
 		}
 	}
