@@ -136,6 +136,10 @@ class GitVersionControl(
 		shell.exec("git", *commands.toTypedArray())
 	}
 
+	override fun checkBranches(branchNames: Set<String>): Set<String> {
+		return branchNames.toMutableSet().apply { removeAll(branches.toSet()) }
+	}
+
 	override fun checkout(branchName: String) = arena {
 		val treeish = withAllocate { checkError(git_revparse_single(it, repo, this.allocate(branchName))) }.deref()
 		checkout(branchName, treeish)

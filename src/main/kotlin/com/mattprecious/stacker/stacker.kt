@@ -31,8 +31,8 @@ class Stacker(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	remote: Remote,
-	stackManager: StackManager,
-	vc: VersionControl,
+	private val stackManager: StackManager,
+	private val vc: VersionControl,
 ) : CliktCommand(
 	name = "st",
 ) {
@@ -86,6 +86,8 @@ class Stacker(
 			)
 			throw Abort()
 		}
+
+		stackManager.reconcileBranches(vc)
 	}
 }
 
@@ -651,6 +653,12 @@ private fun Remote.requireAuthenticated() {
 		error("Personal token does not have access to $repoName.")
 		throw Abort()
 	}
+}
+
+private fun StackManager.reconcileBranches(
+	vc: VersionControl,
+) {
+	untrackBranches(vc.checkBranches(trackedBranchNames.toSet()))
 }
 
 context(CliktCommand)

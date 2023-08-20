@@ -11,6 +11,8 @@ interface VersionControl : AutoCloseable {
 
 	fun fallthrough(commands: List<String>)
 
+	fun checkBranches(branchNames: Set<String>): Set<String>
+
 	fun checkout(branchName: String)
 
 	fun createBranchFromCurrent(branchName: String)

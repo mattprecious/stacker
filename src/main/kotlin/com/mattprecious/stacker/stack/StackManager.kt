@@ -16,6 +16,10 @@ interface StackManager {
 		branch: Branch,
 	)
 
+	fun untrackBranches(
+		branches: Set<String>,
+	)
+
 	fun renameBranch(
 		branch: Branch,
 		newName: String,
