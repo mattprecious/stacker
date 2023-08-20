@@ -566,8 +566,9 @@ private class Rebase(
 		locker.continueOperation { operation ->
 			when (operation) {
 				is Locker.Operation.Restack -> {
-					vc.continueRebase(operation.branches.first())
-					operation.perform(stackManager, vc, continuing = true)
+					if (vc.continueRebase(operation.branches.first())) {
+						operation.perform(stackManager, vc, continuing = true)
+					}
 				}
 			}
 		}
@@ -774,7 +775,7 @@ private fun StackBranch.leaves(): List<StackBranch> {
 	}
 }
 
-context(Locker.LockScope)
+context(CliktCommand, Locker.LockScope)
 private fun Locker.Operation.Restack.perform(
 	stackManager: StackManager,
 	vc: VersionControl,
@@ -783,7 +784,13 @@ private fun Locker.Operation.Restack.perform(
 	branches.forEachIndexed { index, branchName ->
 		val branch = stackManager.getBranch(branchName)!!
 		if (!continuing || index > 0) {
-			vc.restack(branch)
+			if (!vc.restack(branch)) {
+				error(
+					"Merge conflict. Resolve all conflicts manually and then run ${"st rebase --continue".styleCode()}. " +
+						"To abort, run ${"st rebase --abort".styleCode()}",
+				)
+				throw Abort()
+			}
 		}
 
 		stackManager.updateParentSha(branch, vc.getSha(branch.parent!!.name))

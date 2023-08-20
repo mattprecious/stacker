@@ -37,6 +37,8 @@ import com.github.git2_h.git_repository_open
 import com.github.git2_h.git_repository_path
 import com.github.git2_h.git_signature_default
 import com.github.git2_h.git_signature_free
+import com.github.git2_h_1.GIT_ECONFLICT
+import com.github.git2_h_1.GIT_EUNMERGED
 import com.github.git2_h_1.GIT_ITEROVER
 import com.github.git2_h_1.git_checkout_options_init
 import com.github.git2_h_1.git_checkout_tree
@@ -178,7 +180,7 @@ class GitVersionControl(
 		return branch.parentSha != parentSha || !isAncestor(branch.name, parent)
 	}
 
-	override fun restack(branch: Branch) = arena {
+	override fun restack(branch: Branch): Boolean = arena {
 		val branchCommit = getAnnotatedCommit(branch.name)
 		val ontoCommit = getAnnotatedCommit(branch.parent!!.name)
 
@@ -190,8 +192,9 @@ class GitVersionControl(
 			checkError(git_rebase_init(it, repo, branchCommit, upstreamCommit, ontoCommit, NULL))
 		}.deref()
 
-		rebase.performRebase(branch.name)
+		val result = rebase.performRebase(branch.name)
 		git_rebase_free(rebase)
+		return@arena result
 	}
 
 	override fun getSha(branch: String): String = arena {
@@ -204,10 +207,11 @@ class GitVersionControl(
 		git_rebase_free(rebase)
 	}
 
-	override fun continueRebase(branchName: String) = arena {
-		val rebase = getRebase() ?: return@arena
-		rebase.performRebase(branchName)
+	override fun continueRebase(branchName: String): Boolean = arena {
+		val rebase = getRebase() ?: return@arena true // Not really...
+		val result = rebase.performRebase(branchName)
 		git_rebase_free(rebase)
+		return@arena result
 	}
 
 	override fun pushBranches(branches: List<Branch>): Unit = arena {
@@ -356,14 +360,13 @@ class GitVersionControl(
 
 	/** @receiver git_rebase* */
 	context(Arena)
-	private fun MemorySegment.performRebase(branchName: String) {
+	private fun MemorySegment.performRebase(branchName: String): Boolean {
 		val signature = withAllocate { checkError(git_signature_default(it, repo)) }.deref()
 
 		forEachRebaseOperation {
-			performRebaseOperation(
-				operation = it,
-				committer = signature,
-			)
+			if (!performRebaseOperation(operation = it, committer = signature)) {
+				return@performRebase false
+			}
 		}
 
 		checkError(git_rebase_finish(this, signature))
@@ -374,6 +377,7 @@ class GitVersionControl(
 		}
 
 		checkError(git_reference_set_target(allocate(C_POINTER), getBranch(branchName), headId, NULL))
+		return true
 	}
 
 	/**
@@ -410,11 +414,17 @@ class GitVersionControl(
 	private fun MemorySegment.performRebaseOperation(
 		operation: MemorySegment,
 		committer: MemorySegment,
-	) {
+	): Boolean {
 		val operationType = git_rebase_operation.`type$get`(operation)
 		check(operationType == GIT_REBASE_OPERATION_PICK())
 		val code = git_rebase_commit(allocate(git_oid.`$LAYOUT`()), this, NULL, committer, NULL, NULL)
-		if (code != ReturnCodes.EAPPLIED) checkError(code)
+		if (code == ReturnCodes.EAPPLIED) return true
+		// TODO: Should these return different results?
+		if (code == ReturnCodes.EUNMERGED || code == ReturnCodes.ECONFLICT) {
+			return false
+		}
+		checkError(code)
+		return true
 	}
 
 	private fun MemorySegment.deref() = get(C_POINTER, 0)
@@ -448,6 +458,8 @@ class GitVersionControl(
 private object ReturnCodes {
 	val OK = GIT_OK()
 	val ENOTFOUND = GIT_ENOTFOUND()
+	val EUNMERGED = GIT_EUNMERGED()
+	val ECONFLICT = GIT_ECONFLICT()
 	val EAPPLIED = GIT_EAPPLIED()
 	val ITEROVER = GIT_ITEROVER()
 }
