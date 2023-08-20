@@ -17,6 +17,8 @@ interface VersionControl : AutoCloseable {
 
 	fun renameBranch(branch: Branch, newName: String)
 
+	fun delete(branchName: String)
+
 	fun pushBranches(branches: List<Branch>)
 
 	fun latestCommitInfo(branch: Branch): CommitInfo

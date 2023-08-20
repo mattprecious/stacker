@@ -142,6 +142,7 @@ private class Branch(
 			Bottom(configManager, stackManager, vc),
 			Checkout(stackManager, vc),
 			Create(stackManager, vc),
+			Delete(configManager, stackManager, vc),
 			Down(stackManager, vc),
 			Rename(stackManager, vc),
 			Restack(locker, stackManager, vc),
@@ -240,6 +241,33 @@ private class Branch(
 
 			vc.renameBranch(currentBranch, newName)
 			stackManager.renameBranch(currentBranch, newName)
+		}
+	}
+
+	private class Delete(
+		private val configManager: ConfigManager,
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : CliktCommand() {
+		override fun run() {
+			val branchName = vc.currentBranchName
+			if (branchName == configManager.trunk || branchName == configManager.trailingTrunk) {
+				error("Cannnot delete a trunk branch.")
+				throw Abort()
+			}
+
+			val branch = stackManager.getBranch(branchName)
+			if (branch != null) {
+				if (branch.children.isNotEmpty()) {
+					error("Branch has children. Please retarget or untrack them.")
+					throw Abort()
+				}
+
+				vc.checkout(branch.parent!!.name)
+				stackManager.untrackBranch(branch)
+			}
+
+			vc.delete(branchName)
 		}
 	}
 
