@@ -164,11 +164,13 @@ private class Branch(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
+		private val branchName: String? by argument().optional()
+
 		override fun run() {
-			val currentBranchName = vc.currentBranchName
-			val currentBranch = stackManager.getBranch(currentBranchName)
+			val branchName = branchName ?: vc.currentBranchName
+			val currentBranch = stackManager.getBranch(branchName)
 			if (currentBranch != null) {
-				error(message = "Branch ${currentBranch.name.styleBranch()} is already tracked.")
+				error(message = "Branch ${branchName.styleBranch()} is already tracked.")
 				return
 			}
 
@@ -176,12 +178,12 @@ private class Branch(
 
 			val options = stackManager.getBase()!!.prettyTree {
 				vc.isAncestor(
-					branchName = currentBranchName,
+					branchName = branchName,
 					possibleAncestorName = it.name,
 				)
 			}
 			val parent = interactivePrompt(
-				message = "Select the parent branch for ${currentBranchName.styleBranch()}",
+				message = "Select the parent branch for ${branchName.styleBranch()}",
 				options = options,
 				default = options.find { it.branch.name == defaultName },
 				displayTransform = { it.pretty },
@@ -190,7 +192,7 @@ private class Branch(
 
 			val parentSha = vc.getSha(parent)
 
-			stackManager.trackBranch(currentBranchName, parent, parentSha)
+			stackManager.trackBranch(branchName, parent, parentSha)
 		}
 	}
 
@@ -198,10 +200,13 @@ private class Branch(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
+		private val branchName: String? by argument().optional()
+
 		override fun run() {
-			val currentBranch = stackManager.getBranch(vc.currentBranchName)
+			val branchName = branchName ?: vc.currentBranchName
+			val currentBranch = stackManager.getBranch(branchName)
 			if (currentBranch == null) {
-				error(message = "Branch ${vc.currentBranchName.styleBranch()} is already not tracked.")
+				error(message = "Branch ${branchName.styleBranch()} is already not tracked.")
 				return
 			}
 
