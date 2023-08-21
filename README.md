@@ -1,10 +1,19 @@
 # Stacker
 
-# Stacker
+## Development
 
-## libgit2
+### IntelliJ
 
-### libssh
+IntelliJ needs to be configured to opt in to the Java 20 preview language features used in this project. To do this:
+
+1. Open the `Project` window (`⌘1`).
+2. Select the root module and open the module settings (`⌘↓`, or right click and select `Module Settings`).
+3. `Project Settings` / `Project`.
+4. Set the `Language level` to `20 (Preview)`.
+
+### Building/Updating libgit2
+
+#### libssh
 `libssh` is required in order to build `libgit2` with SSH and SSH transport support (for repositories with SSH remotes).
 Install it with:
 
@@ -12,7 +21,7 @@ Install it with:
 brew install libssh
 ```
 
-### Building Library
+#### Building Library
 Clone and build `libgit2` with:
 
 ```sh
@@ -26,7 +35,7 @@ This will create a `libgit2.1.8.0.dylib` which can be copied into the project at
 
 _TODO: Build for more architectures._
 
-### Generating Bindings
+#### Generating Bindings
 
 The bindings are generated using [jextract](https://github.com/openjdk/jextract) and are built upon the Foreign Function
 & Memory API available as a preview in JDK 20.
