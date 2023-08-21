@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.PrintHelpMessage
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.mordant.terminal.ConversionResult
@@ -282,17 +283,26 @@ private class Branch(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
-		override fun run() {
-			val options = stackManager.getBase()!!.prettyTree()
-			val branch = interactivePrompt(
-				message = "Checkout a branch",
-				options = options,
-				default = options.find { it.branch.name == vc.currentBranchName },
-				displayTransform = { it.pretty },
-				valueTransform = { it.branch.name },
-			)
+		private val branchName: String? by argument().optional()
 
-			vc.checkout(branch.branch.name)
+		override fun run() {
+			val branch = if (branchName == null) {
+				val options = stackManager.getBase()!!.prettyTree()
+				interactivePrompt(
+					message = "Checkout a branch",
+					options = options,
+					default = options.find { it.branch.name == vc.currentBranchName },
+					displayTransform = { it.pretty },
+					valueTransform = { it.branch.name },
+				).branch.name
+			} else if (vc.branches.contains(branchName)) {
+				branchName!!
+			} else {
+				error("'$branchName' does not match any branches known to git.")
+				throw Abort()
+			}
+
+			vc.checkout(branch)
 		}
 	}
 
