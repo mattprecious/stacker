@@ -396,8 +396,11 @@ private class Branch(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
+		private val branchName: String? by argument().optional()
+
 		override fun run() {
 			val currentBranchName = vc.currentBranchName
+			val branchName = branchName ?: currentBranchName
 			if (stackManager.getBranch(currentBranchName) == null) {
 				error(
 					message = "Cannot restack ${currentBranchName.styleBranch()} since it is not tracked. " +
@@ -408,7 +411,7 @@ private class Branch(
 
 			val operation = Locker.Operation.Restack(
 				startingBranch = currentBranchName,
-				branches = listOf(currentBranchName),
+				branches = listOf(branchName),
 			)
 
 			locker.beginOperation(operation) {
