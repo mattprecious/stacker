@@ -257,8 +257,12 @@ private class Branch(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : CliktCommand() {
+		private val branchName: String? by argument().optional()
+
 		override fun run() {
-			val branchName = vc.currentBranchName
+			val currentBranchName = vc.currentBranchName
+
+			val branchName = branchName ?: currentBranchName
 			if (branchName == configManager.trunk || branchName == configManager.trailingTrunk) {
 				error("Cannnot delete a trunk branch.")
 				throw Abort()
@@ -271,7 +275,10 @@ private class Branch(
 					throw Abort()
 				}
 
-				vc.checkout(branch.parent!!.name)
+				if (branchName == currentBranchName) {
+					vc.checkout(branch.parent!!.name)
+				}
+
 				stackManager.untrackBranch(branch)
 			}
 
