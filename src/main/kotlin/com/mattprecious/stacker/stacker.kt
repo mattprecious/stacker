@@ -619,10 +619,10 @@ private class Log(
 			stackManager.getBase()?.prettyTree(
 				selected = stackManager.getBranch(vc.currentBranchName),
 			)?.joinToString("\n") {
-				val needsRestack = run {
-					val parent = it.branch.parent ?: return@run false
+				val needsRestack = run needsRestack@{
+					val parent = it.branch.parent ?: return@needsRestack false
 					val parentSha = vc.getSha(parent.name)
-					return@run it.branch.parentSha != parentSha || !vc.isAncestor(
+					return@needsRestack it.branch.parentSha != parentSha || !vc.isAncestor(
 						branchName = it.branch.name,
 						possibleAncestorName = parent.name,
 					)
