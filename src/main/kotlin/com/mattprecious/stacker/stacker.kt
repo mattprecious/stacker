@@ -636,30 +636,43 @@ private class Rebase(
 }
 
 private class Log(
-	private val stackManager: StackManager,
-	private val vc: VersionControl,
+	stackManager: StackManager,
+	vc: VersionControl,
 ) : StackerCommand(shortAlias = "l") {
-	override fun run() {
-		echo(
-			stackManager.getBase()?.prettyTree(
-				selected = stackManager.getBranch(vc.currentBranchName),
-			)?.joinToString("\n") {
-				val needsRestack = run needsRestack@{
-					val parent = it.branch.parent ?: return@needsRestack false
-					val parentSha = vc.getSha(parent.name)
-					return@needsRestack it.branch.parentSha != parentSha || !vc.isAncestor(
-						branchName = it.branch.name,
-						possibleAncestorName = parent.name,
-					)
-				}
-
-				if (needsRestack) {
-					"${it.pretty} (needs restack)"
-				} else {
-					it.pretty
-				}
-			},
+	init {
+		subcommands(
+			Short(stackManager, vc),
 		)
+	}
+
+	override fun run() = Unit
+
+	private class Short(
+		private val stackManager: StackManager,
+		private val vc: VersionControl,
+	) : StackerCommand(shortAlias = "s") {
+		override fun run() {
+			echo(
+				stackManager.getBase()?.prettyTree(
+					selected = stackManager.getBranch(vc.currentBranchName),
+				)?.joinToString("\n") {
+					val needsRestack = run needsRestack@{
+						val parent = it.branch.parent ?: return@needsRestack false
+						val parentSha = vc.getSha(parent.name)
+						return@needsRestack it.branch.parentSha != parentSha || !vc.isAncestor(
+							branchName = it.branch.name,
+							possibleAncestorName = parent.name,
+						)
+					}
+
+					if (needsRestack) {
+						"${it.pretty} (needs restack)"
+					} else {
+						it.pretty
+					}
+				},
+			)
+		}
 	}
 }
 
