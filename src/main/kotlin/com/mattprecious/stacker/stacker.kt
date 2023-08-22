@@ -28,13 +28,13 @@ import java.lang.foreign.Arena
 import kotlin.io.path.div
 import com.mattprecious.stacker.stack.Branch as StackBranch
 
-class Stacker(
+private class Stacker(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	remote: Remote,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : CliktCommand(
+) : StackerCommand(
 	name = "st",
 ) {
 	init {
@@ -92,10 +92,10 @@ class Stacker(
 	}
 }
 
-class Init(
+private class Init(
 	private val configManager: ConfigManager,
 	private val vc: VersionControl,
-) : CliktCommand() {
+) : StackerCommand() {
 	override fun run() {
 		val (currentTrunk, currentTrailingTrunk) = if (configManager.repoInitialized) {
 			configManager.trunk to configManager.trailingTrunk
@@ -139,7 +139,7 @@ private class Branch(
 	remote: Remote,
 	stackManager: StackManager,
 	vc: VersionControl,
-) : CliktCommand() {
+) : StackerCommand(shortAlias = "b") {
 	init {
 		subcommands(
 			Bottom(configManager, stackManager, vc),
@@ -163,7 +163,7 @@ private class Branch(
 		private val configManager: ConfigManager,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "tr") {
 		private val branchName: String? by argument().optional()
 
 		override fun run() {
@@ -199,7 +199,7 @@ private class Branch(
 	private class Untrack(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "ut") {
 		private val branchName: String? by argument().optional()
 
 		override fun run() {
@@ -217,7 +217,7 @@ private class Branch(
 	private class Create(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "c") {
 		private val branchName by argument()
 
 		override fun run() {
@@ -238,7 +238,7 @@ private class Branch(
 	private class Rename(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "rn") {
 		private val newName by argument()
 
 		override fun run() {
@@ -261,7 +261,7 @@ private class Branch(
 		private val configManager: ConfigManager,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "dl") {
 		private val branchName: String? by argument().optional()
 
 		override fun run() {
@@ -294,7 +294,7 @@ private class Branch(
 	private class Checkout(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "co") {
 		private val branchName: String? by argument().optional()
 
 		override fun run() {
@@ -321,7 +321,7 @@ private class Branch(
 	private class Up(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "u") {
 		override fun run() {
 			val options = stackManager.getBranch(vc.currentBranchName)!!.children
 			val branch = interactivePrompt(
@@ -338,7 +338,7 @@ private class Branch(
 	private class Down(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "d") {
 		override fun run() {
 			val parent = stackManager.getBranch(vc.currentBranchName)!!.parent
 			if (parent == null) {
@@ -353,7 +353,7 @@ private class Branch(
 	private class Top(
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "t") {
 		override fun run() {
 			val options = stackManager.getBranch(vc.currentBranchName)!!.leaves()
 			val branch = interactivePrompt(
@@ -371,7 +371,7 @@ private class Branch(
 		private val configManager: ConfigManager,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "b") {
 		override fun run() {
 			val trunk = configManager.trunk
 			val trailingTrunk = configManager.trailingTrunk
@@ -395,7 +395,7 @@ private class Branch(
 		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "r") {
 		private val branchName: String? by argument().optional()
 
 		override fun run() {
@@ -425,7 +425,7 @@ private class Branch(
 		private val remote: Remote,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "s") {
 		override fun run() {
 			val currentBranch = stackManager.getBranch(vc.currentBranchName)
 			if (currentBranch == null) {
@@ -456,7 +456,7 @@ private class Stack(
 	remote: Remote,
 	stackManager: StackManager,
 	vc: VersionControl,
-) : CliktCommand() {
+) : StackerCommand(shortAlias = "s") {
 	init {
 		subcommands(
 			Submit(configManager, remote, stackManager, vc),
@@ -470,7 +470,7 @@ private class Stack(
 		private val remote: Remote,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "s") {
 		override fun run() {
 			val currentBranch = stackManager.getBranch(vc.currentBranchName)
 			if (currentBranch == null) {
@@ -503,7 +503,7 @@ private class Upstack(
 	locker: Locker,
 	stackManager: StackManager,
 	vc: VersionControl,
-) : CliktCommand() {
+) : StackerCommand(shortAlias = "us") {
 	init {
 		subcommands(
 			Onto(configManager, locker, stackManager, vc),
@@ -517,7 +517,7 @@ private class Upstack(
 		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "r") {
 		override fun run() {
 			val currentBranchName = vc.currentBranchName
 			val currentBranch = stackManager.getBranch(currentBranchName)
@@ -545,7 +545,7 @@ private class Upstack(
 		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
-	) : CliktCommand() {
+	) : StackerCommand(shortAlias = "o") {
 		override fun run() {
 			val currentBranchName = vc.currentBranchName
 			val currentBranch = stackManager.getBranch(currentBranchName)
@@ -589,7 +589,7 @@ private class Rebase(
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : CliktCommand() {
+) : StackerCommand() {
 	private val abort: Boolean by option().flag()
 	private val cont by option("--continue").flag()
 
@@ -638,7 +638,7 @@ private class Rebase(
 private class Log(
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : CliktCommand() {
+) : StackerCommand(shortAlias = "l") {
 	override fun run() {
 		echo(
 			stackManager.getBase()?.prettyTree(
