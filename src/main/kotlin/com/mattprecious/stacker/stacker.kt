@@ -174,10 +174,13 @@ private class Branch(
 				return
 			}
 
-			val defaultName = configManager.trailingTrunk ?: configManager.trunk
+			val trunk = configManager.trunk
+			val trailingTrunk = configManager.trailingTrunk
+
+			val defaultName = trailingTrunk ?: trunk
 
 			val options = stackManager.getBase()!!.prettyTree {
-				vc.isAncestor(
+				it.name == trunk || it.name == trailingTrunk || vc.isAncestor(
 					branchName = branchName,
 					possibleAncestorName = it.name,
 				)
