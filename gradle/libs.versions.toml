@@ -6,7 +6,7 @@ sqldelight = "2.0.0"
 clikt = "com.github.ajalt.clikt:clikt:4.2.0"
 github = "org.kohsuke:github-api:1.313"
 jline-terminal = "org.jline:jline-terminal:3.22.0"
-okio = "com.squareup.okio:okio:3.4.0"
+okio = "com.squareup.okio:okio:3.5.0"
 
 kotlin-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1"
 
