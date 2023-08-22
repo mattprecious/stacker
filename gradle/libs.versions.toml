@@ -4,7 +4,7 @@ sqldelight = "2.0.0"
 
 [libraries]
 clikt = "com.github.ajalt.clikt:clikt:4.2.0"
-github = "org.kohsuke:github-api:1.313"
+github = "org.kohsuke:github-api:1.316"
 jline-terminal = "org.jline:jline-terminal:3.23.0"
 okio = "com.squareup.okio:okio:3.5.0"
 
