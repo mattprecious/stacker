@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.PrintHelpMessage
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.clikt.parameters.options.flag
@@ -687,8 +688,8 @@ private fun error(message: String) {
 context(CliktCommand)
 private fun Remote.requireAuthenticated() {
 	if (!isAuthenticated) {
-		prompt(
-			text = "Please enter a GitHub access token",
+		terminal.prompt(
+			prompt = "Please enter a GitHub access token",
 			hideInput = true,
 		) {
 			when {
