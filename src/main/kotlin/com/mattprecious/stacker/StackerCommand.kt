@@ -7,7 +7,7 @@ import com.mattprecious.stacker.rendering.styleCode
 
 internal abstract class StackerCommand(
 	name: String? = null,
-	val shortAlias: String? = null,
+	private val shortAlias: String? = null,
 ) : CliktCommand(
 	name = name,
 ) {
