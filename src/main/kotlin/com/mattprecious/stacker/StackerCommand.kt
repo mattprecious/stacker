@@ -1,6 +1,9 @@
 package com.mattprecious.stacker
 
+import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
+import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.rendering.styleCode
 
 internal abstract class StackerCommand(
 	name: String? = null,
@@ -34,6 +37,13 @@ internal abstract class StackerCommand(
 			registeredSubcommands()
 				.filterIsInstance<StackerCommand>()
 				.forEach { it.addShortAliases(destination, withMyAlias, withMyCommand) }
+		}
+	}
+
+	protected fun requireInitialized(configManager: ConfigManager) {
+		if (!configManager.repoInitialized) {
+			error("Stacker must be initialized, first. Please run ${"st init".styleCode()}.")
+			throw Abort()
 		}
 	}
 }
