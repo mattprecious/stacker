@@ -47,10 +47,6 @@ private class Stacker(
 				stackManager = stackManager,
 				vc = vc,
 			),
-			Init(
-				configManager = configManager,
-				vc = vc,
-			),
 			Log(
 				configManager = configManager,
 				stackManager = stackManager,
@@ -60,6 +56,10 @@ private class Stacker(
 				configManager = configManager,
 				locker = locker,
 				stackManager = stackManager,
+				vc = vc,
+			),
+			Repo(
+				configManager = configManager,
 				vc = vc,
 			),
 			Stack(
@@ -90,44 +90,57 @@ private class Stacker(
 	}
 }
 
-private class Init(
-	private val configManager: ConfigManager,
-	private val vc: VersionControl,
-) : StackerCommand() {
-	override fun run() {
-		val (currentTrunk, currentTrailingTrunk) = if (configManager.repoInitialized) {
-			configManager.trunk to configManager.trailingTrunk
-		} else {
-			null to null
-		}
-
-		val branches = vc.branches
-		val trunk = interactivePrompt(
-			message = "Select your trunk branch, which you open pull requests against",
-			options = branches,
-			// TODO: Infer without hard coding.
-			default = currentTrunk ?: "main",
+private class Repo(
+	configManager: ConfigManager,
+	vc: VersionControl,
+) : StackerCommand(shortAlias = "r") {
+	init {
+		subcommands(
+			Init(configManager, vc),
 		)
+	}
 
-		val trunkSha = vc.getSha(trunk)
+	override fun run() = Unit
 
-		val useTrailing = YesNoPrompt(
-			terminal = currentContext.terminal,
-			prompt = "Do you use a trailing-trunk workflow?",
-			default = currentTrailingTrunk != null,
-		).ask() == true
+	private class Init(
+		private val configManager: ConfigManager,
+		private val vc: VersionControl,
+	) : StackerCommand() {
+		override fun run() {
+			val (currentTrunk, currentTrailingTrunk) = if (configManager.repoInitialized) {
+				configManager.trunk to configManager.trailingTrunk
+			} else {
+				null to null
+			}
 
-		val trailingTrunk = if (!useTrailing) {
-			null
-		} else {
-			interactivePrompt(
-				message = "Select your trailing trunk branch, which you branch from",
-				options = branches.filterNot { it == trunk },
-				default = currentTrailingTrunk,
+			val branches = vc.branches
+			val trunk = interactivePrompt(
+				message = "Select your trunk branch, which you open pull requests against",
+				options = branches,
+				// TODO: Infer without hard coding.
+				default = currentTrunk ?: "main",
 			)
-		}
 
-		configManager.initializeRepo(trunk = trunk, trunkSha = trunkSha, trailingTrunk = trailingTrunk)
+			val trunkSha = vc.getSha(trunk)
+
+			val useTrailing = YesNoPrompt(
+				terminal = currentContext.terminal,
+				prompt = "Do you use a trailing-trunk workflow?",
+				default = currentTrailingTrunk != null,
+			).ask() == true
+
+			val trailingTrunk = if (!useTrailing) {
+				null
+			} else {
+				interactivePrompt(
+					message = "Select your trailing trunk branch, which you branch from",
+					options = branches.filterNot { it == trunk },
+					default = currentTrailingTrunk,
+				)
+			}
+
+			configManager.initializeRepo(trunk = trunk, trunkSha = trunkSha, trailingTrunk = trailingTrunk)
+		}
 	}
 }
 
