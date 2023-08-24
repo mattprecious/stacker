@@ -17,12 +17,14 @@ internal class Stacker(
 	configManager: ConfigManager,
 	locker: Locker,
 	remote: Remote,
-	private val stackManager: StackManager,
-	private val vc: VersionControl,
+	stackManager: StackManager,
+	vc: VersionControl,
 ) : StackerCommand(
 	name = "st",
 ) {
 	init {
+		stackManager.reconcileBranches(vc)
+
 		subcommands(
 			Branch(
 				configManager = configManager,
@@ -63,9 +65,7 @@ internal class Stacker(
 		)
 	}
 
-	override fun run() {
-		stackManager.reconcileBranches(vc)
-	}
+	override fun run() = Unit
 
 	private fun StackManager.reconcileBranches(
 		vc: VersionControl,
