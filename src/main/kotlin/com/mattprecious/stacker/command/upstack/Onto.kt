@@ -2,12 +2,12 @@ package com.mattprecious.stacker.command.upstack
 
 import com.github.ajalt.clikt.core.Abort
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.flattenUp
+import com.mattprecious.stacker.command.perform
+import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.error
-import com.mattprecious.stacker.flattenUp
 import com.mattprecious.stacker.lock.Locker
-import com.mattprecious.stacker.perform
-import com.mattprecious.stacker.prettyTree
 import com.mattprecious.stacker.rendering.interactivePrompt
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode

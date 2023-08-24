@@ -3,10 +3,10 @@ package com.mattprecious.stacker.command.branch
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
-import com.mattprecious.stacker.prettyTree
 import com.mattprecious.stacker.rendering.interactivePrompt
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.stack.StackManager
