@@ -5,7 +5,6 @@ import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.requireAuthenticated
 import com.mattprecious.stacker.command.submit
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.styleBranch
@@ -27,16 +26,18 @@ internal class Submit(
 
 		val currentBranch = stackManager.getBranch(vc.currentBranchName)
 		if (currentBranch == null) {
-			error(
+			echo(
 				message = "Cannot create a pull request from ${vc.currentBranchName.styleBranch()} since it is " +
 					"not tracked. Please track with ${"st branch track".styleCode()}.",
+				err = true,
 			)
 			throw Abort()
 		}
 
 		if (currentBranch.name == configManager.trunk || currentBranch.name == configManager.trailingTrunk) {
-			error(
+			echo(
 				message = "Cannot create a pull request from trunk branch ${currentBranch.name.styleBranch()}.",
+				err = true,
 			)
 			throw Abort()
 		}

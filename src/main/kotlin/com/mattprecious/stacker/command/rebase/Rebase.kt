@@ -7,7 +7,6 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
@@ -33,7 +32,7 @@ internal class Rebase(
 
 	private fun abortOperation() {
 		if (!locker.hasLock()) {
-			error("Nothing to abort.")
+			echo("Nothing to abort.", err = true)
 			throw Abort()
 		}
 
@@ -49,7 +48,7 @@ internal class Rebase(
 
 	private fun continueOperation() {
 		if (!locker.hasLock()) {
-			error("Nothing to continue.")
+			echo("Nothing to continue.", err = true)
 			throw Abort()
 		}
 

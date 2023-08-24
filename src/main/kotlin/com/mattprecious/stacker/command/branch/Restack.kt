@@ -6,7 +6,6 @@ import com.github.ajalt.clikt.parameters.arguments.optional
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
@@ -28,9 +27,10 @@ internal class Restack(
 		val currentBranchName = vc.currentBranchName
 		val branchName = branchName ?: currentBranchName
 		if (stackManager.getBranch(currentBranchName) == null) {
-			error(
+			echo(
 				message = "Cannot restack ${currentBranchName.styleBranch()} since it is not tracked. " +
 					"Please track with ${"st branch track".styleCode()}.",
+				err = true,
 			)
 			throw Abort()
 		}

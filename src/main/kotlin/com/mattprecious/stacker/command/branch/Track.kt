@@ -5,7 +5,6 @@ import com.github.ajalt.clikt.parameters.arguments.optional
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.interactivePrompt
 import com.mattprecious.stacker.rendering.styleBranch
@@ -27,7 +26,7 @@ internal class Track(
 		val branchName = branchName ?: vc.currentBranchName
 		val currentBranch = stackManager.getBranch(branchName)
 		if (currentBranch != null) {
-			error(message = "Branch ${branchName.styleBranch()} is already tracked.")
+			echo(message = "Branch ${branchName.styleBranch()} is already tracked.", err = true)
 			return
 		}
 

@@ -6,7 +6,6 @@ import com.github.ajalt.clikt.parameters.arguments.optional
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.interactivePrompt
 import com.mattprecious.stacker.stack.StackManager
@@ -36,7 +35,7 @@ internal class Checkout(
 		} else if (vc.branches.contains(branchName)) {
 			branchName!!
 		} else {
-			error("'$branchName' does not match any branches known to git.")
+			echo("'$branchName' does not match any branches known to git.", err = true)
 			throw Abort()
 		}
 

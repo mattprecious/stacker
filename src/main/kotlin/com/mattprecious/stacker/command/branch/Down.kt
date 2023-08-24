@@ -3,7 +3,6 @@ package com.mattprecious.stacker.command.branch
 import com.github.ajalt.clikt.core.Abort
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
@@ -20,7 +19,7 @@ internal class Down(
 
 		val parent = stackManager.getBranch(vc.currentBranchName)!!.parent
 		if (parent == null) {
-			error("Already at the base.")
+			echo("Already at the base.", err = true)
 			throw Abort()
 		}
 
