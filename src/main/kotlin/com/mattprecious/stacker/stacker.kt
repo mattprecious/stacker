@@ -31,7 +31,7 @@ import com.mattprecious.stacker.stack.Branch as StackBranch
 
 private class Stacker(
 	configManager: ConfigManager,
-	private val locker: Locker,
+	locker: Locker,
 	remote: Remote,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
@@ -60,10 +60,12 @@ private class Stacker(
 			),
 			Repo(
 				configManager = configManager,
+				locker = locker,
 				vc = vc,
 			),
 			Stack(
 				configManager = configManager,
+				locker = locker,
 				remote = remote,
 				stackManager = stackManager,
 				vc = vc,
@@ -78,25 +80,18 @@ private class Stacker(
 	}
 
 	override fun run() {
-		if (locker.hasLock() && currentContext.invokedSubcommand !is Rebase) {
-			error(
-				"A restack is currently in progress. Please run ${"st rebase --abort".styleCode()} or resolve any " +
-					"conflicts and run ${"st rebase --continue".styleCode()}.",
-			)
-			throw Abort()
-		}
-
 		stackManager.reconcileBranches(vc)
 	}
 }
 
 private class Repo(
 	configManager: ConfigManager,
+	locker: Locker,
 	vc: VersionControl,
 ) : StackerCommand(shortAlias = "r") {
 	init {
 		subcommands(
-			Init(configManager, vc),
+			Init(configManager, locker, vc),
 		)
 	}
 
@@ -104,9 +99,12 @@ private class Repo(
 
 	private class Init(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val vc: VersionControl,
 	) : StackerCommand() {
 		override fun run() {
+			requireNoLock(locker)
+
 			val (currentTrunk, currentTrailingTrunk) = if (configManager.repoInitialized) {
 				configManager.trunk to configManager.trailingTrunk
 			} else {
@@ -153,18 +151,18 @@ private class Branch(
 ) : StackerCommand(shortAlias = "b") {
 	init {
 		subcommands(
-			Bottom(configManager, stackManager, vc),
-			Checkout(configManager, stackManager, vc),
-			Create(configManager, stackManager, vc),
-			Delete(configManager, stackManager, vc),
-			Down(configManager, stackManager, vc),
-			Rename(configManager, stackManager, vc),
+			Bottom(configManager, locker, stackManager, vc),
+			Checkout(configManager, locker, stackManager, vc),
+			Create(configManager, locker, stackManager, vc),
+			Delete(configManager, locker, stackManager, vc),
+			Down(configManager, locker, stackManager, vc),
+			Rename(configManager, locker, stackManager, vc),
 			Restack(configManager, locker, stackManager, vc),
-			Submit(configManager, remote, stackManager, vc),
-			Top(configManager, stackManager, vc),
-			Track(configManager, stackManager, vc),
-			Untrack(configManager, stackManager, vc),
-			Up(configManager, stackManager, vc),
+			Submit(configManager, locker, remote, stackManager, vc),
+			Top(configManager, locker, stackManager, vc),
+			Track(configManager, locker, stackManager, vc),
+			Untrack(configManager, locker, stackManager, vc),
+			Up(configManager, locker, stackManager, vc),
 		)
 	}
 
@@ -172,6 +170,7 @@ private class Branch(
 
 	private class Track(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "tr") {
@@ -179,6 +178,7 @@ private class Branch(
 
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val branchName = branchName ?: vc.currentBranchName
 			val currentBranch = stackManager.getBranch(branchName)
@@ -214,6 +214,7 @@ private class Branch(
 
 	private class Untrack(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "ut") {
@@ -221,6 +222,7 @@ private class Branch(
 
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val branchName = branchName ?: vc.currentBranchName
 			val currentBranch = stackManager.getBranch(branchName)
@@ -235,6 +237,7 @@ private class Branch(
 
 	private class Create(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "c") {
@@ -242,6 +245,7 @@ private class Branch(
 
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val currentBranch = stackManager.getBranch(vc.currentBranchName)
 			if (currentBranch == null) {
@@ -259,6 +263,7 @@ private class Branch(
 
 	private class Rename(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "rn") {
@@ -266,6 +271,7 @@ private class Branch(
 
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val currentBranchName = vc.currentBranchName
 			val currentBranch = stackManager.getBranch(currentBranchName)
@@ -284,6 +290,7 @@ private class Branch(
 
 	private class Delete(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "dl") {
@@ -291,6 +298,7 @@ private class Branch(
 
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val currentBranchName = vc.currentBranchName
 
@@ -320,6 +328,7 @@ private class Branch(
 
 	private class Checkout(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "co") {
@@ -327,6 +336,7 @@ private class Branch(
 
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val branch = if (branchName == null) {
 				val options = stackManager.getBase()!!.prettyTree()
@@ -350,11 +360,13 @@ private class Branch(
 
 	private class Up(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "u") {
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val options = stackManager.getBranch(vc.currentBranchName)!!.children
 			val branch = interactivePrompt(
@@ -370,11 +382,13 @@ private class Branch(
 
 	private class Down(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "d") {
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val parent = stackManager.getBranch(vc.currentBranchName)!!.parent
 			if (parent == null) {
@@ -388,11 +402,13 @@ private class Branch(
 
 	private class Top(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "t") {
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val options = stackManager.getBranch(vc.currentBranchName)!!.leaves()
 			val branch = interactivePrompt(
@@ -408,11 +424,13 @@ private class Branch(
 
 	private class Bottom(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "b") {
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val trunk = configManager.trunk
 			val trailingTrunk = configManager.trailingTrunk
@@ -442,6 +460,7 @@ private class Branch(
 
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val currentBranchName = vc.currentBranchName
 			val branchName = branchName ?: currentBranchName
@@ -466,12 +485,14 @@ private class Branch(
 
 	private class Submit(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val remote: Remote,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "s") {
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val currentBranch = stackManager.getBranch(vc.currentBranchName)
 			if (currentBranch == null) {
@@ -499,13 +520,14 @@ private class Branch(
 
 private class Stack(
 	configManager: ConfigManager,
+	locker: Locker,
 	remote: Remote,
 	stackManager: StackManager,
 	vc: VersionControl,
 ) : StackerCommand(shortAlias = "s") {
 	init {
 		subcommands(
-			Submit(configManager, remote, stackManager, vc),
+			Submit(configManager, locker, remote, stackManager, vc),
 		)
 	}
 
@@ -513,12 +535,14 @@ private class Stack(
 
 	private class Submit(
 		private val configManager: ConfigManager,
+		private val locker: Locker,
 		private val remote: Remote,
 		private val stackManager: StackManager,
 		private val vc: VersionControl,
 	) : StackerCommand(shortAlias = "s") {
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val currentBranch = stackManager.getBranch(vc.currentBranchName)
 			if (currentBranch == null) {
@@ -569,6 +593,7 @@ private class Upstack(
 	) : StackerCommand(shortAlias = "r") {
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val currentBranchName = vc.currentBranchName
 			val currentBranch = stackManager.getBranch(currentBranchName)
@@ -599,6 +624,7 @@ private class Upstack(
 	) : StackerCommand(shortAlias = "o") {
 		override fun run() {
 			requireInitialized(configManager)
+			requireNoLock(locker)
 
 			val currentBranchName = vc.currentBranchName
 			val currentBranch = stackManager.getBranch(currentBranchName)
