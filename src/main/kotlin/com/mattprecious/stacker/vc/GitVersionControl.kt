@@ -59,6 +59,7 @@ import com.github.git2_h_1.git_remote_push
 import com.github.git2_h_1.git_remote_url
 import com.github.git2_h_1.git_repository_set_head
 import com.github.git2_h_1.git_revparse_single
+import com.github.git2_h_2.GIT_CREDTYPE_SSH_KEY
 import com.github.git2_h_2.GIT_REBASE_NO_OPERATION
 import com.github.git2_h_2.git_libgit2_init
 import com.github.git2_h_2.git_libgit2_shutdown
@@ -222,7 +223,11 @@ class GitVersionControl(
 		git_strarray.`count$set`(refs, branches.size.toLong())
 		git_strarray.`strings$set`(refs, strings)
 
-		val acquireCredentialCb = git_credential_acquire_cb { out, _, username, _, _ ->
+		val acquireCredentialCb = git_credential_acquire_cb { out, _, username, types, _ ->
+			check(types and GIT_CREDTYPE_SSH_KEY() == GIT_CREDTYPE_SSH_KEY()) {
+				"Unsupported credential types: $types"
+			}
+
 			checkError(git_credential_ssh_key_from_agent(out, username))
 
 			return@git_credential_acquire_cb 0
