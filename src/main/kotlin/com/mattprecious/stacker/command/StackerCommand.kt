@@ -1,8 +1,9 @@
-package com.mattprecious.stacker
+package com.mattprecious.stacker.command
 
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
 import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.styleCode
 
