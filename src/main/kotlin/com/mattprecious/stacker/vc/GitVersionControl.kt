@@ -64,7 +64,6 @@ import com.github.git2_h_2.git_libgit2_init
 import com.github.git2_h_2.git_libgit2_shutdown
 import com.github.git_buf
 import com.github.git_checkout_options
-import com.github.git_credential
 import com.github.git_credential_acquire_cb
 import com.github.git_error
 import com.github.git_oid
@@ -224,11 +223,8 @@ class GitVersionControl(
 		git_strarray.`strings$set`(refs, strings)
 
 		val acquireCredentialCb = git_credential_acquire_cb { out, _, username, _, _ ->
-			val credentials = withAllocate(git_credential.`$LAYOUT`()) {
-				checkError(git_credential_ssh_key_from_agent(it, username))
-			}
+			checkError(git_credential_ssh_key_from_agent(out, username))
 
-			out.copyFrom(credentials)
 			return@git_credential_acquire_cb 0
 		}
 		val acquireCredential = git_credential_acquire_cb.allocate(acquireCredentialCb, scope())
