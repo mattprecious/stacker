@@ -1,6 +1,5 @@
 package com.mattprecious.stacker
 
-import com.github.ajalt.clikt.core.CliktCommand
 import com.mattprecious.stacker.command.Stacker
 import com.mattprecious.stacker.config.RealConfigManager
 import com.mattprecious.stacker.lock.RealLocker
@@ -10,11 +9,6 @@ import com.mattprecious.stacker.stack.RealStackManager
 import com.mattprecious.stacker.vc.GitVersionControl
 import java.lang.foreign.Arena
 import kotlin.io.path.div
-
-context(CliktCommand)
-fun error(message: String) {
-	echo(message, err = true)
-}
 
 fun main(args: Array<String>) {
 	Arena.openConfined().use { arena ->

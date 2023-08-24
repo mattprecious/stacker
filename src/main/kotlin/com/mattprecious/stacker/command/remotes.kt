@@ -5,7 +5,6 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.ConversionResult
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.stack.Branch
 import com.mattprecious.stacker.vc.VersionControl
@@ -26,12 +25,12 @@ internal fun Remote.requireAuthenticated() {
 	}
 
 	if (repoName == null) {
-		error("Unable to parse repository name from origin URL.")
+		echo("Unable to parse repository name from origin URL.", err = true)
 		throw Abort()
 	}
 
 	if (!hasRepoAccess) {
-		error("Personal token does not have access to $repoName.")
+		echo("Personal token does not have access to $repoName.", err = true)
 		throw Abort()
 	}
 }

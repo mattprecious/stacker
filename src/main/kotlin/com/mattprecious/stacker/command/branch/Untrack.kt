@@ -4,7 +4,6 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.stack.StackManager
@@ -25,7 +24,7 @@ internal class Untrack(
 		val branchName = branchName ?: vc.currentBranchName
 		val currentBranch = stackManager.getBranch(branchName)
 		if (currentBranch == null) {
-			error(message = "Branch ${branchName.styleBranch()} is already not tracked.")
+			echo(message = "Branch ${branchName.styleBranch()} is already not tracked.", err = true)
 			return
 		}
 

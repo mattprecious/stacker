@@ -6,7 +6,6 @@ import com.mattprecious.stacker.command.flattenUp
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.interactivePrompt
 import com.mattprecious.stacker.rendering.styleBranch
@@ -27,15 +26,16 @@ internal class Onto(
 		val currentBranchName = vc.currentBranchName
 		val currentBranch = stackManager.getBranch(currentBranchName)
 		if (currentBranch == null) {
-			error(
+			echo(
 				message = "Cannot retarget ${currentBranchName.styleBranch()} since it is not tracked. " +
 					"Please track with ${"st branch track".styleCode()}.",
+				err = true,
 			)
 			throw Abort()
 		}
 
 		if (currentBranchName == configManager.trunk || currentBranchName == configManager.trailingTrunk) {
-			error(message = "Cannot retarget a trunk branch.")
+			echo(message = "Cannot retarget a trunk branch.", err = true)
 			throw Abort()
 		}
 

@@ -3,7 +3,6 @@ package com.mattprecious.stacker.command
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.styleCode
 
@@ -44,16 +43,17 @@ internal abstract class StackerCommand(
 
 	protected fun requireInitialized(configManager: ConfigManager) {
 		if (!configManager.repoInitialized) {
-			error("Stacker must be initialized, first. Please run ${"st init".styleCode()}.")
+			echo("Stacker must be initialized, first. Please run ${"st init".styleCode()}.", err = true)
 			throw Abort()
 		}
 	}
 
 	protected fun requireNoLock(locker: Locker) {
 		if (locker.hasLock()) {
-			error(
-				"A restack is currently in progress. Please run ${"st rebase --abort".styleCode()} or resolve any " +
+			echo(
+				message = "A restack is currently in progress. Please run ${"st rebase --abort".styleCode()} or resolve any " +
 					"conflicts and run ${"st rebase --continue".styleCode()}.",
+				err = true,
 			)
 			throw Abort()
 		}

@@ -5,7 +5,6 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
@@ -26,14 +25,14 @@ internal class Delete(
 
 		val branchName = branchName ?: currentBranchName
 		if (branchName == configManager.trunk || branchName == configManager.trailingTrunk) {
-			error("Cannnot delete a trunk branch.")
+			echo("Cannnot delete a trunk branch.", err = true)
 			throw Abort()
 		}
 
 		val branch = stackManager.getBranch(branchName)
 		if (branch != null) {
 			if (branch.children.isNotEmpty()) {
-				error("Branch has children. Please retarget or untrack them.")
+				echo("Branch has children. Please retarget or untrack them.", err = true)
 				throw Abort()
 			}
 

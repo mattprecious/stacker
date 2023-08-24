@@ -4,7 +4,6 @@ import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.error
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
@@ -26,9 +25,10 @@ internal class Rename(
 		val currentBranchName = vc.currentBranchName
 		val currentBranch = stackManager.getBranch(currentBranchName)
 		if (currentBranch == null) {
-			error(
+			echo(
 				message = "Cannot rename ${currentBranchName.styleBranch()} since it is not tracked. " +
 					"Please track with ${"st branch track".styleCode()}.",
+				err = true,
 			)
 			throw Abort()
 		}
