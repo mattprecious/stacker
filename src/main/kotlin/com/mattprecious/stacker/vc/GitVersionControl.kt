@@ -217,6 +217,11 @@ class GitVersionControl(
 	}
 
 	override fun pushBranches(branchNames: List<String>): Unit = arena {
+		// Libgit2 auth doesn't work on enterprise repos for some reason. Fall back to shell command for now.
+		shell.exec("git", "push", "-f", "--atomic", "origin", *branchNames.toTypedArray())
+	}
+
+	private fun pushBranchesLibGit(branchNames: List<String>): Unit = arena {
 		val strings = allocate(branches.map { it.asBranchRevSpec() }.map { "+$it:$it" })
 
 		val refs = allocate(git_strarray.`$LAYOUT`())
