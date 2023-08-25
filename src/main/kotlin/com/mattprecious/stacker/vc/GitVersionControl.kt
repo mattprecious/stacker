@@ -1,5 +1,6 @@
 package com.mattprecious.stacker.vc
 
+import com.github.git2_h
 import com.github.git2_h.C_POINTER
 import com.github.git2_h.GIT_BRANCH_LOCAL
 import com.github.git2_h.GIT_CHECKOUT_OPTIONS_VERSION
@@ -17,7 +18,6 @@ import com.github.git2_h.git_branch_iterator_free
 import com.github.git2_h.git_branch_iterator_new
 import com.github.git2_h.git_branch_move
 import com.github.git2_h.git_branch_next
-import com.github.git2_h.git_buf_dispose
 import com.github.git2_h.git_commit_body
 import com.github.git2_h.git_error_last
 import com.github.git2_h.git_merge_base
@@ -87,8 +87,12 @@ class GitVersionControl(
 	arena: Arena,
 	private val shell: Shell,
 ) : VersionControl {
+	private val nullableRepo: MemorySegment?
 	private val repo: MemorySegment
+		get() = nullableRepo!!
 
+	override val repoDiscovered: Boolean
+		get() = nullableRepo != null
 	override val configDirectory: Path
 		get() = Path.of(git_repository_path(repo).utf8())
 
@@ -111,18 +115,29 @@ class GitVersionControl(
 		loadLibGit2()
 		git_libgit2_init()
 
-		val currentPath = arena.allocate(System.getProperty("user.dir"))
+		val repoPathBuf = with(arena) { repoPath() }
 
-		val repoPathBuf = arena.withAllocate(git_buf.`$LAYOUT`()) {
-			checkError(git_repository_discover(it, currentPath, 0, NULL))
+		nullableRepo = if (repoPathBuf == null) {
+			null
+		} else {
+			val repo = arena.withAllocate {
+				val repoPath = git_buf.`ptr$get`(repoPathBuf)
+				checkError(git_repository_open(it, repoPath))
+			}.deref()
+			git2_h.git_buf_dispose(repoPathBuf)
+			repo
 		}
+	}
 
-		repo = arena.withAllocate {
-			val repoPath = git_buf.`ptr$get`(repoPathBuf)
-			checkError(git_repository_open(it, repoPath))
-		}.deref()
-
-		git_buf_dispose(repoPathBuf)
+	/** @return git_buf */
+	context(Arena)
+	private fun repoPath(): MemorySegment? {
+		val currentPath = allocate(System.getProperty("user.dir"))
+		return withAllocate(git_buf.`$LAYOUT`()) {
+			val code = git_repository_discover(it, currentPath, 0, NULL)
+			if (code == ReturnCodes.ENOTFOUND) return null
+			checkError(code)
+		}
 	}
 
 	override fun close() {

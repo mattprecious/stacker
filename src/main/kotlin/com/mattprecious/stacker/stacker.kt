@@ -9,11 +9,17 @@ import com.mattprecious.stacker.stack.RealStackManager
 import com.mattprecious.stacker.vc.GitVersionControl
 import java.lang.foreign.Arena
 import kotlin.io.path.div
+import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
 	Arena.openConfined().use { arena ->
 		val shell = RealShell()
 		GitVersionControl(arena, shell).use { vc ->
+
+			if (!vc.repoDiscovered) {
+				println("No repository found at ${System.getProperty("user.dir")}.")
+				exitProcess(-1)
+			}
 
 			val dbPath = vc.configDirectory / "stacker.db"
 			withDatabase(dbPath.toString()) { db ->
