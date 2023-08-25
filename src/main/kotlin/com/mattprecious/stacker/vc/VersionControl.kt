@@ -3,6 +3,7 @@ package com.mattprecious.stacker.vc
 import java.nio.file.Path
 
 interface VersionControl : AutoCloseable {
+	val repoDiscovered: Boolean
 	val configDirectory: Path
 	val currentBranchName: String
 	val originUrl: String
