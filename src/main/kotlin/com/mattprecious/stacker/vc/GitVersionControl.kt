@@ -19,6 +19,7 @@ import com.github.git2_h.git_branch_iterator_new
 import com.github.git2_h.git_branch_move
 import com.github.git2_h.git_branch_next
 import com.github.git2_h.git_commit_body
+import com.github.git2_h.git_config_snapshot
 import com.github.git2_h.git_error_last
 import com.github.git2_h.git_merge_base
 import com.github.git2_h.git_oid_equal
@@ -31,6 +32,7 @@ import com.github.git2_h.git_rebase_next
 import com.github.git2_h.git_rebase_operation_byindex
 import com.github.git2_h.git_remote_init_callbacks
 import com.github.git2_h.git_remote_lookup
+import com.github.git2_h.git_repository_config
 import com.github.git2_h.git_repository_discover
 import com.github.git2_h.git_repository_free
 import com.github.git2_h.git_repository_head
@@ -45,6 +47,7 @@ import com.github.git2_h_1.git_checkout_options_init
 import com.github.git2_h_1.git_checkout_tree
 import com.github.git2_h_1.git_commit_lookup
 import com.github.git2_h_1.git_commit_summary
+import com.github.git2_h_1.git_config_get_string
 import com.github.git2_h_1.git_credential_ssh_key_from_agent
 import com.github.git2_h_1.git_rebase_abort
 import com.github.git2_h_1.git_rebase_finish
@@ -109,6 +112,25 @@ class GitVersionControl(
 			val list = iterator.mapBranches(flags) { git_reference_shorthand(it).utf8() }
 			git_branch_iterator_free(iterator)
 			return@arena list
+		}
+
+	override val editor: String?
+		get() = arena {
+			val config = withAllocate { checkError(git_repository_config(it, repo)) }.deref()
+			val configSnapshot = withAllocate { checkError(git_config_snapshot(it, config)) }.deref()
+
+			return@arena try {
+				val editor = withAllocate {
+					val code = git_config_get_string(it, configSnapshot, allocate("core.editor"))
+					if (code == ReturnCodes.ENOTFOUND) return@arena null
+					checkError(code)
+				}
+
+				editor.deref().utf8()
+			} finally {
+				git2_h.git_config_free(configSnapshot)
+				git2_h.git_config_free(config)
+			}
 		}
 
 	init {

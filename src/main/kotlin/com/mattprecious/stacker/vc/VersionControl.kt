@@ -8,6 +8,7 @@ interface VersionControl : AutoCloseable {
 	val currentBranchName: String
 	val originUrl: String
 	val branches: List<String>
+	val editor: String?
 
 	fun fallthrough(commands: List<String>)
 
