@@ -43,7 +43,7 @@ internal abstract class StackerCommand(
 
 	protected fun requireInitialized(configManager: ConfigManager) {
 		if (!configManager.repoInitialized) {
-			echo("Stacker must be initialized, first. Please run ${"st init".styleCode()}.", err = true)
+			echo("Stacker must be initialized, first. Please run ${"st repo init".styleCode()}.", err = true)
 			throw Abort()
 		}
 	}
