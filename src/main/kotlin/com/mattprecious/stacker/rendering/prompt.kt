@@ -2,8 +2,10 @@ package com.mattprecious.stacker.rendering
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.mattprecious.stacker.rendering.Ansi.clearEntireLine
+import com.mattprecious.stacker.rendering.Ansi.cursorDown
 import com.mattprecious.stacker.rendering.Ansi.cursorUp
 import com.mattprecious.stacker.rendering.Ansi.reset
+import com.mattprecious.stacker.rendering.Ansi.restorePosition
 import com.mattprecious.stacker.rendering.Ansi.underline
 import org.jline.terminal.TerminalBuilder
 
@@ -27,12 +29,28 @@ fun <T> interactivePrompt(
 		var highlighted = default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0
 		// Make use of the terminal clearing part of the loop by temporarily holding onto the return value.
 		var selected: Int? = null
+		var filter = ""
+		var filteredOptions = options
+
+		fun updateFilter(newFilter: String) {
+			if (newFilter == filter) return
+			filter = newFilter
+			filteredOptions = options.filter { valueTransform(it).contains(filter) }
+			highlighted = highlighted.coerceIn(0, (filteredOptions.size - 1).coerceAtLeast(0))
+		}
 
 		while (true) {
 			with(builder) {
-				if (builder.isNotEmpty()) {
+				if (isNotEmpty()) {
+					// TODO: This is wrong if any lines soft wrapped.
+					val clearingSize = lines().size
 					clear()
-					repeat(options.size + 1) {
+
+					repeat(clearingSize - 1) {
+						append(cursorDown)
+					}
+
+					repeat(clearingSize - 1) {
 						append(clearEntireLine)
 						append(cursorUp)
 					}
@@ -41,18 +59,23 @@ fun <T> interactivePrompt(
 				}
 
 				append(message)
-				append(':')
+				append(": ")
 
-				selected?.let {
-					val result = options[it]
-					appendLine(" ${valueTransform(result)}")
-					outputTerminal.rawPrint(toString())
-					return result
+				selected.let {
+					if (it == null) {
+						append(filter)
+						append(Ansi.savePosition)
+					} else {
+						val result = filteredOptions[it]
+						appendLine(valueTransform(result))
+						outputTerminal.rawPrint(toString())
+						return result
+					}
 				}
 
 				appendLine()
 
-				options.forEachIndexed { index, option ->
+				filteredOptions.forEachIndexed { index, option ->
 					val display = displayTransform(option)
 					if (highlighted == index) {
 						appendLine("❯ $underline$display$reset")
@@ -61,6 +84,8 @@ fun <T> interactivePrompt(
 					}
 				}
 
+				append(restorePosition)
+
 				outputTerminal.rawPrint(toString())
 			}
 
@@ -68,9 +93,11 @@ fun <T> interactivePrompt(
 
 			val reader = inputTerminal.reader()
 			while (true) {
-				when (reader.read()) {
+				when (val c = reader.read()) {
 					10, 13 -> {
-						selected = highlighted
+						if (filteredOptions.isNotEmpty()) {
+							selected = highlighted
+						}
 						break
 					}
 
@@ -79,12 +106,20 @@ fun <T> interactivePrompt(
 							91 -> {
 								when (reader.read()) {
 									65 -> highlighted = (highlighted - 1).coerceAtLeast(0)
-									66 -> highlighted = (highlighted + 1).coerceAtMost(options.size - 1)
+									66 -> highlighted = (highlighted + 1).coerceAtMost(filteredOptions.size - 1)
 								}
 
 								break
 							}
 						}
+					}
+					in 32..126 -> {
+						updateFilter(filter + c.toChar())
+						break
+					}
+					127 -> {
+						updateFilter(filter.dropLast(1))
+						break
 					}
 				}
 			}
