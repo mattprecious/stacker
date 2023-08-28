@@ -2,6 +2,7 @@ package com.mattprecious.stacker.command
 
 import com.github.ajalt.clikt.core.subcommands
 import com.mattprecious.stacker.command.branch.Branch
+import com.mattprecious.stacker.command.downstack.Downstack
 import com.mattprecious.stacker.command.log.Log
 import com.mattprecious.stacker.command.rebase.Rebase
 import com.mattprecious.stacker.command.repo.Repo
@@ -30,6 +31,12 @@ internal class Stacker(
 				configManager = configManager,
 				locker = locker,
 				remote = remote,
+				stackManager = stackManager,
+				vc = vc,
+			),
+			Downstack(
+				configManager = configManager,
+				locker = locker,
 				stackManager = stackManager,
 				vc = vc,
 			),

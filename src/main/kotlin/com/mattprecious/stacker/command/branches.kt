@@ -1,5 +1,6 @@
 package com.mattprecious.stacker.command
 
+import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.stack.Branch
 
 internal fun Branch.flattenUp(): List<Branch> {
@@ -13,6 +14,22 @@ internal fun Branch.flattenUp(): List<Branch> {
 
 		add(this@flattenUp)
 		addChildren()
+	}
+}
+
+internal fun Branch.flattenDown(
+	configManager: ConfigManager,
+): List<Branch> {
+	val trunk = configManager.trunk
+	val trailingTrunk = configManager.trailingTrunk
+	return buildList {
+		var branch = this@flattenDown
+		while (branch.name != trailingTrunk && branch.name != trunk) {
+			add(branch)
+			branch = branch.parent ?: break
+		}
+
+		add(branch)
 	}
 }
 
