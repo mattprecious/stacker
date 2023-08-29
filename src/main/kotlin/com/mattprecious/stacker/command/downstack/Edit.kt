@@ -63,6 +63,7 @@ internal class Edit(
 			val action = interactivePrompt(
 				"${branchName.styleBranch()} was removed from the list. What would you like to do?",
 				options = RemovedOption.entries,
+				filteringEnabled = false,
 				displayTransform = { it.render(trunk) },
 				valueTransform = { it.render(trunk) },
 			)
