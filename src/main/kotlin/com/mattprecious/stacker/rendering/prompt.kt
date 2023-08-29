@@ -13,6 +13,7 @@ context(CliktCommand)
 fun <T> interactivePrompt(
 	message: String,
 	options: List<T>,
+	filteringEnabled: Boolean = true,
 	default: T? = null,
 	displayTransform: (T) -> String = { it.toString() },
 	valueTransform: (T) -> String = { it.toString() },
@@ -116,11 +117,15 @@ fun <T> interactivePrompt(
 						}
 					}
 					in 32..126 -> {
-						updateFilter(filter + c.toChar())
+						if (filteringEnabled) {
+							updateFilter(filter + c.toChar())
+						}
 						break
 					}
 					127 -> {
-						updateFilter(filter.dropLast(1))
+						if (filteringEnabled) {
+							updateFilter(filter.dropLast(1))
+						}
 						break
 					}
 				}
