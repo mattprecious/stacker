@@ -25,6 +25,8 @@ fun <T> interactivePrompt(
 	val builder = StringBuilder(options.size)
 	val outputTerminal = currentContext.terminal
 
+	val labelSuffix = if (message.last().isLetterOrDigit()) ": " else " "
+
 	TerminalBuilder.terminal().use { inputTerminal ->
 		var highlighted = default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0
 		// Make use of the terminal clearing part of the loop by temporarily holding onto the return value.
@@ -59,7 +61,7 @@ fun <T> interactivePrompt(
 				}
 
 				append(message)
-				append(": ")
+				append(labelSuffix)
 
 				selected.let {
 					if (it == null) {
