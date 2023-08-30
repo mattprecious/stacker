@@ -2,7 +2,6 @@ package com.mattprecious.stacker.shell
 
 import okio.buffer
 import okio.source
-import java.util.concurrent.TimeUnit
 
 class RealShell : Shell {
 	override fun exec(
@@ -13,9 +12,7 @@ class RealShell : Shell {
 			redirectError(ProcessBuilder.Redirect.INHERIT)
 		}.start()
 
-		check(process.waitFor(20, TimeUnit.SECONDS)) {
-			"Process $command took more than 20 seconds"
-		}
+		process.waitFor()
 
 		val exitValue = process.exitValue()
 		check(exitValue == 0) {
