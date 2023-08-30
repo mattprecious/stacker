@@ -6,6 +6,10 @@ import com.github.git2_h.GIT_BRANCH_LOCAL
 import com.github.git2_h.GIT_CHECKOUT_OPTIONS_VERSION
 import com.github.git2_h.GIT_EAPPLIED
 import com.github.git2_h.GIT_ENOTFOUND
+import com.github.git2_h.GIT_FETCH_OPTIONS_VERSION
+import com.github.git2_h.GIT_MERGE_ANALYSIS_FASTFORWARD
+import com.github.git2_h.GIT_MERGE_ANALYSIS_UP_TO_DATE
+import com.github.git2_h.GIT_MERGE_PREFERENCE_NO_FASTFORWARD
 import com.github.git2_h.GIT_OK
 import com.github.git2_h.GIT_PUSH_OPTIONS_VERSION
 import com.github.git2_h.GIT_REBASE_OPERATION_PICK
@@ -21,6 +25,8 @@ import com.github.git2_h.git_branch_next
 import com.github.git2_h.git_commit_body
 import com.github.git2_h.git_config_snapshot
 import com.github.git2_h.git_error_last
+import com.github.git2_h.git_fetch_options_init
+import com.github.git2_h.git_merge_analysis_for_ref
 import com.github.git2_h.git_merge_base
 import com.github.git2_h.git_oid_equal
 import com.github.git2_h.git_oid_fromstr
@@ -30,6 +36,8 @@ import com.github.git2_h.git_rebase_commit
 import com.github.git2_h.git_rebase_free
 import com.github.git2_h.git_rebase_next
 import com.github.git2_h.git_rebase_operation_byindex
+import com.github.git2_h.git_remote_fetch
+import com.github.git2_h.git_remote_free
 import com.github.git2_h.git_remote_init_callbacks
 import com.github.git2_h.git_remote_lookup
 import com.github.git2_h.git_repository_config
@@ -43,6 +51,7 @@ import com.github.git2_h.git_signature_free
 import com.github.git2_h_1.GIT_ECONFLICT
 import com.github.git2_h_1.GIT_EUNMERGED
 import com.github.git2_h_1.GIT_ITEROVER
+import com.github.git2_h_1.git_annotated_commit_id
 import com.github.git2_h_1.git_checkout_options_init
 import com.github.git2_h_1.git_checkout_tree
 import com.github.git2_h_1.git_commit_lookup
@@ -70,6 +79,7 @@ import com.github.git_buf
 import com.github.git_checkout_options
 import com.github.git_credential_acquire_cb
 import com.github.git_error
+import com.github.git_fetch_options
 import com.github.git_oid
 import com.github.git_push_options
 import com.github.git_rebase_operation
@@ -82,7 +92,7 @@ import java.lang.foreign.Arena
 import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.MemorySegment.NULL
-import java.lang.foreign.ValueLayout
+import java.lang.foreign.ValueLayout.JAVA_INT
 import java.lang.foreign.ValueLayout.JAVA_LONG
 import java.nio.file.Path
 
@@ -265,6 +275,61 @@ class GitVersionControl(
 		git_strarray.`count$set`(refs, branches.size.toLong())
 		git_strarray.`strings$set`(refs, strings)
 
+		// TODO: Atomic? I don't think libgit2 supports this.
+		val options = withAllocate(git_push_options.`$LAYOUT`()) {
+			checkError(git_push_options_init(it, GIT_PUSH_OPTIONS_VERSION()))
+		}
+
+		git_push_options.`callbacks$slice`(options).copyFrom(createRemoteCallbacks())
+
+		val origin = getOrigin()
+		checkError(git_remote_push(origin, refs, options))
+		git_remote_free(origin)
+	}
+
+	override fun pull(branchName: String) {
+		// Libgit2 auth doesn't work on enterprise repos for some reason. Fall back to shell command for now.
+		val currentBranch = currentBranchName
+		checkout(branchName)
+		shell.exec("git", "pull", "origin", branchName)
+		checkout(currentBranch)
+	}
+
+	private fun pullLibGit(branchName: String): Unit = arena {
+		val pullOptions = withAllocate(git_fetch_options.`$LAYOUT`()) {
+			checkError(git_fetch_options_init(it, GIT_FETCH_OPTIONS_VERSION()))
+		}
+
+		git_fetch_options.`callbacks$slice`(pullOptions).copyFrom(createRemoteCallbacks())
+
+		val origin = getOrigin()
+		checkError(git_remote_fetch(origin, allocate(listOf(branchName)), pullOptions, NULL))
+		git_remote_free(origin)
+
+		val head = withAllocate {
+			checkError(git_annotated_commit_from_revspec(it, repo, allocate(branchName.asRemoteBranchRevSpec())))
+		}.deref()
+
+		val analysis = getMergeAnalysis(getBranch(branchName), head)
+		if (analysis.upToDate) {
+			return@arena
+		}
+
+		check(analysis.fastForward && !analysis.preferenceNoFastForward) {
+			"$branchName cannot be fast-forwarded."
+		}
+
+		val commitId = git_annotated_commit_id(head)
+		if (currentBranchName == branchName) {
+			checkoutTree(commitId)
+		}
+
+		setBranchTarget(branchName, commitId)
+	}
+
+	/** @return git_remote_callbacks */
+	context(Arena)
+	private fun createRemoteCallbacks(): MemorySegment {
 		val acquireCredentialCb = git_credential_acquire_cb { out, _, username, types, _ ->
 			check(types and GIT_CREDTYPE_SSH_KEY() == GIT_CREDTYPE_SSH_KEY()) {
 				"Unsupported credential types: $types"
@@ -274,6 +339,7 @@ class GitVersionControl(
 
 			return@git_credential_acquire_cb 0
 		}
+
 		val acquireCredential = git_credential_acquire_cb.allocate(acquireCredentialCb, scope())
 
 		// Is this bad? I don't know why it's not a known host.
@@ -286,14 +352,7 @@ class GitVersionControl(
 		git_remote_callbacks.`credentials$set`(callbacks, acquireCredential)
 		git_remote_callbacks.`certificate_check$set`(callbacks, certificateCheck)
 
-		// TODO: Atomic? I don't think libgit2 supports this.
-		val options = withAllocate(git_push_options.`$LAYOUT`()) {
-			checkError(git_push_options_init(it, GIT_PUSH_OPTIONS_VERSION()))
-		}
-
-		git_push_options.`callbacks$slice`(options).copyFrom(callbacks)
-
-		checkError(git_remote_push(getOrigin(), refs, options))
+		return callbacks
 	}
 
 	private fun <T> arena(block: Arena.() -> T) = Arena.openConfined().use(block)
@@ -307,6 +366,9 @@ class GitVersionControl(
 
 	/** Convert a branch name to a refspec. */
 	private fun String.asBranchRevSpec() = "refs/heads/$this"
+
+	/** Convert a branch name to a remote refspec. */
+	private fun String.asRemoteBranchRevSpec() = "refs/remotes/origin/$this"
 
 	/** @return git_oid* */
 	context(Arena)
@@ -334,7 +396,7 @@ class GitVersionControl(
 		return withAllocate { checkError(git_reference_lookup(it, repo, allocate(branchName.asBranchRevSpec()))) }.deref()
 	}
 
-	/** @return git_remote* */
+	/** @return git_remote*, should be freed with [git_remote_free]. */
 	context(Arena)
 	private fun getOrigin(): MemorySegment {
 		return withAllocate { checkError(git_remote_lookup(it, repo, allocate("origin"))) }.deref()
@@ -343,12 +405,47 @@ class GitVersionControl(
 	/** @param treeish git_commit* or git_object* */
 	context(Arena)
 	private fun checkout(branchName: String, treeish: MemorySegment) {
+		checkoutTree(treeish)
+		checkError(git_repository_set_head(repo, allocate(branchName.asBranchRevSpec())))
+	}
+
+	/** @param treeish git_commit* or git_object* */
+	context(Arena)
+	private fun checkoutTree(treeish: MemorySegment) {
 		val options = withAllocate(git_checkout_options.`$LAYOUT`()) {
 			git_checkout_options_init(it, GIT_CHECKOUT_OPTIONS_VERSION())
 		}
 
 		checkError(git_checkout_tree(repo, treeish, options))
-		checkError(git_repository_set_head(repo, allocate(branchName.asBranchRevSpec())))
+	}
+
+	private data class MergeAnalysis(
+		private val analysisFlags: Int,
+		private val mergePreferenceFlags: Int,
+	) {
+		val upToDate = analysisFlags and GIT_MERGE_ANALYSIS_UP_TO_DATE() != 0
+		val fastForward = analysisFlags and GIT_MERGE_ANALYSIS_FASTFORWARD() != 0
+		val preferenceNoFastForward = mergePreferenceFlags and GIT_MERGE_PREFERENCE_NO_FASTFORWARD() != 0
+	}
+
+	/**
+	 * @param into git_reference*
+	 * @param commit git_annotated_commit*
+	 */
+	private fun getMergeAnalysis(
+		into: MemorySegment,
+		commit: MemorySegment,
+	): MergeAnalysis = arena {
+		val analysis = allocate(C_POINTER)
+		val mergePreference = allocate(C_POINTER)
+		val heads = allocate(JAVA_LONG, commit.address())
+
+		checkError(git_merge_analysis_for_ref(analysis, mergePreference, repo, into, heads, 1))
+
+		return@arena MergeAnalysis(
+			analysisFlags = analysis.get(JAVA_INT, 0),
+			mergePreferenceFlags = mergePreference.get(JAVA_INT, 0),
+		)
 	}
 
 	/**
@@ -422,8 +519,17 @@ class GitVersionControl(
 			checkError(git_reference_name_to_id(it, repo, allocate("HEAD")))
 		}
 
-		checkError(git_reference_set_target(allocate(C_POINTER), getBranch(branchName), headId, NULL))
+		setBranchTarget(branchName, headId)
 		return true
+	}
+
+	/** @param target git_oid* */
+	context(Arena)
+	private fun setBranchTarget(
+		branchName: String,
+		target: MemorySegment,
+	) {
+		checkError(git_reference_set_target(allocate(C_POINTER), getBranch(branchName), target, NULL))
 	}
 
 	/**
@@ -482,7 +588,7 @@ class GitVersionControl(
 	private fun Arena.allocate(str: String) = allocateUtf8String(str)
 
 	context(Arena)
-	private fun allocateInt(i: Int) = allocate(ValueLayout.JAVA_INT, i)
+	private fun allocateInt(i: Int) = allocate(JAVA_INT, i)
 
 	context(Arena)
 	private fun allocate(strs: List<String>): MemorySegment {
