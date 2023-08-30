@@ -24,6 +24,8 @@ interface VersionControl : AutoCloseable {
 
 	fun pushBranches(branchNames: List<String>)
 
+	fun pull(branchName: String)
+
 	fun latestCommitInfo(branchName: String): CommitInfo
 
 	fun isAncestor(branchName: String, possibleAncestorName: String): Boolean

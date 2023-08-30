@@ -14,6 +14,7 @@ internal class Repo(
 	init {
 		subcommands(
 			Init(configManager, locker, vc),
+			Sync(configManager, vc),
 		)
 	}
 
