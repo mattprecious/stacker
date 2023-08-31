@@ -1,11 +1,12 @@
 plugins {
 	application
-	kotlin("jvm") version libs.versions.kotlin
-	kotlin("plugin.serialization") version libs.versions.kotlin
+
+	alias(libs.plugins.spotless)
 
 	id("app.cash.sqldelight") version libs.versions.sqldelight
 
-	alias(libs.plugins.spotless)
+	kotlin("jvm") version libs.versions.kotlin
+	kotlin("plugin.serialization") version libs.versions.kotlin
 }
 
 repositories {
