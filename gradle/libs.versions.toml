@@ -6,10 +6,8 @@ sqldelight = "2.0.0"
 clikt = "com.github.ajalt.clikt:clikt:4.2.0"
 github = "org.kohsuke:github-api:1.316"
 jline-terminal = "org.jline:jline-terminal:3.23.0"
-okio = "com.squareup.okio:okio:3.5.0"
-
 kotlin-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"
-
+okio = "com.squareup.okio:okio:3.5.0"
 sqldelight-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 
 [plugins]
