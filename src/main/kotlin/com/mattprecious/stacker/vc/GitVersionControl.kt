@@ -269,10 +269,10 @@ class GitVersionControl(
 	}
 
 	private fun pushBranchesLibGit(branchNames: List<String>): Unit = arena {
-		val strings = allocate(branches.map { it.asBranchRevSpec() }.map { "+$it:$it" })
+		val strings = allocate(branchNames.map { it.asBranchRevSpec() }.map { "+$it:$it" })
 
 		val refs = allocate(git_strarray.`$LAYOUT`())
-		git_strarray.`count$set`(refs, branches.size.toLong())
+		git_strarray.`count$set`(refs, branchNames.size.toLong())
 		git_strarray.`strings$set`(refs, strings)
 
 		// TODO: Atomic? I don't think libgit2 supports this.
