@@ -13,6 +13,8 @@ internal class Short(
 ) : StackerCommand(shortAlias = "s") {
 	override fun run() {
 		requireInitialized(configManager)
+		val trunk = configManager.trunk
+		val trailingTrunk = configManager.trailingTrunk
 
 		echo(
 			stackManager.getBase()?.prettyTree(
@@ -21,10 +23,12 @@ internal class Short(
 				val needsRestack = run needsRestack@{
 					val parent = it.branch.parent ?: return@needsRestack false
 					val parentSha = vc.getSha(parent.name)
-					return@needsRestack it.branch.parentSha != parentSha || !vc.isAncestor(
-						branchName = it.branch.name,
-						possibleAncestorName = parent.name,
-					)
+					return@needsRestack if (it.branch.name == trunk || it.branch.name == trailingTrunk) {
+						false
+					} else {
+						it.branch.parentSha != parentSha ||
+							!vc.isAncestor(branchName = it.branch.name, possibleAncestorName = parent.name)
+					}
 				}
 
 				if (needsRestack) {
