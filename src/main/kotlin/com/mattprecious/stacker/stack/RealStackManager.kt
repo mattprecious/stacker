@@ -48,7 +48,12 @@ class RealStackManager(
 	}
 
 	override fun untrackBranches(branches: Set<String>) {
-		branchQueries.removeAllOf(branches)
+		branchQueries.transaction {
+			branches.forEach {
+				branchQueries.bypass(it)
+				branchQueries.remove(it)
+			}
+		}
 	}
 
 	override fun renameBranch(branch: Branch, newName: String) {
