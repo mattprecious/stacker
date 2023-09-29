@@ -11,4 +11,4 @@ okio = "com.squareup.okio:okio:3.5.0"
 sqldelight-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
 
 [plugins]
-spotless = "com.diffplug.spotless:6.21.0"
+spotless = "com.diffplug.spotless:6.22.0"
