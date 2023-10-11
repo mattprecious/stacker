@@ -47,8 +47,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: jvm-native-libraries
-          path: ./resources/*
+          name: native-libraries
+          path: ./native/*
           if-no-files-found: error
 
   build:
@@ -65,7 +65,7 @@ jobs:
 
       - uses: actions/download-artifact@master
         with:
-          name: jvm-native-libraries
-          path: src/main/resources
+          name: native-libraries
+          path: src/main/dist/native
 
       - run: ./gradlew build

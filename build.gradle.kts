@@ -68,6 +68,8 @@ tasks.named("assemble").configure {
 
 tasks.withType<JavaExec>().all {
 	jvmArgs("--enable-preview")
+	// Override the library path for tasks like run and test so they can find the libraries.
+	systemProperty("stacker.library.path", file("src/main/dist/native").absolutePath)
 }
 
 tasks.withType<JavaCompile>().all {

@@ -78,11 +78,11 @@ function build() {
     -DCMAKE_BUILD_TYPE=Release
   cmake --build libgit2/build --target install
 
-  mkdir -p resources/jni/$OS_ARCH/
-  cp -vL $deps/{lib,lib64}/libcrypto.{dylib,so} resources/jni/$OS_ARCH/ || true
-  cp -vL $deps/{lib,lib64}/libssl.{dylib,so} resources/jni/$OS_ARCH/ || true
-  cp -vL $deps/{lib,lib64}/libssh2.{dylib,so} resources/jni/$OS_ARCH/ || true
-  cp -vL $deps/lib/libgit2.{dylib,so} resources/jni/$OS_ARCH/ || true
+  mkdir -p native/$OS_ARCH/
+  cp -vL $deps/{lib,lib64}/libcrypto.{dylib,so} native/$OS_ARCH/ || true
+  cp -vL $deps/{lib,lib64}/libssl.{dylib,so} native/$OS_ARCH/ || true
+  cp -vL $deps/{lib,lib64}/libssh2.{dylib,so} native/$OS_ARCH/ || true
+  cp -vL $deps/lib/libgit2.{dylib,so} native/$OS_ARCH/ || true
 
   echo "Build complete."
   exit 0
