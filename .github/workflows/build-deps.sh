@@ -49,7 +49,7 @@ function build() {
 
   git clone --depth 1 --branch openssl-3.1.3 https://github.com/openssl/openssl.git
   pushd openssl
-  ./Configure $OPENSSL_ARCH --prefix=$deps
+  ./Configure $OPENSSL_ARCH --prefix=$deps no-tests no-legacy
   make -j$CMAKE_BUILD_PARALLEL_LEVEL
   make -j$CMAKE_BUILD_PARALLEL_LEVEL install_sw
   popd
