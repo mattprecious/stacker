@@ -8,3 +8,9 @@ build
 
 ### Mac OS ###
 .DS_Store
+
+deps/
+libgit2/
+libssh2/
+native/
+openssl/
