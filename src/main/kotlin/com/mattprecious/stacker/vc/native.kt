@@ -9,12 +9,18 @@ import kotlin.io.path.notExists
 internal fun loadLibGit2() {
 	val osName = System.getProperty("os.name").lowercase(Locale.US)
 	val osArch = System.getProperty("os.arch").lowercase(Locale.US)
-	val libraryRelativePath = if (osName.contains("mac")) {
-		"$osArch/libgit2.dylib"
+
+	if (osName.contains("mac")) {
+		loadLibrary("$osArch/libcrypto.dylib")
+		loadLibrary("$osArch/libssl.dylib")
+		loadLibrary("$osArch/libssh2.dylib")
+		loadLibrary("$osArch/libgit2.dylib")
 	} else {
 		throw IllegalStateException("Unsupported OS: $osName")
 	}
+}
 
+private fun loadLibrary(libraryRelativePath: String) {
 	val overridePath = System.getProperty("stacker.library.path")
 	val nativeDir = if (overridePath != null) {
 		Path.of(overridePath)
