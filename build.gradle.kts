@@ -2,11 +2,9 @@ plugins {
 	application
 
 	alias(libs.plugins.spotless)
-
-	id("app.cash.sqldelight") version libs.versions.sqldelight
-
-	kotlin("jvm") version libs.versions.kotlin
-	kotlin("plugin.serialization") version libs.versions.kotlin
+	alias(libs.plugins.sqldelight)
+	alias(libs.plugins.kotlin.jvm)
+	alias(libs.plugins.kotlin.plugin.serialization)
 }
 
 repositories {
