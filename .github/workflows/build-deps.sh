@@ -33,6 +33,36 @@ EOF
   exit 0
 }
 
+function autoDetect() {
+	RAW_ARCH=$(uname -m)
+	if [[ $OSTYPE == "darwin"* ]]; then
+		if [[ "$RAW_ARCH" == "arm64" ]]; then
+			OS_ARCH="aarch64"
+			CMAKE_ARCH="arm64"
+			OPENSSL_ARCH="darwin64-arm64-cc"
+		elif [[ "$RAW_ARCH" == "x86_64" ]]; then
+			OS_ARCH="x86_64"
+			CMAKE_ARCH="x86_64"
+			OPENSSL_ARCH="darwin64-x86_64-cc"
+		else
+			echo "Unable to detect Mac architecture."
+			exit 1
+		fi
+	elif [[ $OSTYPE == "linux-gnu"* ]]; then
+		if [[ "$RAW_ARCH" == "x86_64" ]]; then
+			OS_ARCH="amd64"
+			CMAKE_ARCH="x86_64"
+			OPENSSL_ARCH="linux-x86_64"
+		else
+			echo "Unable to detect Linux architecture."
+			exit 1
+		fi
+  else
+		echo "Unable to detect OS."
+		exit 1
+  fi
+}
+
 function build() {
   echo "OS_ARCH=${OS_ARCH}"
   echo "CMAKE_ARCH=${CMAKE_ARCH}"
@@ -113,6 +143,7 @@ function processArguments {
 }
 
 # main
+autoDetect
 processArguments "$@"
 build
 
