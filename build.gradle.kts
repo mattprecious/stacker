@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
 	application
 
@@ -27,6 +29,12 @@ application {
 	mainClass.set("com.mattprecious.stacker.StackerKt")
 
 	applicationDefaultJvmArgs = listOf("--enable-preview", "--enable-native-access=ALL-UNNAMED")
+
+	applicationDistribution.from(projectDir) {
+		// libgit and related dependencies are built locally and dropped into this folder for local development. CI has been
+		// configured to drop them here instead of src/main/dist for parity.
+		include("native/**")
+	}
 }
 
 kotlin {
@@ -67,9 +75,24 @@ tasks.named("assemble").configure {
 tasks.withType<JavaExec>().all {
 	jvmArgs("--enable-preview")
 	// Override the library path for tasks like run and test so they can find the libraries.
-	systemProperty("stacker.library.path", file("src/main/dist/native").absolutePath)
+	systemProperty("stacker.library.path", file("native").absolutePath)
 }
 
 tasks.withType<JavaCompile>().all {
 	options.compilerArgs!! += "--enable-preview"
+}
+
+val requireNativeTask by tasks.register("requireNativeDirectory") {
+	outputs.upToDateWhen { false }
+
+	doFirst {
+		check(file("native").walk().any { it.isFile }) {
+			"'native' directory does not exist or is empty. This must be populated with libgit libraries.\n" +
+				"If developing locally, please run .github/workflows/build-deps.sh"
+		}
+	}
+}
+
+tasks.withType<KotlinCompile>().all {
+	dependsOn(requireNativeTask)
 }
