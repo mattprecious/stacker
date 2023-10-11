@@ -43,7 +43,7 @@ sqldelight {
 	databases {
 		create("RepoDatabase") {
 			packageName.set("com.mattprecious.stacker.db")
-			dialect("app.cash.sqldelight:sqlite-3-38-dialect:2.0.0")
+			dialect(libs.sqldelight.dialect)
 		}
 	}
 }
