@@ -46,6 +46,7 @@ import com.github.git2_h.git_repository_free
 import com.github.git2_h.git_repository_head
 import com.github.git2_h.git_repository_open
 import com.github.git2_h.git_repository_path
+import com.github.git2_h.git_repository_set_head
 import com.github.git2_h.git_signature_default
 import com.github.git2_h.git_signature_free
 import com.github.git2_h_1.GIT_ECONFLICT
@@ -69,7 +70,6 @@ import com.github.git2_h_1.git_reference_set_target
 import com.github.git2_h_1.git_reference_shorthand
 import com.github.git2_h_1.git_remote_push
 import com.github.git2_h_1.git_remote_url
-import com.github.git2_h_1.git_repository_set_head
 import com.github.git2_h_1.git_revparse_single
 import com.github.git2_h_2.GIT_CREDTYPE_SSH_KEY
 import com.github.git2_h_2.GIT_REBASE_NO_OPERATION
@@ -340,11 +340,11 @@ class GitVersionControl(
 			return@git_credential_acquire_cb 0
 		}
 
-		val acquireCredential = git_credential_acquire_cb.allocate(acquireCredentialCb, scope())
+		val acquireCredential = git_credential_acquire_cb.allocate(acquireCredentialCb, this@Arena)
 
 		// Is this bad? I don't know why it's not a known host.
 		val certificateCheckCb = git_transport_certificate_check_cb { _, valid, _, _ -> valid }
-		val certificateCheck = git_transport_certificate_check_cb.allocate(certificateCheckCb, scope())
+		val certificateCheck = git_transport_certificate_check_cb.allocate(certificateCheckCb, this@Arena)
 
 		val callbacks = withAllocate(git_remote_callbacks.`$LAYOUT`()) {
 			checkError(git_remote_init_callbacks(it, GIT_REMOTE_CALLBACKS_VERSION()))
@@ -355,7 +355,7 @@ class GitVersionControl(
 		return callbacks
 	}
 
-	private fun <T> arena(block: Arena.() -> T) = Arena.openConfined().use(block)
+	private fun <T> arena(block: Arena.() -> T) = Arena.ofConfined().use(block)
 
 	private fun checkError(result: Int) {
 		check(result == ReturnCodes.OK) {

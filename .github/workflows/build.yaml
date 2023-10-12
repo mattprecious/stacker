@@ -61,7 +61,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: 20
+          java-version: 21
 
       - uses: actions/download-artifact@master
         with:

@@ -12,7 +12,7 @@ import kotlin.io.path.div
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-	Arena.openConfined().use { arena ->
+	Arena.ofConfined().use { arena ->
 		val shell = RealShell()
 		GitVersionControl(arena, shell).use { vc ->
 
