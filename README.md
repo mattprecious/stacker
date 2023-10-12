@@ -4,12 +4,12 @@
 
 ### IntelliJ
 
-IntelliJ needs to be configured to opt in to the Java 20 preview language features used in this project. To do this:
+IntelliJ needs to be configured to opt in to the Java 21 preview language features used in this project. To do this:
 
 1. Open the `Project` window (`⌘1`).
 2. Select the root module and open the module settings (`⌘↓`, or right click and select `Module Settings`).
 3. `Project Settings` / `Project`.
-4. Set the `Language level` to `20 (Preview)`.
+4. Set the `Language level` to `21 (Preview)`.
 
 ### Building Native Libraries
 
@@ -19,12 +19,12 @@ the project will compile. This can be done by executing `.github/workflows/build
 ### Generating Bindings
 
 The libgit2 bindings are generated using [jextract](https://github.com/openjdk/jextract) and are built upon the Foreign Function & Memory API available
-as a preview in JDK 20. If libgit2 is updated, the bindings need to be regenerated and checked in.
+as a preview in JDK 21. If libgit2 is updated, the bindings need to be regenerated and checked in.
 
-Install JDK 20:
+Install JDK 21:
 
 ```sh
-brew install zulu-jdk20
+brew install zulu-jdk21
 ```
 
 Download jextract from [here](https://jdk.java.net/jextract/) and optionally add it to your PATH.
@@ -36,8 +36,8 @@ mkdir libgit2-bindings && cd libgit2-bindings
 
 jextract --output classes -t com.github \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
-  -I libgit2/include/ \
-  libgit2/include/git2.h
+  -I ../libgit2/include/ \
+  ../libgit2/include/git2.h
 
 pushd classes && zip -r ../libgit2j.jar . && popd
 
