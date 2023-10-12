@@ -66,6 +66,6 @@ jobs:
       - uses: actions/download-artifact@master
         with:
           name: native-libraries
-          path: src/main/dist/native
+          path: native
 
       - run: ./gradlew build
