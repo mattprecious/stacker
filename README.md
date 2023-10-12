@@ -11,34 +11,15 @@ IntelliJ needs to be configured to opt in to the Java 20 preview language featur
 3. `Project Settings` / `Project`.
 4. Set the `Language level` to `20 (Preview)`.
 
-### Building/Updating libgit2
+### Building Native Libraries
 
-#### libssh
-`libssh` is required in order to build `libgit2` with SSH and SSH transport support (for repositories with SSH remotes).
-Install it with:
+This project uses [libgit2](https://github.com/libgit2/libgit2), which needs to be downloaded and built locally before
+the project will compile. This can be done by executing `.github/workflows/build-deps.sh`.
 
-```sh
-brew install libssh
-```
+### Generating Bindings
 
-#### Building Library
-Clone and build `libgit2` with:
-
-```sh
-git clone git@github.com:libgit2/libgit2.git
-cd libgit2/build
-cmake -DUSE_SSH=ON ..
-cmake --build .
-```
-
-This will create a `libgit2.1.8.0.dylib` which can be copied into the project at `resources/jni/aarch64/libgit2.dynlib`.
-
-_TODO: Build for more architectures._
-
-#### Generating Bindings
-
-The bindings are generated using [jextract](https://github.com/openjdk/jextract) and are built upon the Foreign Function
-& Memory API available as a preview in JDK 20.
+The libgit2 bindings are generated using [jextract](https://github.com/openjdk/jextract) and are built upon the Foreign Function & Memory API available
+as a preview in JDK 20. If libgit2 is updated, the bindings need to be regenerated and checked in.
 
 Install JDK 20:
 
@@ -55,11 +36,11 @@ mkdir libgit2-bindings && cd libgit2-bindings
 
 jextract --output classes -t com.github \
   -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
-  -I <libgit2folder>/include/ \
-  -I <libgit2folder>/include/git2 \
-  <libgit2folder>/include/git2.h
+  -I libgit2/include/ \
+  libgit2/include/git2.h
 
-cd classes && zip -r ../libgit2j.jar . && popd
+pushd classes && zip -r ../libgit2j.jar . && popd
+
 ```
 
 This JAR can be copied into the project at `libs/libgit2j.jar`.
