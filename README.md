@@ -16,6 +16,17 @@ IntelliJ needs to be configured to opt in to the Java 21 preview language featur
 This project uses [libgit2](https://github.com/libgit2/libgit2), which needs to be downloaded and built locally before
 the project will compile. This can be done by executing `.github/workflows/build-deps.sh`.
 
+### Running
+
+To run from a local build, a wrapper script is recommended so that the expected JDK is used:
+
+```sh
+#!/bin/sh
+
+JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home
+<path-to-stacker>/build/install/st/bin/st $@
+```
+
 ### Generating Bindings
 
 The libgit2 bindings are generated using [jextract](https://github.com/openjdk/jextract) and are built upon the Foreign Function & Memory API available
