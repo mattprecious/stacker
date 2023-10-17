@@ -69,3 +69,10 @@ jobs:
           path: native
 
       - run: ./gradlew build
+
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: test-report
+          path: build/reports/tests/test/
+          if-no-files-found: ignore
