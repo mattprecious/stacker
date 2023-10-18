@@ -3,7 +3,7 @@ kotlin = "1.9.20-RC"
 sqldelight = "2.0.0"
 
 [libraries]
-assertk = "com.willowtreeapps.assertk:assertk:0.26.1"
+assertk = "com.willowtreeapps.assertk:assertk:0.27.0"
 clikt = "com.github.ajalt.clikt:clikt:4.2.1"
 github = "org.kohsuke:github-api:1.316"
 jline-terminal = "org.jline:jline-terminal:3.23.0"
