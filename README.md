@@ -18,7 +18,13 @@ the project will compile. This can be done by executing `.github/workflows/build
 
 ### Running
 
-To run from a local build, a wrapper script is recommended so that the expected JDK is used:
+Java 21 is required to run the project:
+
+```sh
+brew install zulu-jdk21
+```
+
+A wrapper script is recommended so that the expected JDK is used:
 
 ```sh
 #!/bin/sh
@@ -26,35 +32,6 @@ To run from a local build, a wrapper script is recommended so that the expected 
 JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home
 <path-to-stacker>/build/install/st/bin/st $@
 ```
-
-### Generating Bindings
-
-The libgit2 bindings are generated using [jextract](https://github.com/openjdk/jextract) and are built upon the Foreign Function & Memory API available
-as a preview in JDK 21. If libgit2 is updated, the bindings need to be regenerated and checked in.
-
-Install JDK 21:
-
-```sh
-brew install zulu-jdk21
-```
-
-Download jextract from [here](https://jdk.java.net/jextract/) and optionally add it to your PATH.
-
-Generate the bindings and bundle them into a JAR:
-
-```sh
-mkdir libgit2-bindings && cd libgit2-bindings
-
-jextract --output classes -t com.github \
-  -I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ \
-  -I ../libgit2/include/ \
-  ../libgit2/include/git2.h
-
-pushd classes && zip -r ../libgit2j.jar . && popd
-
-```
-
-This JAR can be copied into the project at `libs/libgit2j.jar`.
 
 # License
 
