@@ -14,7 +14,7 @@ import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
 	withStacker {
-		main(args)
+		it.main(args)
 	}
 }
 
