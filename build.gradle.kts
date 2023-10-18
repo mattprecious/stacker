@@ -7,6 +7,8 @@ plugins {
 	alias(libs.plugins.sqldelight)
 	alias(libs.plugins.kotlin.jvm)
 	alias(libs.plugins.kotlin.plugin.serialization)
+
+	id("java-test-fixtures")
 }
 
 repositories {
@@ -22,6 +24,9 @@ dependencies {
 	implementation(libs.kotlin.serialization.json)
 	implementation(libs.okio)
 	implementation(libs.sqldelight.driver)
+
+	testImplementation(libs.assertk)
+	testImplementation(libs.junit)
 }
 
 application {
@@ -74,12 +79,17 @@ tasks.named("assemble").configure {
 
 tasks.withType<JavaExec>().all {
 	jvmArgs("--enable-preview")
-	// Override the library path for tasks like run and test so they can find the libraries.
+	// Override the library path for tasks like run so that they can find the libraries.
 	systemProperty("stacker.library.path", file("native").absolutePath)
 }
 
 tasks.withType<JavaCompile>().all {
 	options.compilerArgs!! += "--enable-preview"
+}
+
+tasks.withType<Test>().all {
+	jvmArgs("--enable-preview", "--enable-native-access=ALL-UNNAMED")
+	systemProperty("stacker.library.path", file("native").absolutePath)
 }
 
 val requireNativeTask by tasks.register("requireNativeDirectory") {
