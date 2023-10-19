@@ -140,7 +140,7 @@ val downloadJExtractTask = tasks.register<DownloadJExtractTask>("downloadJExtrac
 }
 
 val extractJExtractTask = tasks.register<Copy>("extractJExtract") {
-	from(tarTree(downloadJExtractTask.map { it.outputFile.get() }))
+	from(tarTree(downloadJExtractTask.flatMap { it.outputFile }))
 	into(layout.buildDirectory.dir("jextract"))
 }
 
