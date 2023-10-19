@@ -14,6 +14,7 @@ sqldelight-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref 
 sqldelight-dialect = { module = "app.cash.sqldelight:sqlite-3-38-dialect", version.ref = "sqldelight" }
 
 [plugins]
+gradleDownload = "de.undercouch.download:5.5.0"
 spotless = "com.diffplug.spotless:6.22.0"
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

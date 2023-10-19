@@ -1,8 +1,12 @@
+
+import de.undercouch.gradle.tasks.download.Download
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 	application
 
+	alias(libs.plugins.gradleDownload)
 	alias(libs.plugins.spotless)
 	alias(libs.plugins.sqldelight)
 	alias(libs.plugins.kotlin.jvm)
@@ -16,8 +20,6 @@ repositories {
 }
 
 dependencies {
-	implementation(files("libs/libgit2j.jar"))
-
 	implementation(libs.clikt)
 	implementation(libs.github)
 	implementation(libs.jline.terminal)
@@ -92,7 +94,7 @@ tasks.withType<Test>().all {
 	systemProperty("stacker.library.path", file("native").absolutePath)
 }
 
-val requireNativeTask by tasks.register("requireNativeDirectory") {
+val requireNativeTask by tasks.register("requireNativeFiles") {
 	outputs.upToDateWhen { false }
 
 	doFirst {
@@ -105,4 +107,61 @@ val requireNativeTask by tasks.register("requireNativeDirectory") {
 
 tasks.withType<KotlinCompile>().all {
 	dependsOn(requireNativeTask)
+}
+
+val downloadJExtractTask = tasks.register<Download>("downloadJExtract") {
+	val os = DefaultNativePlatform.getCurrentOperatingSystem()
+	val url = when {
+		os.isMacOsX -> "https://download.java.net/java/early_access/jextract/1/openjdk-21-jextract+1-2_macos-x64_bin.tar.gz"
+		os.isLinux -> "https://download.java.net/java/early_access/jextract/1/openjdk-21-jextract+1-2_linux-x64_bin.tar.gz"
+		else -> throw IllegalStateException("Unsupported OS: ${os.name}.")
+	}
+
+	src(url)
+	onlyIfModified(true)
+	useETag(true)
+	dest(layout.buildDirectory.file("jextract/jextract.tar.gz").get().asFile)
+}
+
+val extractJExtractTask = tasks.register<Copy>("extractJExtract") {
+	from(tarTree(downloadJExtractTask.map { it.outputFiles.single() }))
+	into(layout.buildDirectory.dir("jextract"))
+}
+
+val generateBindingsTask = tasks.register<GenerateBindingsTask>("generateBindings") {
+	jExtractDir = extractJExtractTask.map { it.destinationDir }
+	libgit2IncludeDir = layout.projectDirectory.dir("libgit2/include")
+	outputDir = layout.buildDirectory.dir("generated/libgit2")
+}
+
+java {
+	sourceSets.main.configure {
+		java.srcDir(generateBindingsTask)
+	}
+}
+
+abstract class GenerateBindingsTask : Exec() {
+	@get:InputDirectory
+	abstract val jExtractDir: DirectoryProperty
+
+	@get:InputDirectory
+	abstract val libgit2IncludeDir: DirectoryProperty
+
+	@get:OutputDirectory
+	abstract val outputDir: DirectoryProperty
+
+	override fun exec() {
+		setExecutable(jExtractDir.file("jextract-21/bin/jextract").get().asFile)
+		setArgs(
+			listOf(
+				"--source",
+				"--output", outputDir.get().asFile.absolutePath,
+				"-t", "com.github",
+				"-I", "libgit2/include/",
+				"libgit2/include/git2.h",
+			)
+		)
+
+		super.exec()
+	}
 }

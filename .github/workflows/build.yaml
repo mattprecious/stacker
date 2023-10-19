@@ -44,17 +44,30 @@ jobs:
       - name: Build native library
         run: ./.github/workflows/build-deps.sh -a ${{ matrix.arch }} -c ${{ matrix.cmake-arch }} -o ${{ matrix.openssl-arch }}
 
-      - name: Upload artifact
+      - name: Upload native libraries
         uses: actions/upload-artifact@v3
         with:
           name: native-libraries
           path: ./native/*
           if-no-files-found: error
 
+      - name: Upload libgit2 includes
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: libgit-include
+          path: ./libgit2/include
+          if-no-files-found: error
+
   build:
     needs: build_deps
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macOS-latest ]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -63,10 +76,17 @@ jobs:
           distribution: 'zulu'
           java-version: 21
 
-      - uses: actions/download-artifact@master
+      - name: Download native libraries
+        uses: actions/download-artifact@master
         with:
           name: native-libraries
           path: native
+
+      - name: Download libgit2 includes
+        uses: actions/download-artifact@master
+        with:
+          name: libgit-include
+          path: libgit2/include
 
       - run: ./gradlew build
 
