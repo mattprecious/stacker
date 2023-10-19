@@ -1,12 +1,15 @@
-
-import de.undercouch.gradle.tasks.download.Download
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers
+import java.nio.file.Files
+import java.security.MessageDigest
 
 plugins {
 	application
 
-	alias(libs.plugins.gradleDownload)
 	alias(libs.plugins.spotless)
 	alias(libs.plugins.sqldelight)
 	alias(libs.plugins.kotlin.jvm)
@@ -109,22 +112,35 @@ tasks.withType<KotlinCompile>().all {
 	dependsOn(requireNativeTask)
 }
 
-val downloadJExtractTask = tasks.register<Download>("downloadJExtract") {
+private data class DownloadInfo(
+	val url: String,
+	val checksum: String,
+)
+
+val downloadJExtractTask = tasks.register<DownloadJExtractTask>("downloadJExtract") {
 	val os = DefaultNativePlatform.getCurrentOperatingSystem()
-	val url = when {
-		os.isMacOsX -> "https://download.java.net/java/early_access/jextract/1/openjdk-21-jextract+1-2_macos-x64_bin.tar.gz"
-		os.isLinux -> "https://download.java.net/java/early_access/jextract/1/openjdk-21-jextract+1-2_linux-x64_bin.tar.gz"
+	val downloadInfo = when {
+		os.isMacOsX -> DownloadInfo(
+			url = "https://download.java.net/java/early_access/jextract/1/openjdk-21-jextract+1-2_macos-x64_bin.tar.gz",
+			checksum = "6183f3d079ed531cc5a332e6d86c0abfbc5d001f1e85f721ebc5232204c987a2",
+		)
+
+		os.isLinux -> DownloadInfo(
+			url = "https://download.java.net/java/early_access/jextract/1/openjdk-21-jextract+1-2_linux-x64_bin.tar.gz",
+			checksum = "83626610b1b074bfe4985bd825d8ba44d906a30b24c42d971b6ac836c7eb0671",
+		)
+
 		else -> throw IllegalStateException("Unsupported OS: ${os.name}.")
 	}
 
-	src(url)
-	onlyIfModified(true)
-	useETag(true)
-	dest(layout.buildDirectory.file("jextract/jextract.tar.gz").get().asFile)
+	url = downloadInfo.url
+	checksum = downloadInfo.checksum
+
+	outputFile = layout.buildDirectory.file("jextract/jextract.tar.gz")
 }
 
 val extractJExtractTask = tasks.register<Copy>("extractJExtract") {
-	from(tarTree(downloadJExtractTask.map { it.outputFiles.single() }))
+	from(tarTree(downloadJExtractTask.map { it.outputFile.get() }))
 	into(layout.buildDirectory.dir("jextract"))
 }
 
@@ -137,6 +153,40 @@ val generateBindingsTask = tasks.register<GenerateBindingsTask>("generateBinding
 java {
 	sourceSets.main.configure {
 		java.srcDir(generateBindingsTask)
+	}
+}
+
+abstract class DownloadJExtractTask : DefaultTask() {
+	@get:Input
+	abstract val url: Property<String>
+
+	@get:Input
+	abstract val checksum: Property<String>
+
+	@get:OutputFile
+	abstract val outputFile: RegularFileProperty
+
+	@TaskAction
+	fun download() {
+		val filePath = outputFile.get().asFile.toPath()
+
+		HttpClient.newHttpClient().send(
+			HttpRequest.newBuilder(URI.create(url.get())).build(),
+			BodyHandlers.ofFile(filePath),
+		)
+
+		val expectedHash = checksum.get()
+
+		val bytes = Files.readAllBytes(filePath)
+		val actualHash = BigInteger(1, MessageDigest.getInstance("SHA-256").digest(bytes)).toString(16)
+		check(actualHash == expectedHash) {
+			"""
+				Checksum does not match.
+				URL: ${url.get()}
+				Expected checksum: $expectedHash
+				Actual checksum: $actualHash
+				""".trimIndent()
+		}
 	}
 }
 
