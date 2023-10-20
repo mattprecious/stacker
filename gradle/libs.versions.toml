@@ -5,7 +5,7 @@ sqldelight = "2.0.0"
 [libraries]
 assertk = "com.willowtreeapps.assertk:assertk:0.27.0"
 clikt = "com.github.ajalt.clikt:clikt:4.2.1"
-github = "org.kohsuke:github-api:1.316"
+github = "org.kohsuke:github-api:1.317"
 jline-terminal = "org.jline:jline-terminal:3.23.0"
 junit = "junit:junit:4.13.2"
 kotlin-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"
