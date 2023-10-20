@@ -51,7 +51,12 @@ internal class Sync(
 			).ask()
 
 			if (delete == true) {
+				if (vc.currentBranchName == name) {
+					vc.checkout(parent!!.name)
+				}
+
 				stackManager.untrackBranch(this)
+				vc.delete(name)
 			}
 		}
 
