@@ -12,6 +12,10 @@ class FakeRemote : Remote {
 		TODO("Not yet implemented")
 	}
 
+	override fun getPrStatus(branchName: String): Remote.PrStatus {
+		TODO("Not yet implemented")
+	}
+
 	override fun openOrRetargetPullRequest(
 		branchName: String,
 		targetName: String,

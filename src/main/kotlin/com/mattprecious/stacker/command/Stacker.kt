@@ -54,6 +54,8 @@ internal class Stacker(
 			Repo(
 				configManager = configManager,
 				locker = locker,
+				remote = remote,
+				stackManager = stackManager,
 				vc = vc,
 			),
 			Stack(
