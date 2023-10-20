@@ -5,6 +5,7 @@ import com.mattprecious.stacker.delegates.mutableLazy
 import com.mattprecious.stacker.remote.Remote.PrInfo
 import com.mattprecious.stacker.remote.Remote.PrResult
 import org.kohsuke.github.GHFileNotFoundException
+import org.kohsuke.github.GHIssueState
 import org.kohsuke.github.GHRepository
 import org.kohsuke.github.GitHub
 import org.kohsuke.github.GitHubBuilder
@@ -62,6 +63,17 @@ class GitHubRemote(
 		} else {
 			pr.setBaseBranch(targetName)
 			PrResult.Updated(pr.htmlUrl.toString())
+		}
+	}
+
+	override fun getPrStatus(branchName: String): Remote.PrStatus {
+		val pr = repo!!.queryPullRequests().head(branchName).state(GHIssueState.ALL).list().firstOrNull()
+		return when {
+			pr == null -> Remote.PrStatus.NotFound
+			pr.isMerged -> Remote.PrStatus.Merged
+			pr.state == GHIssueState.CLOSED -> Remote.PrStatus.Closed
+			pr.state == GHIssueState.OPEN -> Remote.PrStatus.Open
+			else -> throw IllegalStateException("Unable to determine status of PR #${pr.number} for branch $branchName.")
 		}
 	}
 

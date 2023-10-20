@@ -7,6 +7,8 @@ interface Remote {
 
 	fun setToken(token: String): Boolean
 
+	fun getPrStatus(branchName: String): PrStatus
+
 	fun openOrRetargetPullRequest(
 		branchName: String,
 		targetName: String,
@@ -17,6 +19,13 @@ interface Remote {
 		val title: String,
 		val body: String?,
 	)
+
+	enum class PrStatus {
+		NotFound,
+		Open,
+		Closed,
+		Merged,
+	}
 
 	sealed interface PrResult {
 		val url: String

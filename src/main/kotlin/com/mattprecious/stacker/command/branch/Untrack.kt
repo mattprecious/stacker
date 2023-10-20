@@ -28,6 +28,14 @@ internal class Untrack(
 			return
 		}
 
+		if (currentBranch.children.isNotEmpty()) {
+			echo(
+				message = "Branch ${branchName.styleBranch()} has children. Please retarget or untrack them.",
+				err = true,
+			)
+			return
+		}
+
 		stackManager.untrackBranch(currentBranch)
 	}
 }

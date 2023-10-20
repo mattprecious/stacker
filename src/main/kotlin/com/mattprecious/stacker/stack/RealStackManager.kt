@@ -40,19 +40,21 @@ class RealStackManager(
 	}
 
 	override fun untrackBranch(branch: Branch) {
-		require(branch.children.isEmpty()) {
-			"Branch has children: ${branch.children}."
-		}
-
-		branchQueries.remove(branch.name)
+		untrackBranch(branch.name)
 	}
 
 	override fun untrackBranches(branches: Set<String>) {
 		branchQueries.transaction {
 			branches.forEach {
-				branchQueries.bypass(it)
-				branchQueries.remove(it)
+				untrackBranch(it)
 			}
+		}
+	}
+
+	private fun untrackBranch(branchName: String) {
+		branchQueries.transaction {
+			branchQueries.bypass(branchName)
+			branchQueries.remove(branchName)
 		}
 	}
 
