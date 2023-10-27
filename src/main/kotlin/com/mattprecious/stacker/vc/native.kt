@@ -11,9 +11,9 @@ internal fun loadLibGit2() {
 	val osArch = System.getProperty("os.arch").lowercase(Locale.US)
 
 	if (osName.contains("mac")) {
-		loadLibrary("$osArch/libcrypto.dylib")
+		loadLibrary("$osArch/libcrypto.3.dylib")
 		loadLibrary("$osArch/libssl.dylib")
-		loadLibrary("$osArch/libssh2.dylib")
+		loadLibrary("$osArch/libssh2.1.dylib")
 		loadLibrary("$osArch/libgit2.dylib")
 	} else if (osName.contains("linux")) {
 		loadLibrary("$osArch/libcrypto.so")

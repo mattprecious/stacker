@@ -89,6 +89,7 @@ function build() {
   cmake -S libssh2 -B libssh2/build \
     -DCMAKE_PREFIX_PATH="$deps;$deps/include/openssl" \
     -DCMAKE_INSTALL_PREFIX="$deps" \
+    -DCMAKE_SKIP_RPATH=TRUE \
     -DCMAKE_IGNORE_PREFIX_PATH="/usr" \
     -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
     -DCMAKE_BUILD_TYPE=Release \
@@ -103,15 +104,16 @@ function build() {
     -DBUILD_TESTS=OFF \
     -DCMAKE_PREFIX_PATH="$deps;$deps/include/openssl" \
     -DCMAKE_INSTALL_PREFIX="$deps" \
+    -DCMAKE_SKIP_RPATH=TRUE \
     -DCMAKE_IGNORE_PREFIX_PATH="/usr" \
     -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
     -DCMAKE_BUILD_TYPE=Release
   cmake --build libgit2/build --target install
 
   mkdir -p native/$OS_ARCH/
-  cp -vL $deps/{lib,lib64}/libcrypto.{dylib,so} native/$OS_ARCH/ || true
+  cp -vL $deps/{lib,lib64}/libcrypto.{3.dylib,so} native/$OS_ARCH/ || true
   cp -vL $deps/{lib,lib64}/libssl.{dylib,so} native/$OS_ARCH/ || true
-  cp -vL $deps/{lib,lib64}/libssh2.{dylib,so} native/$OS_ARCH/ || true
+  cp -vL $deps/{lib,lib64}/libssh2.{1.dylib,so} native/$OS_ARCH/ || true
   cp -vL $deps/lib/libgit2.{dylib,so} native/$OS_ARCH/ || true
 
   echo "Build complete."
