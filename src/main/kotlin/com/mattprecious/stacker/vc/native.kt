@@ -11,14 +11,8 @@ internal fun loadLibGit2() {
 	val osArch = System.getProperty("os.arch").lowercase(Locale.US)
 
 	if (osName.contains("mac")) {
-		loadLibrary("$osArch/libcrypto.dylib")
-		loadLibrary("$osArch/libssl.dylib")
-		loadLibrary("$osArch/libssh2.dylib")
 		loadLibrary("$osArch/libgit2.dylib")
 	} else if (osName.contains("linux")) {
-		loadLibrary("$osArch/libcrypto.so")
-		loadLibrary("$osArch/libssl.so")
-		loadLibrary("$osArch/libssh2.so")
 		loadLibrary("$osArch/libgit2.so")
 	} else {
 		throw IllegalStateException("Unsupported OS: $osName")
