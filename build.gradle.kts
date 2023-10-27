@@ -75,7 +75,7 @@ spotless {
 	}
 }
 
-tasks.named("distTar").configure {
+tasks.named("distZip").configure {
 	enabled = false
 }
 tasks.named("assemble").configure {

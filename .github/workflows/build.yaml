@@ -101,5 +101,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: st
-          path: ./build/install/st/*
+          path: ./build/distributions/st.tar
           if-no-files-found: error
