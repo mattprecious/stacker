@@ -98,6 +98,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload distribution
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v3
         with:
           name: st
