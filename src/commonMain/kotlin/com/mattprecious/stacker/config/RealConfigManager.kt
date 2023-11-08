@@ -2,25 +2,28 @@ package com.mattprecious.stacker.config
 
 import com.mattprecious.stacker.db.RepoConfig
 import com.mattprecious.stacker.db.RepoDatabase
+import com.mattprecious.stacker.delegates.Permissions
 import com.mattprecious.stacker.delegates.jsonFile
 import com.mattprecious.stacker.stack.StackManager
-import java.nio.file.Path
-import java.nio.file.attribute.PosixFilePermission
-import java.util.*
-import kotlin.io.path.div
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.toKString
+import okio.FileSystem
+import okio.Path.Companion.toPath
+import platform.posix.getpwuid
+import platform.posix.getuid
 
 class RealConfigManager(
 	db: RepoDatabase,
+	fs: FileSystem,
 	private val stackManager: StackManager,
 ) : ConfigManager {
 	private val repoConfigQueries = db.repoConfigQueries
 
 	private var userConfig: UserConfig by jsonFile(
-		path = Path.of(System.getProperty("user.home")) / ".stacker_user_config",
-		permissions = EnumSet.of(
-			PosixFilePermission.OWNER_READ,
-			PosixFilePermission.OWNER_WRITE,
-		),
+		fs = fs,
+		path = getpwuid(getuid())!!.pointed.pw_dir!!.toKString().toPath() / ".stacker_user_config",
+		permissions = Permissions.Posix(setOf(Permissions.Posix.Permission.OwnerRead)),
+		requirePermissionsOnRead = true,
 	) {
 		UserConfig(
 			githubToken = null,

@@ -2,36 +2,26 @@
 
 ## Development
 
-### IntelliJ
-
-IntelliJ needs to be configured to opt in to the Java 21 preview language features used in this project. To do this:
-
-1. Open the `Project` window (`⌘1`).
-2. Select the root module and open the module settings (`⌘↓`, or right click and select `Module Settings`).
-3. `Project Settings` / `Project`.
-4. Set the `Language level` to `21 (Preview)`.
-
 ### Building Native Libraries
 
 This project uses [libgit2](https://github.com/libgit2/libgit2), which needs to be downloaded and built locally before
-the project will compile. This can be done by executing `.github/workflows/build-deps.sh`.
+the project will compile. This can be done by executing `./build-deps.sh`.
+
+### Building
+
+The generic `assemble` and `build` tasks will attempt to build for all supported architectures, which cannot be done
+locally. Instead, run the gradle task for your current architecture:
+
+* `./gradlew linkReleaseExecutableMacosArm`
+* `./gradlew linkReleaseExecutableMacosX64`
+
+Debug variants are available by replacing `Release` with `Debug`. Other architectures are not currently supported.
 
 ### Running
 
-Java 21 is required to run the project:
-
-```sh
-brew install zulu-jdk21
-```
-
-A wrapper script is recommended so that the expected JDK is used:
-
-```sh
-#!/bin/sh
-
-JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home
-<path-to-stacker>/build/install/st/bin/st $@
-```
+After building, an executable will be available in the `build` folder. Its exact path will depend on the task that was
+used to build it. For reference, a release macOS ARM build will be available at
+`build/bin/macosArm64/debugExecutable/stacker.kexe`.
 
 # License
 
