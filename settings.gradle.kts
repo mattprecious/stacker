@@ -1,5 +1,11 @@
 rootProject.name = "stacker"
 
-plugins {
-  id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
+pluginManagement {
+	repositories {
+		gradlePluginPortal()
+		mavenCentral()
+		maven {
+			setUrl("https://oss.sonatype.org/content/repositories/snapshots/")
+		}
+	}
 }

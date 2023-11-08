@@ -79,7 +79,7 @@ function build() {
 
   git clone --depth 1 --branch openssl-3.1.3 https://github.com/openssl/openssl.git
   pushd openssl
-  ./Configure $OPENSSL_ARCH --prefix=$deps no-tests no-legacy
+  ./Configure $OPENSSL_ARCH --prefix=$deps no-tests no-legacy no-shared
   make -j$CMAKE_BUILD_PARALLEL_LEVEL
   make -j$CMAKE_BUILD_PARALLEL_LEVEL install_sw
   popd
@@ -92,7 +92,7 @@ function build() {
     -DCMAKE_IGNORE_PREFIX_PATH="/usr" \
     -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
     -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_STATIC_LIBS=OFF
+    -DBUILD_SHARED_LIBS=OFF
   cmake --build libssh2/build --target install
 
   # Stuck on 1.4.6 due to https://github.com/libgit2/libgit2/issues/6371
@@ -105,14 +105,15 @@ function build() {
     -DCMAKE_INSTALL_PREFIX="$deps" \
     -DCMAKE_IGNORE_PREFIX_PATH="/usr" \
     -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
+    -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_BUILD_TYPE=Release
   cmake --build libgit2/build --target install
 
   mkdir -p native/$OS_ARCH/
-  cp -vL $deps/{lib,lib64}/libcrypto.{dylib,so} native/$OS_ARCH/ || true
-  cp -vL $deps/{lib,lib64}/libssl.{dylib,so} native/$OS_ARCH/ || true
-  cp -vL $deps/{lib,lib64}/libssh2.{dylib,so} native/$OS_ARCH/ || true
-  cp -vL $deps/lib/libgit2.{dylib,so} native/$OS_ARCH/ || true
+  cp -vL $deps/{lib,lib64}/libcrypto.{a,so} native/$OS_ARCH/ || true
+  cp -vL $deps/{lib,lib64}/libssl.{a,so} native/$OS_ARCH/ || true
+  cp -vL $deps/{lib,lib64}/libssh2.{a,so} native/$OS_ARCH/ || true
+  cp -vL $deps/lib/libgit2.{a,so} native/$OS_ARCH/ || true
 
   echo "Build complete."
   exit 0

@@ -3,31 +3,24 @@ package com.mattprecious.stacker.delegates
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
+import okio.FileSystem
+import okio.Path
 import okio.buffer
-import okio.sink
-import okio.source
-import java.nio.file.Path
-import java.nio.file.attribute.PosixFilePermission
-import java.nio.file.attribute.PosixFilePermissions
-import java.util.EnumSet
-import kotlin.io.path.createFile
-import kotlin.io.path.createParentDirectories
-import kotlin.io.path.exists
-import kotlin.io.path.notExists
+import okio.use
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 inline fun <reified T : Any?> jsonFile(
+	fs: FileSystem,
 	path: Path,
-	permissions: EnumSet<PosixFilePermission>? = null,
 	noinline default: (() -> T),
-) = JsonFileDelegate(typeOf<T>(), path, permissions, default)
+) = JsonFileDelegate(typeOf<T>(), fs, path, default)
 
 class JsonFileDelegate<T : Any?>(
 	type: KType,
+	private val fs: FileSystem,
 	private val path: Path,
-	private val permissions: EnumSet<PosixFilePermission>?,
 	private val default: () -> T,
 ) {
 	@Suppress("UNCHECKED_CAST")
@@ -38,8 +31,8 @@ class JsonFileDelegate<T : Any?>(
 		return when (val v = value) {
 			is Optional.Some -> v.value
 			is Optional.None -> {
-				val loadedValue = if (path.exists()) {
-					val json = path.source().buffer().use { it.readUtf8() }
+				val loadedValue = if (fs.exists(path)) {
+					val json = fs.source(path).buffer().use { it.readUtf8() }
 					Json.decodeFromString(serializer, json)
 				} else {
 					default()
@@ -53,16 +46,8 @@ class JsonFileDelegate<T : Any?>(
 	}
 
 	operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-		path.createParentDirectories()
-		if (path.notExists()) {
-			if (permissions == null) {
-				path.createFile()
-			} else {
-				path.createFile(PosixFilePermissions.asFileAttribute(permissions))
-			}
-		}
-
-		path.sink().buffer().use { it.writeUtf8(Json.encodeToString(serializer, value)) }
+		fs.createDirectories(path.parent!!)
+		fs.sink(path).buffer().use { it.writeUtf8(Json.encodeToString(serializer, value)) }
 
 		this.value = Optional.Some(value)
 	}

@@ -30,7 +30,7 @@ internal abstract class StackerCommand(
 			val withMyCommand = currentChain + commandName
 
 			check(!destination.contains(withMyAlias)) {
-				"Conflicting aliases! Command ${javaClass.simpleName} tried to add '$withMyAlias', but it already " +
+				"Conflicting aliases! Command ${this::class.simpleName} tried to add '$withMyAlias', but it already " +
 					"points to ${destination[withMyAlias]}."
 			}
 
