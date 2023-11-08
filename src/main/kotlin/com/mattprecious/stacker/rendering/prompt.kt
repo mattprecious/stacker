@@ -7,7 +7,6 @@ import com.mattprecious.stacker.rendering.Ansi.cursorUp
 import com.mattprecious.stacker.rendering.Ansi.reset
 import com.mattprecious.stacker.rendering.Ansi.restorePosition
 import com.mattprecious.stacker.rendering.Ansi.underline
-import org.jline.terminal.TerminalBuilder
 
 context(CliktCommand)
 fun <T> interactivePrompt(
@@ -28,7 +27,7 @@ fun <T> interactivePrompt(
 
 	val labelSuffix = if (message.last().isLetterOrDigit()) ": " else " "
 
-	TerminalBuilder.terminal().use { inputTerminal ->
+//	TerminalBuilder.terminal().use { inputTerminal ->
 		var highlighted = default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0
 		// Make use of the terminal clearing part of the loop by temporarily holding onto the return value.
 		var selected: Int? = null
@@ -92,44 +91,44 @@ fun <T> interactivePrompt(
 				outputTerminal.rawPrint(toString())
 			}
 
-			inputTerminal.enterRawMode()
+//			inputTerminal.enterRawMode()
 
-			val reader = inputTerminal.reader()
-			while (true) {
-				when (val c = reader.read()) {
-					10, 13 -> {
-						if (filteredOptions.isNotEmpty()) {
-							selected = highlighted
-						}
-						break
-					}
-
-					27 -> {
-						when (reader.read()) {
-							91 -> {
-								when (reader.read()) {
-									65 -> highlighted = (highlighted - 1).coerceAtLeast(0)
-									66 -> highlighted = (highlighted + 1).coerceAtMost(filteredOptions.size - 1)
-								}
-
-								break
-							}
-						}
-					}
-					in 32..126 -> {
-						if (filteringEnabled) {
-							updateFilter(filter + c.toChar())
-						}
-						break
-					}
-					127 -> {
-						if (filteringEnabled) {
-							updateFilter(filter.dropLast(1))
-						}
-						break
-					}
-				}
-			}
-		}
+//			val reader = inputTerminal.reader()
+//			while (true) {
+//				when (val c = reader.read()) {
+//					10, 13 -> {
+//						if (filteredOptions.isNotEmpty()) {
+//							selected = highlighted
+//						}
+//						break
+//					}
+//
+//					27 -> {
+//						when (reader.read()) {
+//							91 -> {
+//								when (reader.read()) {
+//									65 -> highlighted = (highlighted - 1).coerceAtLeast(0)
+//									66 -> highlighted = (highlighted + 1).coerceAtMost(filteredOptions.size - 1)
+//								}
+//
+//								break
+//							}
+//						}
+//					}
+//					in 32..126 -> {
+//						if (filteringEnabled) {
+//							updateFilter(filter + c.toChar())
+//						}
+//						break
+//					}
+//					127 -> {
+//						if (filteringEnabled) {
+//							updateFilter(filter.dropLast(1))
+//						}
+//						break
+//					}
+//				}
+//			}
+////		}
 	}
 }

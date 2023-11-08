@@ -5,16 +5,14 @@ sqldelight = "2.0.0"
 [libraries]
 assertk = "com.willowtreeapps.assertk:assertk:0.27.0"
 clikt = "com.github.ajalt.clikt:clikt:4.2.1"
-github = "org.kohsuke:github-api:1.317"
-jline-terminal = "org.jline:jline-terminal:3.24.1"
-junit = "junit:junit:4.13.2"
 kotlin-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0"
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test" }
 okio = "com.squareup.okio:okio:3.6.0"
-sqldelight-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+sqldelight-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
 sqldelight-dialect = { module = "app.cash.sqldelight:sqlite-3-38-dialect", version.ref = "sqldelight" }
 
 [plugins]
 spotless = "com.diffplug.spotless:6.22.0"
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
