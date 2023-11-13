@@ -11,6 +11,9 @@ plugins {
 
 repositories {
 	mavenCentral()
+	maven {
+		setUrl("https://oss.sonatype.org/content/repositories/snapshots/")
+	}
 }
 
 //application {
@@ -28,6 +31,11 @@ kotlin {
 	macosArm64()
 
 	sourceSets {
+		all {
+			languageSettings.optIn("kotlin.ExperimentalStdlibApi")
+			languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
+		}
+
 		getByName("commonMain") {
 			dependencies {
 				implementation(libs.clikt)
@@ -47,17 +55,12 @@ kotlin {
 
 	targets.withType<KotlinNativeTarget>().configureEach {
 		binaries.executable {
-			entryPoint = "com.mattprecious.stacker.StackerKt"
+			entryPoint = "com.mattprecious.stacker.main"
 		}
 
 		compilations.getByName("main").cinterops {
 			create("libgit2") {
-				packageName("com.github.libgit2")
-
-				header(file("libgit2/include/git2.h"))
-				includeDirs(
-					file("libgit2/include/git2"),
-				)
+				packageName("com.github.git2")
 			}
 		}
 	}
