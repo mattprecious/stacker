@@ -12,5 +12,6 @@ typedef struct git_commit {} git_commit;
 typedef struct git_config {} git_config;
 typedef struct git_object {} git_object;
 typedef struct git_reference {} git_reference;
+typedef struct git_rebase {} git_rebase;
 typedef struct git_remote {} git_remote;
 typedef struct git_repository {} git_repository;

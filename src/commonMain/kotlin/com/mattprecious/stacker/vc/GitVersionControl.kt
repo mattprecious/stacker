@@ -14,10 +14,13 @@ import com.github.git2.GIT_MERGE_ANALYSIS_UP_TO_DATE
 import com.github.git2.GIT_MERGE_PREFERENCE_NO_FASTFORWARD
 import com.github.git2.GIT_OK
 import com.github.git2.GIT_PUSH_OPTIONS_VERSION
+import com.github.git2.GIT_REBASE_NO_OPERATION
+import com.github.git2.GIT_REBASE_OPERATION_PICK
 import com.github.git2.GIT_REMOTE_CALLBACKS_VERSION
 import com.github.git2.git_annotated_commit
 import com.github.git2.git_annotated_commit_from_revspec
 import com.github.git2.git_annotated_commit_id
+import com.github.git2.git_annotated_commit_lookup
 import com.github.git2.git_branch_create
 import com.github.git2.git_branch_delete
 import com.github.git2.git_branch_iterator
@@ -35,7 +38,6 @@ import com.github.git2.git_commit
 import com.github.git2.git_commit_body
 import com.github.git2.git_commit_lookup
 import com.github.git2.git_commit_summary
-import com.github.git2.git_config
 import com.github.git2.git_config_free
 import com.github.git2.git_config_get_string
 import com.github.git2.git_config_snapshot
@@ -52,9 +54,21 @@ import com.github.git2.git_merge_preference_tVar
 import com.github.git2.git_object
 import com.github.git2.git_oid
 import com.github.git2.git_oid_equal
+import com.github.git2.git_oid_fromstr
 import com.github.git2.git_oid_tostr_s
 import com.github.git2.git_push_options
 import com.github.git2.git_push_options_init
+import com.github.git2.git_rebase
+import com.github.git2.git_rebase_abort
+import com.github.git2.git_rebase_commit
+import com.github.git2.git_rebase_finish
+import com.github.git2.git_rebase_free
+import com.github.git2.git_rebase_init
+import com.github.git2.git_rebase_next
+import com.github.git2.git_rebase_open
+import com.github.git2.git_rebase_operation
+import com.github.git2.git_rebase_operation_byindex
+import com.github.git2.git_rebase_operation_current
 import com.github.git2.git_reference
 import com.github.git2.git_reference_free
 import com.github.git2.git_reference_lookup
@@ -78,12 +92,15 @@ import com.github.git2.git_repository_open
 import com.github.git2.git_repository_path
 import com.github.git2.git_repository_set_head
 import com.github.git2.git_revparse_single
+import com.github.git2.git_signature
+import com.github.git2.git_signature_default
+import com.github.git2.git_signature_free
 import com.github.git2.git_strarray
 import com.mattprecious.stacker.shell.Shell
 import com.mattprecious.stacker.vc.VersionControl.CommitInfo
-import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocPointerTo
@@ -101,7 +118,7 @@ import okio.Path.Companion.toPath
 import kotlinx.cinterop.ptr as pointer
 
 class GitVersionControl(
-	private val scope: MemScope,
+	scope: MemScope,
 	private val fs: FileSystem,
 	private val shell: Shell,
 ) : VersionControl {
@@ -120,25 +137,26 @@ class GitVersionControl(
 	override val branches: List<String>
 		get() = memScoped {
 			val flags = alloc(GIT_BRANCH_LOCAL).ptr
-			val iterator = allocPointerTo<git_branch_iterator>()
-			checkError(git_branch_iterator_new(iterator.ptr, repo, GIT_BRANCH_LOCAL))
+			val iterator = withAllocPointerTo {
+				checkError(git_branch_iterator_new(it.ptr, repo, GIT_BRANCH_LOCAL))
+			}
 			val list = mapBranches(iterator, flags) { git_reference_shorthand(it.ptr)!!.toKString() }
 			git_branch_iterator_free(iterator.value)
 			list
 		}
 	override val editor: String?
 		get() = memScoped {
-			val config = allocPointerTo<git_config>()
-			checkError(git_repository_config(config.ptr, repo))
-
-			val configSnapshot = allocPointerTo<git_config>()
-			checkError(git_config_snapshot(configSnapshot.ptr, config.value))
+			val config = withAllocPointerTo {	checkError(git_repository_config(it.ptr, repo)) }
+			val configSnapshot = withAllocPointerTo {
+				checkError(git_config_snapshot(it.ptr, config.value))
+			}
 
 			return@memScoped try {
-				val editor = allocPointerTo<ByteVar>()
-				val code = git_config_get_string(editor.ptr, configSnapshot.value, "core.editor")
-				if (code == ReturnCodes.ENOTFOUND) return@memScoped null
-				checkError(code)
+				val editor = withAllocPointerTo {
+					val code = git_config_get_string(it.ptr, configSnapshot.value, "core.editor")
+					if (code == ReturnCodes.ENOTFOUND) return@memScoped null
+					checkError(code)
+				}
 
 				editor.value!!.toKString()
 			} finally {
@@ -155,9 +173,7 @@ class GitVersionControl(
 		nullableRepo = if (repoPathBuf == null) {
 			null
 		} else {
-			val repo = scope.allocPointerTo<git_repository>()
-			checkError(git_repository_open(repo.ptr, repoPathBuf))
-			repo
+			scope.withAllocPointerTo { checkError(git_repository_open(it.ptr, repoPathBuf)) }
 		}
 	}
 
@@ -187,8 +203,7 @@ class GitVersionControl(
 	}
 
 	override fun checkout(branchName: String) = memScoped {
-		val treeish = allocPointerTo<git_object>()
-		checkError(git_revparse_single(treeish.ptr, repo, branchName))
+		val treeish = withAllocPointerTo { checkError(git_revparse_single(it.ptr, repo, branchName)) }
 		checkout(branchName, treeish.pointed!!)
 	}
 
@@ -221,28 +236,53 @@ class GitVersionControl(
 		val branchCommitId = getCommitId(branchName)
 		val possibleAncestorCommitId = getCommitId(possibleAncestorName)
 
-		val oid = alloc<git_oid>()
-		val code = git_merge_base(oid.ptr, repo, possibleAncestorCommitId.ptr, branchCommitId.ptr)
-		if (code == ReturnCodes.ENOTFOUND) return false
-		checkError(code)
+		val oid = withAlloc<git_oid> {
+			val code = git_merge_base(it.ptr, repo, possibleAncestorCommitId.ptr, branchCommitId.ptr)
+			if (code == ReturnCodes.ENOTFOUND) return false
+			checkError(code)
+		}
 
 		return@memScoped git_oid_equal(oid.ptr, possibleAncestorCommitId.ptr) == 1
 	}
 
-	override fun restack(branchName: String, parentName: String, parentSha: String): Boolean {
-		TODO("Not yet implemented")
+	override fun restack(
+		branchName: String,
+		parentName: String,
+		parentSha: String,
+	): Boolean = memScoped {
+		val branchCommit = getAnnotatedCommit(branchName)
+		val ontoCommit = getAnnotatedCommit(parentName)
+
+		val upstreamId = withAlloc<git_oid> { checkError(git_oid_fromstr(it.ptr, parentSha)) }
+
+		val upstreamCommit = withAllocPointerTo {
+			checkError(git_annotated_commit_lookup(it.ptr, repo, upstreamId.ptr))
+		}
+
+		val rebase = withAllocPointerTo {
+			checkError(git_rebase_init(it.ptr, repo, branchCommit.ptr, upstreamCommit.value, ontoCommit.ptr, null))
+		}
+
+		val result = performRebase(rebase.pointed!!, branchName)
+		git_rebase_free(rebase.value)
+		return@memScoped result
 	}
 
 	override fun getSha(branch: String): String = memScoped {
 		return@memScoped git_oid_tostr_s(getCommitId(branch).ptr)!!.toKString()
 	}
 
-	override fun abortRebase() {
-		TODO("Not yet implemented")
+	override fun abortRebase() = memScoped {
+		val rebase = getRebase() ?: return@memScoped
+		checkError(git_rebase_abort(rebase.ptr))
+		git_rebase_free(rebase.ptr)
 	}
 
-	override fun continueRebase(branchName: String): Boolean {
-		TODO("Not yet implemented")
+	override fun continueRebase(branchName: String): Boolean = memScoped {
+		val rebase = getRebase() ?: return@memScoped true // Not really...
+		val result = performRebase(rebase, branchName)
+		git_rebase_free(rebase.ptr)
+		return@memScoped result
 	}
 
 	override fun pushBranches(branchNames: List<String>): Unit = memScoped {
@@ -251,14 +291,16 @@ class GitVersionControl(
 	}
 
 	private fun pushBranchesLibGit(branchNames: List<String>): Unit = memScoped {
-		val refs = alloc<git_strarray>()
-		refs.count = branchNames.size.toULong()
-		refs.strings = branchNames.map { it.asBranchRevSpec() }.map { "+$it:$it" }.toCStringArray(this)
+		val refs = withAlloc<git_strarray> {
+			it.count = branchNames.size.toULong()
+			it.strings = branchNames.map { it.asBranchRevSpec() }.map { "+$it:$it" }.toCStringArray(this)
+		}
 
 		// TODO: Atomic? I don't think libgit2 supports this.
-		val options = alloc<git_push_options>()
-		checkError(git_push_options_init(options.ptr, GIT_PUSH_OPTIONS_VERSION.toUInt()))
-		populateRemoteCallbacks(options.callbacks)
+		val options = withAlloc<git_push_options> {
+			checkError(git_push_options_init(it.ptr, GIT_PUSH_OPTIONS_VERSION.toUInt()))
+			populateRemoteCallbacks(it.callbacks)
+		}
 
 		val origin = getOrigin()
 		checkError(git_remote_push(origin.ptr, refs.ptr, options.ptr))
@@ -278,16 +320,18 @@ class GitVersionControl(
 		refs.count = 1.toULong()
 		refs.strings = listOf(branchName).toCStringArray(this)
 
-		val pullOptions = alloc<git_fetch_options>()
-		checkError(git_fetch_options_init(pullOptions.ptr, GIT_FETCH_OPTIONS_VERSION.toUInt()))
-		populateRemoteCallbacks(pullOptions.callbacks)
+		val pullOptions = withAlloc<git_fetch_options> {
+			checkError(git_fetch_options_init(it.ptr, GIT_FETCH_OPTIONS_VERSION.toUInt()))
+			populateRemoteCallbacks(it.callbacks)
+		}
 
 		val origin = getOrigin()
 		checkError(git_remote_fetch(origin.ptr, refs.ptr, pullOptions.ptr, null))
 		git_remote_free(origin.ptr)
 
-		val head = allocPointerTo<git_annotated_commit>()
-		checkError(git_annotated_commit_from_revspec(head.ptr, repo, branchName.asRemoteBranchRevSpec()))
+		val head = withAllocPointerTo {
+			checkError(git_annotated_commit_from_revspec(it.ptr, repo, branchName.asRemoteBranchRevSpec()))
+		}
 
 		val analysis = getMergeAnalysis(getBranch(branchName), head)
 		if (analysis.upToDate) {
@@ -329,34 +373,26 @@ class GitVersionControl(
 	private fun String.asRemoteBranchRevSpec() = "refs/remotes/origin/$this"
 
 	private fun MemScope.getCommitId(branchName: String): git_oid {
-		val oid = alloc<git_oid>()
-		checkError(git_reference_name_to_id(oid.ptr, repo, branchName.asBranchRevSpec()))
-		return oid
+		return withAlloc { checkError(git_reference_name_to_id(it.ptr, repo, branchName.asBranchRevSpec())) }
 	}
 
 	private fun MemScope.getCommitForBranch(branchName: String): git_commit {
-		val commit = allocPointerTo<git_commit>()
-		checkError(git_commit_lookup(commit.pointer, repo, getCommitId(branchName).pointer))
-		return commit.pointed!!
+		return withAllocPointerTo {
+			checkError(git_commit_lookup(it.pointer, repo, getCommitId(branchName).pointer))
+		}.pointed!!
 	}
 
 	private fun MemScope.getHead(): git_reference {
-		val head = allocPointerTo<git_reference>()
-		checkError(git_repository_head(head.ptr, repo))
-		return head.pointed!!
+		return withAllocPointerTo { checkError(git_repository_head(it.ptr, repo)) }.pointed!!
 	}
 
 	private fun MemScope.getBranch(branchName: String): git_reference {
-		val ref = allocPointerTo<git_reference>()
-		checkError(git_reference_lookup(ref.ptr, repo, branchName.asBranchRevSpec()))
-		return ref.pointed!!
+		return withAllocPointerTo { checkError(git_reference_lookup(it.ptr, repo, branchName.asBranchRevSpec())) }.pointed!!
 	}
 
 	/** Should be freed with [git_remote_free]. */
 	private fun MemScope.getOrigin(): git_remote {
-		val remote = allocPointerTo<git_remote>()
-		checkError(git_remote_lookup(remote.ptr, repo, "origin"))
-		return remote.pointed!!
+		return withAllocPointerTo { checkError(git_remote_lookup(it.ptr, repo, "origin")) }.pointed!!
 	}
 
 	/** @param treeish git_commit* or git_object* */
@@ -369,8 +405,9 @@ class GitVersionControl(
 	}
 
 	private fun MemScope.checkoutTree(treeish: git_object) {
-		val options = alloc<git_checkout_options>()
-		git_checkout_options_init(options.ptr, GIT_CHECKOUT_OPTIONS_VERSION.toUInt())
+		val options = withAlloc<git_checkout_options> {
+			git_checkout_options_init(it.ptr, GIT_CHECKOUT_OPTIONS_VERSION.toUInt())
+		}
 
 		checkError(git_checkout_tree(repo, treeish.ptr, options.ptr))
 	}
@@ -429,21 +466,105 @@ class GitVersionControl(
 		action: (branch: git_reference) -> Unit,
 	) {
 		while (true) {
-			val reference = allocPointerTo<git_reference>()
-			val code = git_branch_next(reference.pointer, flags, iterator.value)
-			if (code == ReturnCodes.ITEROVER) return
+			val branch = withAllocPointerTo {
+				val code = git_branch_next(it.pointer, flags, iterator.value)
+				if (code == ReturnCodes.ITEROVER) return
+			}
 
-			action(reference.pointed!!)
+			action(branch.pointed!!)
 		}
+	}
+
+	private fun MemScope.getAnnotatedCommit(branchName: String): git_annotated_commit {
+		return withAllocPointerTo {
+			checkError(git_annotated_commit_from_revspec(it.ptr, repo, branchName.asBranchRevSpec()))
+		}.pointed!!
+	}
+
+	private fun MemScope.getRebase(): git_rebase? {
+		return withAllocPointerTo {
+			val code = git_rebase_open(it.ptr, repo, null)
+			if (code == ReturnCodes.ENOTFOUND) return null
+			checkError(code)
+		}.pointed
+	}
+
+	private fun MemScope.performRebase(
+		rebase: git_rebase,
+		branchName: String,
+	): Boolean {
+		val signature = withAllocPointerTo { checkError(git_signature_default(it.ptr, repo)) }
+
+		forEachRebaseOperation(rebase) {
+			if (!performRebaseOperation(rebase = rebase, operation = it.pointed, committer = signature.pointed!!)) {
+				return@performRebase false
+			}
+		}
+
+		checkError(git_rebase_finish(rebase.ptr, signature.value))
+		git_signature_free(signature.value)
+
+		val headId = withAlloc<git_oid> { checkError(git_reference_name_to_id(it.ptr, repo, "HEAD")) }
+
+		setBranchTarget(branchName, headId)
+		return true
 	}
 
 	private fun MemScope.setBranchTarget(
 		branchName: String,
 		target: git_oid,
 	) {
-		val ref = allocPointerTo<git_reference>()
-		checkError(git_reference_set_target(ref.ptr, getBranch(branchName).ptr, target.ptr, null))
+		val ref = withAllocPointerTo {
+			checkError(git_reference_set_target(it.ptr, getBranch(branchName).ptr, target.ptr, null))
+		}
 		git_reference_free(ref.value)
+	}
+
+	private inline fun MemScope.forEachRebaseOperation(
+		rebase: git_rebase,
+		action: (operation: CPointer<git_rebase_operation>) -> Unit,
+	) {
+		val operation = allocPointerTo<git_rebase_operation>()
+
+		val operationIndex = git_rebase_operation_current(rebase.ptr)
+		if (operationIndex != GIT_REBASE_NO_OPERATION) {
+			action(git_rebase_operation_byindex(rebase.ptr, operationIndex)!!)
+		}
+
+		while (true) {
+			val code = git_rebase_next(operation.ptr, rebase.ptr)
+			if (code == ReturnCodes.ITEROVER) break
+			checkError(code)
+			action(operation.value!!)
+		}
+	}
+
+	private fun MemScope.performRebaseOperation(
+		rebase: git_rebase,
+		operation: git_rebase_operation,
+		committer: git_signature,
+	): Boolean {
+		check(operation.type == GIT_REBASE_OPERATION_PICK)
+		val code = git_rebase_commit(alloc<git_oid>().ptr, rebase.ptr, null, committer.ptr, null, null)
+		if (code == ReturnCodes.EAPPLIED) return true
+		// TODO: Should these return different results?
+		if (code == ReturnCodes.EUNMERGED || code == ReturnCodes.ECONFLICT) {
+			return false
+		}
+		checkError(code)
+		return true
+	}
+
+	private inline fun <reified T : CVariable> MemScope.withAlloc(
+		block: (out: T) -> Unit,
+	): T {
+		return alloc<T>().also(block)
+	}
+
+	private inline fun <reified T : CVariable> MemScope.withAllocPointerTo(
+		block: (out: CPointerVar<T>) -> Unit,
+	): CPointerVar<T> {
+		return allocPointerTo<T>().also(block)
 	}
 
 	private fun git_commit.asObject(): git_object {
