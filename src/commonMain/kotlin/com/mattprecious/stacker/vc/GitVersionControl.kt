@@ -28,7 +28,6 @@ import com.github.git2.git_branch_next
 import com.github.git2.git_branch_tVar
 import com.github.git2.git_buf
 import com.github.git2.git_buf_dispose
-import com.github.git2.git_cert
 import com.github.git2.git_checkout_options
 import com.github.git2.git_checkout_options_init
 import com.github.git2.git_checkout_tree
@@ -40,7 +39,6 @@ import com.github.git2.git_config
 import com.github.git2.git_config_free
 import com.github.git2.git_config_get_string
 import com.github.git2.git_config_snapshot
-import com.github.git2.git_credential
 import com.github.git2.git_credential_ssh_key_from_agent
 import com.github.git2.git_error_last
 import com.github.git2.git_fetch_options
@@ -84,7 +82,6 @@ import com.github.git2.git_strarray
 import com.mattprecious.stacker.shell.Shell
 import com.mattprecious.stacker.vc.VersionControl.CommitInfo
 import kotlinx.cinterop.ByteVar
-import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.MemScope
@@ -311,29 +308,18 @@ class GitVersionControl(
 
 	private fun populateRemoteCallbacks(callbacks: git_remote_callbacks) {
 		checkError(git_remote_init_callbacks(callbacks.ptr, GIT_REMOTE_CALLBACKS_VERSION.toUInt()))
-		callbacks.credentials =
-			staticCFunction { out: CPointer<CPointerVar<git_credential>>?,
-												_: CPointer<ByteVar>?,
-												username: CPointer<ByteVar>?,
-												types: UInt,
-												_: COpaquePointer? ->
-				check(types and GIT_CREDTYPE_SSH_KEY.toUInt() == GIT_CREDTYPE_SSH_KEY.toUInt()) {
-					"Unsupported credential types: $types"
-				}
-
-				checkError(git_credential_ssh_key_from_agent(out, username?.toKString()))
-
-				return@staticCFunction 0
+		callbacks.credentials = staticCFunction { out, _, username, types, _ ->
+			check(types.toInt() and GIT_CREDTYPE_SSH_KEY == GIT_CREDTYPE_SSH_KEY) {
+				"Unsupported credential types: $types"
 			}
+
+			checkError(git_credential_ssh_key_from_agent(out, username?.toKString()))
+
+			return@staticCFunction 0
+		}
 
 		// Is this bad? I don't know why it's not a known host.
-		callbacks.certificate_check =
-			staticCFunction { _: CPointer<git_cert>?,
-												valid: Int,
-												_: CPointer<ByteVar>?,
-												_: COpaquePointer? ->
-				return@staticCFunction valid
-			}
+		callbacks.certificate_check = staticCFunction { _, valid, _, _ -> valid }
 	}
 
 	/** Convert a branch name to a refspec. */
