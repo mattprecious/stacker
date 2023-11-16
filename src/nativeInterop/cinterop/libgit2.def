@@ -6,7 +6,11 @@ linkerOpts = -L/Volumes/development/kgit2/lib/build/dist/libgit2/lib -L/Volumes/
 
 ---
 
+typedef struct git_annotated_commit {} git_annotated_commit;
 typedef struct git_branch_iterator {} git_branch_iterator;
+typedef struct git_commit {} git_commit;
+typedef struct git_config {} git_config;
+typedef struct git_object {} git_object;
 typedef struct git_reference {} git_reference;
 typedef struct git_remote {} git_remote;
 typedef struct git_repository {} git_repository;
