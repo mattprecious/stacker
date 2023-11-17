@@ -115,7 +115,7 @@ fun <T> CliktCommand.interactivePrompt(
 			outputTerminal.rawPrint(toString())
 		}
 
-		withCBreak {
+		withRaw {
 			while (true) {
 				when (val c = getchar()) {
 					10, 13 -> {
@@ -157,16 +157,16 @@ fun <T> CliktCommand.interactivePrompt(
 	}
 }
 
-private inline fun withCBreak(block: () -> Unit) {
+private inline fun withRaw(block: () -> Unit) {
 	try {
-		updateTerminalFlags(interactive = true)
+		updateTerminalFlags(raw = true)
 		block()
 	} finally {
-		updateTerminalFlags(interactive = false)
+		updateTerminalFlags(raw = false)
 	}
 }
 
-private fun updateTerminalFlags(interactive: Boolean) = memScoped {
+private fun updateTerminalFlags(raw: Boolean) = memScoped {
 	// TODO: Figure out ncurses, because this is ridiculous.
 
 	val termios = alloc<termios>()
@@ -174,7 +174,9 @@ private fun updateTerminalFlags(interactive: Boolean) = memScoped {
 		"Unable to get the terminal attributes."
 	}
 
-	if (interactive) {
+	// These flags are sourced from cfmakeraw: https://www.man7.org/linux/man-pages/man3/termios.3.html
+	// This can maybe just call cfmakeraw directly, but I don't know how to reset it afterward.
+	if (raw) {
 		termios.c_iflag =
 			termios.c_iflag and (IGNBRK or BRKINT or PARMRK or ISTRIP or INLCR or IGNCR or ICRNL or IXON).inv().toULong()
 		termios.c_oflag = termios.c_oflag and OPOST.inv().toULong()
