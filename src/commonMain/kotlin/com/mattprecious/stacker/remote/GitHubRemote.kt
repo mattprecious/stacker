@@ -24,7 +24,7 @@ class GitHubRemote(
 	override fun openOrRetargetPullRequest(
 		branchName: String,
 		targetName: String,
-		prInfo: () -> Remote.PrInfo
+		prInfo: () -> Remote.PrInfo,
 	): Remote.PrResult {
 		TODO("Not yet implemented")
 	}

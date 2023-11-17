@@ -7,6 +7,32 @@ import com.mattprecious.stacker.rendering.Ansi.cursorUp
 import com.mattprecious.stacker.rendering.Ansi.reset
 import com.mattprecious.stacker.rendering.Ansi.restorePosition
 import com.mattprecious.stacker.rendering.Ansi.underline
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import platform.posix.BRKINT
+import platform.posix.CS8
+import platform.posix.CSIZE
+import platform.posix.ECHO
+import platform.posix.ECHONL
+import platform.posix.ICANON
+import platform.posix.ICRNL
+import platform.posix.IEXTEN
+import platform.posix.IGNBRK
+import platform.posix.IGNCR
+import platform.posix.INLCR
+import platform.posix.ISIG
+import platform.posix.ISTRIP
+import platform.posix.IXON
+import platform.posix.OPOST
+import platform.posix.PARENB
+import platform.posix.PARMRK
+import platform.posix.STDIN_FILENO
+import platform.posix.TCSAFLUSH
+import platform.posix.getchar
+import platform.posix.tcgetattr
+import platform.posix.tcsetattr
+import platform.posix.termios
 
 fun <T> CliktCommand.interactivePrompt(
 	message: String,
@@ -26,108 +52,141 @@ fun <T> CliktCommand.interactivePrompt(
 
 	val labelSuffix = if (message.last().isLetterOrDigit()) ": " else " "
 
-//	TerminalBuilder.terminal().use { inputTerminal ->
-		var highlighted = default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0
-		// Make use of the terminal clearing part of the loop by temporarily holding onto the return value.
-		var selected: Int? = null
-		var filter = ""
-		var filteredOptions = options
+	var highlighted = default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0
+	// Make use of the terminal clearing part of the loop by temporarily holding onto the return value.
+	var selected: Int? = null
+	var filter = ""
+	var filteredOptions = options
 
-		fun updateFilter(newFilter: String) {
-			if (newFilter == filter) return
-			filter = newFilter
-			filteredOptions = options.filter { valueTransform(it).contains(filter) }
-			highlighted = highlighted.coerceIn(0, (filteredOptions.size - 1).coerceAtLeast(0))
-		}
+	fun updateFilter(newFilter: String) {
+		if (newFilter == filter) return
+		filter = newFilter
+		filteredOptions = options.filter { valueTransform(it).contains(filter) }
+		highlighted = highlighted.coerceIn(0, (filteredOptions.size - 1).coerceAtLeast(0))
+	}
 
-		while (true) {
-			with(builder) {
-				if (isNotEmpty()) {
-					// TODO: This is wrong if any lines soft wrapped.
-					val clearingSize = lines().size
-					clear()
+	while (true) {
+		with(builder) {
+			if (isNotEmpty()) {
+				// TODO: This is wrong if any lines soft wrapped.
+				val clearingSize = lines().size
+				clear()
 
-					repeat(clearingSize - 1) {
-						append(cursorDown)
-					}
+				repeat(clearingSize - 1) {
+					append(cursorDown)
+				}
 
-					repeat(clearingSize - 1) {
-						append(clearEntireLine)
-						append(cursorUp)
-					}
-
+				repeat(clearingSize - 1) {
 					append(clearEntireLine)
+					append(cursorUp)
 				}
 
-				append(message)
-				append(labelSuffix)
-
-				selected.let {
-					if (it == null) {
-						append(filter)
-						append(Ansi.savePosition)
-					} else {
-						val result = filteredOptions[it]
-						appendLine(valueTransform(result))
-						outputTerminal.rawPrint(toString())
-						return result
-					}
-				}
-
-				appendLine()
-
-				filteredOptions.forEachIndexed { index, option ->
-					val display = displayTransform(option)
-					if (highlighted == index) {
-						appendLine("❯ $underline$display$reset")
-					} else {
-						appendLine("  $display")
-					}
-				}
-
-				append(restorePosition)
-
-				outputTerminal.rawPrint(toString())
+				append(clearEntireLine)
 			}
 
-//			inputTerminal.enterRawMode()
+			append(message)
+			append(labelSuffix)
 
-//			val reader = inputTerminal.reader()
-//			while (true) {
-//				when (val c = reader.read()) {
-//					10, 13 -> {
-//						if (filteredOptions.isNotEmpty()) {
-//							selected = highlighted
-//						}
-//						break
-//					}
-//
-//					27 -> {
-//						when (reader.read()) {
-//							91 -> {
-//								when (reader.read()) {
-//									65 -> highlighted = (highlighted - 1).coerceAtLeast(0)
-//									66 -> highlighted = (highlighted + 1).coerceAtMost(filteredOptions.size - 1)
-//								}
-//
-//								break
-//							}
-//						}
-//					}
-//					in 32..126 -> {
-//						if (filteringEnabled) {
-//							updateFilter(filter + c.toChar())
-//						}
-//						break
-//					}
-//					127 -> {
-//						if (filteringEnabled) {
-//							updateFilter(filter.dropLast(1))
-//						}
-//						break
-//					}
-//				}
-//			}
-////		}
+			selected.let {
+				if (it == null) {
+					append(filter)
+					append(Ansi.savePosition)
+				} else {
+					val result = filteredOptions[it]
+					appendLine(valueTransform(result))
+					outputTerminal.rawPrint(toString())
+					return result
+				}
+			}
+
+			appendLine()
+
+			filteredOptions.forEachIndexed { index, option ->
+				val display = displayTransform(option)
+				if (highlighted == index) {
+					appendLine("❯ $underline$display$reset")
+				} else {
+					appendLine("  $display")
+				}
+			}
+
+			append(restorePosition)
+
+			outputTerminal.rawPrint(toString())
+		}
+
+		withCBreak {
+			while (true) {
+				when (val c = getchar()) {
+					10, 13 -> {
+						if (filteredOptions.isNotEmpty()) {
+							selected = highlighted
+						}
+						break
+					}
+
+					27 -> {
+						when (getchar()) {
+							91 -> {
+								when (getchar()) {
+									65 -> highlighted = (highlighted - 1).coerceAtLeast(0)
+									66 -> highlighted = (highlighted + 1).coerceAtMost(filteredOptions.size - 1)
+								}
+
+								break
+							}
+						}
+					}
+
+					in 32..126 -> {
+						if (filteringEnabled) {
+							updateFilter(filter + c.toChar())
+						}
+						break
+					}
+
+					127 -> {
+						if (filteringEnabled) {
+							updateFilter(filter.dropLast(1))
+						}
+						break
+					}
+				}
+			}
+		}
 	}
+}
+
+private inline fun withCBreak(block: () -> Unit) {
+	try {
+		updateTerminalFlags(interactive = true)
+		block()
+	} finally {
+		updateTerminalFlags(interactive = false)
+	}
+}
+
+private fun updateTerminalFlags(interactive: Boolean) = memScoped {
+	// TODO: Figure out ncurses, because this is ridiculous.
+
+	val termios = alloc<termios>()
+	check(tcgetattr(STDIN_FILENO, termios.ptr) == 0) {
+		"Unable to get the terminal attributes."
+	}
+
+	if (interactive) {
+		termios.c_iflag =
+			termios.c_iflag and (IGNBRK or BRKINT or PARMRK or ISTRIP or INLCR or IGNCR or ICRNL or IXON).inv().toULong()
+		termios.c_oflag = termios.c_oflag and OPOST.inv().toULong()
+		termios.c_lflag = termios.c_lflag and (ECHO or ECHONL or ICANON or ISIG or IEXTEN).inv().toULong()
+		termios.c_cflag = termios.c_cflag and (CSIZE or PARENB).inv().toULong() or CS8.toULong()
+	} else {
+		termios.c_iflag =
+			termios.c_iflag or (IGNBRK or BRKINT or PARMRK or ISTRIP or INLCR or IGNCR or ICRNL or IXON).toULong()
+		termios.c_oflag = termios.c_oflag or OPOST.toULong()
+		termios.c_lflag = termios.c_lflag or (ECHO or ECHONL or ICANON or ISIG or IEXTEN).toULong()
+		termios.c_cflag = termios.c_cflag or (CSIZE or PARENB).toULong() and CS8.inv().toULong()
+	}
+
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, termios.ptr)
 }
