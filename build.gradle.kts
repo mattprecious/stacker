@@ -16,17 +16,6 @@ repositories {
 	}
 }
 
-//application {
-//	applicationName = "st"
-//	mainClass.set("com.mattprecious.stacker.StackerKt")
-//
-//	applicationDistribution.from(projectDir) {
-//		// libgit and related dependencies are built locally and dropped into this folder for local development. CI has been
-//		// configured to drop them here instead of src/main/dist for parity.
-//		include("native/**")
-//	}
-//}
-
 kotlin {
 	macosArm64()
 
