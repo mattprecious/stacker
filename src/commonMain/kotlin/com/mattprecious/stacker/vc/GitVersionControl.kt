@@ -130,10 +130,13 @@ class GitVersionControl(
 		get() = nullableRepo != null
 	override val configDirectory: Path
 		get() = git_repository_path(repo)!!.toKString().toPath()
+
 	override val currentBranchName: String
 		get() = memScoped { git_reference_shorthand(getHead().pointer)!!.toKString() }
+
 	override val originUrl: String
 		get() = memScoped { git_remote_url(getOrigin().pointer)!!.toKString() }
+
 	override val branches: List<String>
 		get() = memScoped {
 			val flags = alloc(GIT_BRANCH_LOCAL).ptr
@@ -144,6 +147,7 @@ class GitVersionControl(
 			git_branch_iterator_free(iterator.value)
 			list
 		}
+
 	override val editor: String?
 		get() = memScoped {
 			val config = withAllocPointerTo {	checkError(git_repository_config(it.ptr, repo)) }

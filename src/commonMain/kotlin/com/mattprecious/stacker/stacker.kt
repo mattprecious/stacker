@@ -8,7 +8,12 @@ import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.shell.RealShell
 import com.mattprecious.stacker.stack.RealStackManager
 import com.mattprecious.stacker.vc.GitVersionControl
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.curl.Curl
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.cinterop.memScoped
+import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import kotlin.system.exitProcess
@@ -36,7 +41,18 @@ internal fun withStacker(
 				val stackManager = RealStackManager(db)
 				val configManager = RealConfigManager(db, fs, stackManager)
 				val locker = RealLocker(db, stackManager, vc)
-				val remote = remoteOverride ?: GitHubRemote(vc.originUrl, configManager)
+				val httpClient = HttpClient(Curl) {
+					install(ContentNegotiation) {
+						json(
+							Json {
+								ignoreUnknownKeys = true
+								decodeEnumsCaseInsensitive = true
+							},
+						)
+					}
+				}
+
+				val remote = remoteOverride ?: GitHubRemote(httpClient, vc.originUrl, configManager)
 
 				Stacker(
 					configManager = configManager,

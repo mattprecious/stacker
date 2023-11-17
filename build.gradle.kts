@@ -40,6 +40,10 @@ kotlin {
 			dependencies {
 				implementation(libs.clikt)
 				implementation(libs.kotlin.serialization.json)
+				implementation(libs.ktor.client.core)
+				implementation(libs.ktor.client.curl)
+				implementation(libs.ktor.client.negotiation)
+				implementation(libs.ktor.serialization.json)
 				implementation(libs.okio)
 				implementation(libs.sqldelight.driver)
 			}
