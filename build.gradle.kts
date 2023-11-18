@@ -24,11 +24,15 @@ repositories {
 
 dependencies {
 	implementation(libs.clikt)
-	implementation(libs.github)
 	implementation(libs.jline.terminal)
 	implementation(libs.kotlin.serialization.json)
+	implementation(libs.ktor.client.cio)
+	implementation(libs.ktor.client.core)
+	implementation(libs.ktor.client.negotiation)
+	implementation(libs.ktor.serialization.json)
 	implementation(libs.okio)
 	implementation(libs.sqldelight.driver)
+	implementation(libs.slf4j.simple)
 
 	testImplementation(libs.assertk)
 	testImplementation(libs.junit)

@@ -1,85 +1,138 @@
 package com.mattprecious.stacker.remote
 
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.delegates.mutableLazy
 import com.mattprecious.stacker.remote.Remote.PrInfo
 import com.mattprecious.stacker.remote.Remote.PrResult
-import org.kohsuke.github.GHFileNotFoundException
-import org.kohsuke.github.GHIssueState
-import org.kohsuke.github.GHRepository
-import org.kohsuke.github.GitHub
-import org.kohsuke.github.GitHubBuilder
+import com.mattprecious.stacker.remote.github.CreatePull
+import com.mattprecious.stacker.remote.github.GitHubError
+import com.mattprecious.stacker.remote.github.Pull
+import com.mattprecious.stacker.remote.github.UpdatePull
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMessageBuilder
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import io.ktor.utils.io.errors.IOException
+import kotlinx.coroutines.runBlocking
 
 class GitHubRemote(
+	private val client: HttpClient,
 	private val originUrl: String,
 	private val configManager: ConfigManager,
 ) : Remote {
 	override val isAuthenticated: Boolean
-		get() = gitHub.isCredentialValid
+		get() = configManager.githubToken?.let(::isTokenValid) == true
+
+	private val repoOwnerAndName: Pair<String, String>? by lazy {
+		val originMatchResult = Regex("""^.+github\.com:(.+)/(.+)\.git$""").matchEntire(originUrl)
+		originMatchResult?.groupValues?.let {
+			it[1] to it[2]
+		}
+	}
 
 	override val repoName: String? by lazy {
-		val originMatchResult = Regex("""^.+github\.com:(.+/.+)\.git$""").matchEntire(originUrl)
-		originMatchResult?.groups?.get(1)?.value
+		repoOwnerAndName?.let { "${it.first}/${it.second}" }
 	}
 
 	override val hasRepoAccess: Boolean
-		get() = repo != null
-
-	private val repo: GHRepository? by lazy {
-		try {
-			gitHub.getRepository(repoName)
-		} catch (t: GHFileNotFoundException) {
-			// We don't have access.
-			null
-		}
-	}
-
-	private var gitHub: GitHub by mutableLazy { createGitHub(configManager.githubToken) }
+		get() = runBlocking { client.get("$host/repos/$repoName") { auth() }.status.isSuccess() }
 
 	override fun setToken(token: String): Boolean {
-		val newGitHub = createGitHub(token)
-		return if (newGitHub.isCredentialValid) {
-			configManager.githubToken = token
-			gitHub = newGitHub
-			true
-		} else {
-			false
-		}
+		return isTokenValid(token).also { if (it) configManager.githubToken = token }
 	}
 
 	override fun openOrRetargetPullRequest(
 		branchName: String,
 		targetName: String,
 		prInfo: () -> PrInfo,
-	): PrResult {
-		val pr = repo!!.queryPullRequests().head(branchName).list().firstOrNull()
-		return if (pr == null) {
-			val info = prInfo()
+	): PrResult = runBlocking {
+		val pr = client.get("$host/repos/$repoName/pulls") {
+			auth()
+			parameter("head", branchName.asHead())
+		}.bodyOrThrow<List<Pull>>().firstOrNull()
 
-			// TODO: Drafts. Need to somehow know whether drafts are supported in the repo.
-			val createdPr = repo!!.createPullRequest(info.title, branchName, targetName, info.body)
+		return@runBlocking if (pr == null) {
+			val createdPr = client.post("$host/repos/$repoName/pulls") {
+				auth()
 
-			PrResult.Created(url = createdPr.htmlUrl.toString())
+				val info = prInfo()
+				contentType(ContentType.Application.Json)
+				setBody(
+					// TODO: Drafts. Need to somehow know whether drafts are supported in the repo.
+					CreatePull(
+						title = info.title,
+						body = info.body,
+						head = branchName,
+						base = targetName,
+					),
+				)
+			}.bodyOrThrow<Pull>()
+
+			PrResult.Created(url = createdPr.html_url)
 		} else {
-			pr.setBaseBranch(targetName)
-			PrResult.Updated(pr.htmlUrl.toString())
+			client.patch("$host/repos/$repoName/pulls/${pr.number}") {
+				auth()
+				contentType(ContentType.Application.Json)
+				setBody(UpdatePull(base = targetName))
+			}.requireSuccess()
+
+			PrResult.Updated(pr.html_url)
 		}
 	}
 
-	override fun getPrStatus(branchName: String): Remote.PrStatus {
-		val pr = repo!!.queryPullRequests().head(branchName).state(GHIssueState.ALL).list().firstOrNull()
-		return when {
+	override fun getPrStatus(branchName: String): Remote.PrStatus = runBlocking {
+		val pr = client.get("$host/repos/$repoName/pulls") {
+			auth()
+			parameter("head", branchName.asHead())
+			parameter("state", "all")
+		}.bodyOrThrow<List<Pull>>().firstOrNull()
+
+		return@runBlocking when {
 			pr == null -> Remote.PrStatus.NotFound
-			pr.isMerged -> Remote.PrStatus.Merged
-			pr.state == GHIssueState.CLOSED -> Remote.PrStatus.Closed
-			pr.state == GHIssueState.OPEN -> Remote.PrStatus.Open
+			pr.merged_at != null -> Remote.PrStatus.Merged
+			pr.state == Pull.State.Closed -> Remote.PrStatus.Closed
+			pr.state == Pull.State.Open -> Remote.PrStatus.Open
 			else -> throw IllegalStateException("Unable to determine status of PR #${pr.number} for branch $branchName.")
 		}
 	}
 
-	private fun createGitHub(token: String?): GitHub {
-		return GitHubBuilder()
-			.withOAuthToken(token)
-			.build()
+	private fun String.asHead() = "${repoOwnerAndName!!.first}:$this"
+
+	// TODO: Investigate using the Auth plugin further. It doesn't fit into the current API of this class.
+	private fun HttpMessageBuilder.auth() = bearerAuth(configManager.githubToken!!)
+
+	private fun isTokenValid(token: String): Boolean = runBlocking {
+		client.get("$host/rate_limit") { bearerAuth(token) }.status.value != 401
+	}
+
+	private suspend inline fun <reified T> HttpResponse.bodyOrThrow(): T {
+		return if (status.isSuccess()) {
+			body<T>()
+		} else {
+			throw asThrowable()
+		}
+	}
+
+	private suspend fun HttpResponse.requireSuccess() {
+		if (!status.isSuccess()) throw asThrowable()
+	}
+
+	private suspend fun HttpResponse.asThrowable(): Throwable {
+		return IOException(
+			"""
+			Received ${status.value} when calling ${call.request.url}.
+			Message: ${body<GitHubError>().message}
+			""".trimIndent(),
+		)
 	}
 }
+
+private const val host = "https://api.github.com"
