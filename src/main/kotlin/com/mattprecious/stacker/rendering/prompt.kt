@@ -9,8 +9,7 @@ import com.mattprecious.stacker.rendering.Ansi.restorePosition
 import com.mattprecious.stacker.rendering.Ansi.underline
 import org.jline.terminal.TerminalBuilder
 
-context(CliktCommand)
-fun <T> interactivePrompt(
+fun <T> CliktCommand.interactivePrompt(
 	message: String,
 	options: List<T>,
 	filteringEnabled: Boolean = true,

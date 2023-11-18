@@ -9,34 +9,33 @@ import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.stack.Branch
 import com.mattprecious.stacker.vc.VersionControl
 
-context(CliktCommand)
-internal fun Remote.requireAuthenticated() {
-	if (!isAuthenticated) {
+internal fun CliktCommand.requireAuthenticated(remote: Remote) {
+	if (!remote.isAuthenticated) {
 		terminal.prompt(
 			prompt = "Please enter a GitHub access token",
 			hideInput = true,
 		) {
 			when {
 				it.isBlank() -> ConversionResult.Invalid("Cannot be blank.")
-				setToken(it) -> ConversionResult.Valid(it)
+				remote.setToken(it) -> ConversionResult.Valid(it)
 				else -> ConversionResult.Invalid("Invalid token.")
 			}
 		}
 	}
 
-	if (repoName == null) {
+	if (remote.repoName == null) {
 		echo("Unable to parse repository name from origin URL.", err = true)
 		throw Abort()
 	}
 
-	if (!hasRepoAccess) {
-		echo("Personal token does not have access to $repoName.", err = true)
+	if (!remote.hasRepoAccess) {
+		echo("Personal token does not have access to ${remote.repoName}.", err = true)
 		throw Abort()
 	}
 }
 
-context(CliktCommand)
 internal fun Branch.submit(
+	command: CliktCommand,
 	configManager: ConfigManager,
 	remote: Remote,
 	vc: VersionControl,
@@ -62,7 +61,7 @@ internal fun Branch.submit(
 	}
 
 	when (result) {
-		is Remote.PrResult.Created -> echo("Pull request created: ${result.url}")
-		is Remote.PrResult.Updated -> echo("Pull request updated: ${result.url}")
+		is Remote.PrResult.Created -> command.echo("Pull request created: ${result.url}")
+		is Remote.PrResult.Updated -> command.echo("Pull request updated: ${result.url}")
 	}
 }

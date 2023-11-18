@@ -119,7 +119,7 @@ class GitVersionControl(
 		get() = arena {
 			val flags = allocateInt(GIT_BRANCH_LOCAL())
 			val iterator = withAllocate { checkError(git_branch_iterator_new(it, repo, GIT_BRANCH_LOCAL())) }.deref()
-			val list = iterator.mapBranches(flags) { git_reference_shorthand(it).utf8() }
+			val list = mapBranches(iterator, flags) { git_reference_shorthand(it).utf8() }
 			git_branch_iterator_free(iterator)
 			return@arena list
 		}
@@ -162,8 +162,7 @@ class GitVersionControl(
 	}
 
 	/** @return git_buf */
-	context(Arena)
-	private fun repoPath(): MemorySegment? {
+	private fun Arena.repoPath(): MemorySegment? {
 		val currentPath = allocate(System.getProperty("user.dir"))
 		return withAllocate(git_buf.`$LAYOUT`()) {
 			val code = git_repository_discover(it, currentPath, 0, NULL)
@@ -241,7 +240,7 @@ class GitVersionControl(
 			checkError(git_rebase_init(it, repo, branchCommit, upstreamCommit, ontoCommit, NULL))
 		}.deref()
 
-		val result = rebase.performRebase(branchName)
+		val result = performRebase(rebase, branchName)
 		git_rebase_free(rebase)
 		return@arena result
 	}
@@ -258,7 +257,7 @@ class GitVersionControl(
 
 	override fun continueRebase(branchName: String): Boolean = arena {
 		val rebase = getRebase() ?: return@arena true // Not really...
-		val result = rebase.performRebase(branchName)
+		val result = performRebase(rebase, branchName)
 		git_rebase_free(rebase)
 		return@arena result
 	}
@@ -328,8 +327,7 @@ class GitVersionControl(
 	}
 
 	/** @return git_remote_callbacks */
-	context(Arena)
-	private fun createRemoteCallbacks(): MemorySegment {
+	private fun Arena.createRemoteCallbacks(): MemorySegment {
 		val acquireCredentialCb = git_credential_acquire_cb { out, _, username, types, _ ->
 			check(types and GIT_CREDTYPE_SSH_KEY() == GIT_CREDTYPE_SSH_KEY()) {
 				"Unsupported credential types: $types"
@@ -340,11 +338,11 @@ class GitVersionControl(
 			return@git_credential_acquire_cb 0
 		}
 
-		val acquireCredential = git_credential_acquire_cb.allocate(acquireCredentialCb, this@Arena)
+		val acquireCredential = git_credential_acquire_cb.allocate(acquireCredentialCb, this)
 
 		// Is this bad? I don't know why it's not a known host.
 		val certificateCheckCb = git_transport_certificate_check_cb { _, valid, _, _ -> valid }
-		val certificateCheck = git_transport_certificate_check_cb.allocate(certificateCheckCb, this@Arena)
+		val certificateCheck = git_transport_certificate_check_cb.allocate(certificateCheckCb, this)
 
 		val callbacks = withAllocate(git_remote_callbacks.`$LAYOUT`()) {
 			checkError(git_remote_init_callbacks(it, GIT_REMOTE_CALLBACKS_VERSION()))
@@ -371,47 +369,40 @@ class GitVersionControl(
 	private fun String.asRemoteBranchRevSpec() = "refs/remotes/origin/$this"
 
 	/** @return git_oid* */
-	context(Arena)
-	private fun getCommitId(branchName: String): MemorySegment {
+	private fun Arena.getCommitId(branchName: String): MemorySegment {
 		return withAllocate(git_oid.`$LAYOUT`()) {
 			checkError(git_reference_name_to_id(it, repo, allocate(branchName.asBranchRevSpec())))
 		}
 	}
 
 	/** @return git_commit* */
-	context(Arena)
-	private fun getCommitForBranch(branchName: String): MemorySegment {
+	private fun Arena.getCommitForBranch(branchName: String): MemorySegment {
 		return withAllocate { checkError(git_commit_lookup(it, repo, getCommitId(branchName))) }.deref()
 	}
 
 	/** @return git_reference* */
-	context(Arena)
-	private fun getHead(): MemorySegment {
+	private fun Arena.getHead(): MemorySegment {
 		return withAllocate { checkError(git_repository_head(it, repo)) }.deref()
 	}
 
 	/** @return git_reference* */
-	context(Arena)
-	private fun getBranch(branchName: String): MemorySegment {
+	private fun Arena.getBranch(branchName: String): MemorySegment {
 		return withAllocate { checkError(git_reference_lookup(it, repo, allocate(branchName.asBranchRevSpec()))) }.deref()
 	}
 
 	/** @return git_remote*, should be freed with [git_remote_free]. */
-	context(Arena)
-	private fun getOrigin(): MemorySegment {
+	private fun Arena.getOrigin(): MemorySegment {
 		return withAllocate { checkError(git_remote_lookup(it, repo, allocate("origin"))) }.deref()
 	}
 
 	/** @param treeish git_commit* or git_object* */
-	context(Arena)
-	private fun checkout(branchName: String, treeish: MemorySegment) {
+	private fun Arena.checkout(branchName: String, treeish: MemorySegment) {
 		checkoutTree(treeish)
 		checkError(git_repository_set_head(repo, allocate(branchName.asBranchRevSpec())))
 	}
 
 	/** @param treeish git_commit* or git_object* */
-	context(Arena)
-	private fun checkoutTree(treeish: MemorySegment) {
+	private fun Arena.checkoutTree(treeish: MemorySegment) {
 		val options = withAllocate(git_checkout_options.`$LAYOUT`()) {
 			git_checkout_options_init(it, GIT_CHECKOUT_OPTIONS_VERSION())
 		}
@@ -449,33 +440,33 @@ class GitVersionControl(
 	}
 
 	/**
-	 * @receiver git_branch_iterator*
+	 * @param iterator git_branch_iterator*
 	 * @param flags int, one of GIT_BRANCH_*.
 	 * @param transform git_reference*
 	 */
-	context(Arena)
-	private fun <T> MemorySegment.mapBranches(
+	private fun <T> Arena.mapBranches(
+		iterator: MemorySegment,
 		flags: MemorySegment,
 		transform: (branch: MemorySegment) -> T,
 	): List<T> {
 		return buildList {
-			forEachBranch(flags) { add(transform(it)) }
+			forEachBranch(iterator, flags) { add(transform(it)) }
 		}
 	}
 
 	/**
-	 * @receiver git_branch_iterator*
+	 * @param iterator git_branch_iterator*
 	 * @param flags int, one of GIT_BRANCH_*.
 	 * @param action git_reference*
 	 */
-	context(Arena)
-	private fun MemorySegment.forEachBranch(
+	private fun Arena.forEachBranch(
+		iterator: MemorySegment,
 		flags: MemorySegment,
 		action: (branch: MemorySegment) -> Unit,
 	) {
 		while (true) {
 			val branch = withAllocate {
-				val code = git_branch_next(it, flags, this)
+				val code = git_branch_next(it, flags, iterator)
 				if (code == ReturnCodes.ITEROVER) return
 			}.deref()
 
@@ -484,16 +475,14 @@ class GitVersionControl(
 	}
 
 	/** @return git_annotated_commit* */
-	context(Arena)
-	private fun getAnnotatedCommit(branchName: String): MemorySegment {
+	private fun Arena.getAnnotatedCommit(branchName: String): MemorySegment {
 		return withAllocate {
 			checkError(git_annotated_commit_from_revspec(it, repo, allocate(branchName.asBranchRevSpec())))
 		}.deref()
 	}
 
 	/** @return git_rebase* */
-	context(Arena)
-	private fun getRebase(): MemorySegment? {
+	private fun Arena.getRebase(): MemorySegment? {
 		return withAllocate {
 			val code = git_rebase_open(it, repo, NULL)
 			if (code == ReturnCodes.ENOTFOUND) return null
@@ -501,18 +490,20 @@ class GitVersionControl(
 		}.deref()
 	}
 
-	/** @receiver git_rebase* */
-	context(Arena)
-	private fun MemorySegment.performRebase(branchName: String): Boolean {
+	/** @param rebase git_rebase* */
+	private fun Arena.performRebase(
+		rebase: MemorySegment,
+		branchName: String,
+	): Boolean {
 		val signature = withAllocate { checkError(git_signature_default(it, repo)) }.deref()
 
-		forEachRebaseOperation {
-			if (!performRebaseOperation(operation = it, committer = signature)) {
+		forEachRebaseOperation(rebase) {
+			if (!performRebaseOperation(rebase = rebase, operation = it, committer = signature)) {
 				return@performRebase false
 			}
 		}
 
-		checkError(git_rebase_finish(this, signature))
+		checkError(git_rebase_finish(rebase, signature))
 		git_signature_free(signature)
 
 		val headId = withAllocate(git_oid.`$LAYOUT`()) {
@@ -524,8 +515,7 @@ class GitVersionControl(
 	}
 
 	/** @param target git_oid* */
-	context(Arena)
-	private fun setBranchTarget(
+	private fun Arena.setBranchTarget(
 		branchName: String,
 		target: MemorySegment,
 	) {
@@ -533,23 +523,22 @@ class GitVersionControl(
 	}
 
 	/**
-	 * @receiver git_rebase*
-	 *
+	 * @param rebase git_rebase*
 	 * @param action git_rebase_operation*
 	 */
-	context(Arena)
-	private inline fun MemorySegment.forEachRebaseOperation(
+	private inline fun Arena.forEachRebaseOperation(
+		rebase: MemorySegment,
 		action: (operation: MemorySegment) -> Unit,
 	) {
 		val operation = allocate(C_POINTER)
 
-		val operationIndex = git_rebase_operation_current(this)
+		val operationIndex = git_rebase_operation_current(rebase)
 		if (operationIndex != GIT_REBASE_NO_OPERATION()) {
-			action(git_rebase_operation_byindex(this, operationIndex))
+			action(git_rebase_operation_byindex(rebase, operationIndex))
 		}
 
 		while (true) {
-			val code = git_rebase_next(operation, this)
+			val code = git_rebase_next(operation, rebase)
 			if (code == ReturnCodes.ITEROVER) break
 			checkError(code)
 			action(operation.deref())
@@ -557,19 +546,18 @@ class GitVersionControl(
 	}
 
 	/**
-	 * @receiver git_rebase*
-	 *
+	 * @param rebase git_rebase*
 	 * @param operation git_rebase_operation*
 	 * @param committer git_signature*
 	 */
-	context(Arena)
-	private fun MemorySegment.performRebaseOperation(
+	private fun Arena.performRebaseOperation(
+		rebase: MemorySegment,
 		operation: MemorySegment,
 		committer: MemorySegment,
 	): Boolean {
 		val operationType = git_rebase_operation.`type$get`(operation)
 		check(operationType == GIT_REBASE_OPERATION_PICK())
-		val code = git_rebase_commit(allocate(git_oid.`$LAYOUT`()), this, NULL, committer, NULL, NULL)
+		val code = git_rebase_commit(allocate(git_oid.`$LAYOUT`()), rebase, NULL, committer, NULL, NULL)
 		if (code == ReturnCodes.EAPPLIED) return true
 		// TODO: Should these return different results?
 		if (code == ReturnCodes.EUNMERGED || code == ReturnCodes.ECONFLICT) {
@@ -587,11 +575,9 @@ class GitVersionControl(
 
 	private fun Arena.allocate(str: String) = allocateUtf8String(str)
 
-	context(Arena)
-	private fun allocateInt(i: Int) = allocate(JAVA_INT, i)
+	private fun Arena.allocateInt(i: Int) = allocate(JAVA_INT, i)
 
-	context(Arena)
-	private fun allocate(strs: List<String>): MemorySegment {
+	private fun Arena.allocate(strs: List<String>): MemorySegment {
 		return allocate(JAVA_LONG.byteSize() * strs.size).also {
 			strs.forEachIndexed { index, segment ->
 				it.setAtIndex(JAVA_LONG, index.toLong(), allocateUtf8String(segment).address())

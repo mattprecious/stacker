@@ -56,7 +56,7 @@ internal class Rebase(
 			when (operation) {
 				is Locker.Operation.Restack -> {
 					if (vc.continueRebase(operation.branches.first())) {
-						operation.perform(stackManager, vc, continuing = true)
+						operation.perform(this@Rebase, this, stackManager, vc, continuing = true)
 					}
 				}
 			}

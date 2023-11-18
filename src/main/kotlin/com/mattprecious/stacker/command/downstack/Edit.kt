@@ -99,7 +99,7 @@ internal class Edit(
 		)
 
 		locker.beginOperation(operation) {
-			operation.perform(stackManager, vc)
+			operation.perform(this@Edit, this@beginOperation, stackManager, vc)
 		}
 	}
 
