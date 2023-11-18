@@ -13,6 +13,7 @@ import io.ktor.client.engine.curl.Curl
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.cinterop.memScoped
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path.Companion.toPath
@@ -24,6 +25,7 @@ fun main(args: Array<String>) {
 	}
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 internal fun withStacker(
 	remoteOverride: Remote? = null,
 	block: (Stacker) -> Unit,

@@ -2,19 +2,24 @@ package com.mattprecious.stacker.remote
 
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.remote.Remote.PrResult
-import com.mattprecious.stacker.remote.github.CreatePullRequest
+import com.mattprecious.stacker.remote.github.CreatePull
+import com.mattprecious.stacker.remote.github.GitHubError
 import com.mattprecious.stacker.remote.github.Pull
+import com.mattprecious.stacker.remote.github.UpdatePull
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMessageBuilder
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.runBlocking
 
 class GitHubRemote(
@@ -31,18 +36,10 @@ class GitHubRemote(
 	}
 
 	override val hasRepoAccess: Boolean
-		get() = runBlocking {
-			client.get("https://api.github.com/repos/$repoName") {
-				header("Authorization", "Bearer ${configManager.githubToken}")
-			}.status.isSuccess()
-		}
+		get() = runBlocking { client.get("$host/repos/$repoName") { auth() }.status.isSuccess() }
 
 	override fun setToken(token: String): Boolean {
-		return isTokenValid(token).also {
-			if (it) {
-				configManager.githubToken = token
-			}
-		}
+		return isTokenValid(token).also { if (it) configManager.githubToken = token }
 	}
 
 	override fun openOrRetargetPullRequest(
@@ -50,20 +47,20 @@ class GitHubRemote(
 		targetName: String,
 		prInfo: () -> Remote.PrInfo,
 	): PrResult = runBlocking {
-		val pr = client.get("https://api.github.com/repos/$repoName/pulls") {
-			header("Authorization", "Bearer ${configManager.githubToken}")
+		val pr = client.get("$host/repos/$repoName/pulls") {
+			auth()
 			parameter("head", branchName)
-		}.body<List<Pull>>().firstOrNull()
+		}.bodyOrError<List<Pull>>().firstOrNull()
 
 		return@runBlocking if (pr == null) {
-			val info = prInfo()
+			val createdPr = client.post("$host/repos/$repoName/pulls") {
+				auth()
 
-			// TODO: Drafts. Need to somehow know whether drafts are supported in the repo.
-			val createdPr = client.post("https://api.github.com/repos/$repoName/pulls") {
-				header("Authorization", "Bearer ${configManager.githubToken}")
+				val info = prInfo()
 				contentType(ContentType.Application.Json)
 				setBody(
-					CreatePullRequest(
+					// TODO: Drafts. Need to somehow know whether drafts are supported in the repo.
+					CreatePull(
 						title = info.title,
 						body = info.body,
 						head = branchName,
@@ -72,22 +69,24 @@ class GitHubRemote(
 				)
 			}
 
-			PrResult.Created(url = createdPr.body<Pull>().html_url)
+			PrResult.Created(url = createdPr.bodyOrError<Pull>().html_url)
 		} else {
-			client.patch("https://api.github.com/repos/$repoName/pulls/${pr.number}") {
-				header("Authorization", "Bearer ${configManager.githubToken}")
-				parameter("base", targetName)
-			}
+			client.patch("$host/repos/$repoName/pulls/${pr.number}") {
+				auth()
+				contentType(ContentType.Application.Json)
+				setBody(UpdatePull(base = targetName))
+			}.requireSuccess()
+
 			PrResult.Updated(pr.html_url)
 		}
 	}
 
 	override fun getPrStatus(branchName: String): Remote.PrStatus = runBlocking {
-		val pr = client.get("https://api.github.com/repos/$repoName/pulls") {
-			header("Authorization", "Bearer ${configManager.githubToken}")
+		val pr = client.get("$host/repos/$repoName/pulls") {
+			auth()
 			parameter("head", branchName)
 			parameter("state", "all")
-		}.body<List<Pull>>().firstOrNull()
+		}.bodyOrError<List<Pull>>().firstOrNull()
 
 		return@runBlocking when {
 			pr == null -> Remote.PrStatus.NotFound
@@ -98,9 +97,33 @@ class GitHubRemote(
 		}
 	}
 
+	// TODO: Investigate using the Auth plugin further. It doesn't fit into the current API of this class.
+	private fun HttpMessageBuilder.auth() = bearerAuth(configManager.githubToken!!)
+
 	private fun isTokenValid(token: String): Boolean = runBlocking {
-		client.get("https://api.github.com/rate_limit") {
-			header("Authorization", "Bearer $token")
-		}.status.value != 401
+		client.get("$host/rate_limit") { bearerAuth(token) }.status.value != 401
+	}
+
+	private suspend inline fun <reified T> HttpResponse.bodyOrError(): T {
+		return if (status.isSuccess()) {
+			body<T>()
+		} else {
+			throw asThrowable()
+		}
+	}
+
+	private suspend fun HttpResponse.requireSuccess() {
+		if (!status.isSuccess()) throw asThrowable()
+	}
+
+	private suspend fun HttpResponse.asThrowable(): Throwable {
+		return IOException(
+			"""
+			Received ${status.value} when calling ${call.request.url}.
+			Message: ${body<GitHubError>().message}
+			""".trimIndent(),
+		)
 	}
 }
+
+private const val host = "https://api.github.com"
