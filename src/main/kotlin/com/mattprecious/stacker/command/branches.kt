@@ -57,7 +57,6 @@ internal fun Branch.prettyTree(
 	}
 }
 
-context(MutableList<PrettyBranch>)
 private fun Branch.prettyTree(
 	builder: MutableList<PrettyBranch>,
 	inset: Int,

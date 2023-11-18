@@ -56,7 +56,7 @@ internal class Onto(
 		)
 
 		locker.beginOperation(operation) {
-			operation.perform(stackManager, vc)
+			operation.perform(this@Onto, this@beginOperation, stackManager, vc)
 		}
 	}
 }

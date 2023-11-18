@@ -38,7 +38,7 @@ internal class Restack(
 		)
 
 		locker.beginOperation(operation) {
-			operation.perform(stackManager, vc)
+			operation.perform(this@Restack, this@beginOperation, stackManager, vc)
 		}
 	}
 }

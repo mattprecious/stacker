@@ -42,12 +42,12 @@ internal class Submit(
 			throw Abort()
 		}
 
-		remote.requireAuthenticated()
+		requireAuthenticated(remote)
 
 		val branchesToSubmit = currentBranch.flattenStack()
 			.filterNot { it.name == configManager.trunk || it.name == configManager.trailingTrunk }
 		vc.pushBranches(branchesToSubmit.map { it.name })
-		branchesToSubmit.forEach { it.submit(configManager, remote, vc) }
+		branchesToSubmit.forEach { it.submit(this, configManager, remote, vc) }
 	}
 
 	private fun Branch.flattenStack(): List<Branch> {

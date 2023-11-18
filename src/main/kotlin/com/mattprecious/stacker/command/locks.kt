@@ -7,8 +7,9 @@ import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
-context(CliktCommand, Locker.LockScope)
 internal fun Locker.Operation.Restack.perform(
+	command: CliktCommand,
+	lockScope: Locker.LockScope,
 	stackManager: StackManager,
 	vc: VersionControl,
 	continuing: Boolean = false,
@@ -17,7 +18,7 @@ internal fun Locker.Operation.Restack.perform(
 		val branch = stackManager.getBranch(branchName)!!
 		if (!continuing || index > 0) {
 			if (!vc.restack(branchName = branch.name, parentName = branch.parent!!.name, parentSha = branch.parentSha!!)) {
-				echo(
+				command.echo(
 					message = "Merge conflict. Resolve all conflicts manually and then run " +
 						"${"st rebase --continue".styleCode()}. To abort, run ${"st rebase --abort".styleCode()}",
 					err = true,
@@ -27,7 +28,7 @@ internal fun Locker.Operation.Restack.perform(
 		}
 
 		stackManager.updateParentSha(branch, vc.getSha(branch.parent!!.name))
-		updateOperation(copy(branches = branches.subList(index + 1, branches.size)))
+		lockScope.updateOperation(copy(branches = branches.subList(index + 1, branches.size)))
 	}
 
 	vc.checkout(startingBranch)

@@ -41,9 +41,9 @@ internal class Submit(
 			throw Abort()
 		}
 
-		remote.requireAuthenticated()
+		requireAuthenticated(remote)
 
 		vc.pushBranches(listOf(currentBranch.name))
-		currentBranch.submit(configManager, remote, vc)
+		currentBranch.submit(this, configManager, remote, vc)
 	}
 }
