@@ -67,7 +67,7 @@ function build() {
   set -x
 
   # Clean the directories to prevent confusing failure cases
-  rm -rf libssh2/ libgit2/ openssl/ deps/
+  rm -rf curl/ libssh2/ libgit2/ openssl/ deps/
 
   mkdir deps
   deps="`pwd`/deps"
@@ -78,6 +78,18 @@ function build() {
   make -j$CMAKE_BUILD_PARALLEL_LEVEL
   make -j$CMAKE_BUILD_PARALLEL_LEVEL install_sw
   popd
+
+	git clone --depth 1 --branch curl-8_4_0 https://github.com/curl/curl.git
+	mkdir -p curl/build
+	cmake -S curl -B curl/build \
+		-DCMAKE_PREFIX_PATH="$deps" \
+		-DCMAKE_INSTALL_PREFIX="$deps" \
+		-DCMAKE_IGNORE_PREFIX_PATH="/usr" \
+		-DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DBUILD_SHARED_LIBS=OFF \
+		-DCURL_DISABLE_LDAP=ON
+	cmake --build curl/build --target install
 
   git clone --depth 1 --branch libssh2-1.11.0 https://github.com/libssh2/libssh2.git
   mkdir -p libssh2/build

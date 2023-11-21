@@ -11,6 +11,7 @@ build
 
 src/nativeInterop/cinterop/libgit2.def
 deps/
+curl/
 libgit2/
 libssh2/
 openssl/
