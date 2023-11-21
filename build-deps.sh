@@ -3,7 +3,6 @@ set -e
 
 export CMAKE_BUILD_PARALLEL_LEVEL=$((`nproc`+1))
 
-OS_ARCH=""
 CMAKE_ARCH=""
 OPENSSL_ARCH=""
 
@@ -37,11 +36,9 @@ function autoDetect() {
 	RAW_ARCH=$(uname -m)
 	if [[ $OSTYPE == "darwin"* ]]; then
 		if [[ "$RAW_ARCH" == "arm64" ]]; then
-			OS_ARCH="aarch64"
 			CMAKE_ARCH="arm64"
 			OPENSSL_ARCH="darwin64-arm64-cc"
 		elif [[ "$RAW_ARCH" == "x86_64" ]]; then
-			OS_ARCH="x86_64"
 			CMAKE_ARCH="x86_64"
 			OPENSSL_ARCH="darwin64-x86_64-cc"
 		else
@@ -50,7 +47,6 @@ function autoDetect() {
 		fi
 	elif [[ $OSTYPE == "linux-gnu"* ]]; then
 		if [[ "$RAW_ARCH" == "x86_64" ]]; then
-			OS_ARCH="amd64"
 			CMAKE_ARCH="x86_64"
 			OPENSSL_ARCH="linux-x86_64"
 		else
@@ -64,7 +60,6 @@ function autoDetect() {
 }
 
 function build() {
-  echo "OS_ARCH=${OS_ARCH}"
   echo "CMAKE_ARCH=${CMAKE_ARCH}"
   echo "OPENSSL_ARCH=${OPENSSL_ARCH}"
   echo ""
@@ -72,7 +67,7 @@ function build() {
   set -x
 
   # Clean the directories to prevent confusing failure cases
-  rm -rf libssh2-*/ libgit2/ openssl/ deps/
+  rm -rf libssh2/ libgit2/ openssl/ deps/
 
   mkdir deps
   deps="`pwd`/deps"
@@ -84,19 +79,18 @@ function build() {
   make -j$CMAKE_BUILD_PARALLEL_LEVEL install_sw
   popd
 
-  curl -L https://www.libssh2.org/download/libssh2-1.10.0.tar.gz > libssh2.tar.gz
-  tar -xf libssh2.tar.gz
-  rm libssh2.tar.gz
-  pushd libssh2-*
-  ./configure \
-    --prefix=$deps \
-    --disable-silent-rules \
-    --disable-examples-build \
-    --with-crypto=openssl \
-    --with-libssl-prefix=$deps
-  make -j$CMAKE_BUILD_PARALLEL_LEVEL
-  make -j$CMAKE_BUILD_PARALLEL_LEVEL install
-  popd
+  git clone --depth 1 --branch libssh2-1.11.0 https://github.com/libssh2/libssh2.git
+  mkdir -p libssh2/build
+  cmake -S libssh2 -B libssh2/build \
+    -DCMAKE_PREFIX_PATH="$deps" \
+    -DCMAKE_INSTALL_PREFIX="$deps" \
+    -DCRYPTO_BACKEND="OpenSSL" \
+    -DCMAKE_IGNORE_PREFIX_PATH="/usr" \
+    -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_FLAGS="-DOPENSSL_NO_ENGINE" \
+    -DBUILD_SHARED_LIBS=OFF
+  cmake --build libssh2/build --target install
 
   # Stuck on 1.4.6 due to https://github.com/libgit2/libgit2/issues/6371
   git clone --depth 1 --branch v1.4.6 https://github.com/libgit2/libgit2.git
@@ -104,7 +98,7 @@ function build() {
   cmake -S libgit2 -B libgit2/build\
     -DUSE_SSH=ON \
     -DBUILD_TESTS=OFF \
-    -DCMAKE_PREFIX_PATH="$deps;$deps/include/openssl" \
+    -DCMAKE_PREFIX_PATH="$deps" \
     -DCMAKE_INSTALL_PREFIX="$deps" \
     -DCMAKE_IGNORE_PREFIX_PATH="/usr" \
     -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
@@ -146,9 +140,6 @@ function processArguments {
     h|\?)
         usage
         exit 0
-        ;;
-    a)
-        OS_ARCH=${OPTARG}
         ;;
 
     c)

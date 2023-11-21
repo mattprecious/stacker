@@ -19,17 +19,14 @@ jobs:
       matrix:
         include:
           #- os: ubuntu-latest
-          #  arch: amd64
           #  cmake-arch: x86_64
           #  openssl-arch: linux-x86_64
           #  task: linkReleaseExecutableLinuxX64
           - os: macOS-latest
-            arch: x86_64
             cmake-arch: x86_64
             openssl-arch: darwin64-x86_64-cc
             task: linkReleaseExecutableMacosX64
           - os: macOS-latest
-            arch: aarch64
             cmake-arch: arm64
             openssl-arch: darwin64-arm64-cc
             task: linkReleaseExecutableMacosArm64
