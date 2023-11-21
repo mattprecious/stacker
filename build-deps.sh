@@ -72,7 +72,7 @@ function build() {
   set -x
 
   # Clean the directories to prevent confusing failure cases
-  rm -rf libssh2/ libgit2/ openssl/ deps/
+  rm -rf libssh2-*/ libgit2/ openssl/ deps/
 
   mkdir deps
   deps="`pwd`/deps"
@@ -84,16 +84,19 @@ function build() {
   make -j$CMAKE_BUILD_PARALLEL_LEVEL install_sw
   popd
 
-  git clone --depth 1 --branch libssh2-1.11.0 https://github.com/libssh2/libssh2.git
-  mkdir -p libssh2/build
-  cmake -S libssh2 -B libssh2/build \
-    -DCMAKE_PREFIX_PATH="$deps;$deps/include/openssl" \
-    -DCMAKE_INSTALL_PREFIX="$deps" \
-    -DCMAKE_IGNORE_PREFIX_PATH="/usr" \
-    -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_SHARED_LIBS=OFF
-  cmake --build libssh2/build --target install
+  curl -L https://www.libssh2.org/download/libssh2-1.10.0.tar.gz > libssh2.tar.gz
+  tar -xf libssh2.tar.gz
+  rm libssh2.tar.gz
+  pushd libssh2-*
+  ./configure \
+    --prefix=$deps \
+    --disable-silent-rules \
+    --disable-examples-build \
+    --with-crypto=openssl \
+    --with-libssl-prefix=$deps
+  make -j$CMAKE_BUILD_PARALLEL_LEVEL
+  make -j$CMAKE_BUILD_PARALLEL_LEVEL install
+  popd
 
   # Stuck on 1.4.6 due to https://github.com/libgit2/libgit2/issues/6371
   git clone --depth 1 --branch v1.4.6 https://github.com/libgit2/libgit2.git
@@ -109,13 +112,31 @@ function build() {
     -DCMAKE_BUILD_TYPE=Release
   cmake --build libgit2/build --target install
 
-  mkdir -p native/$OS_ARCH/
-  cp -vL $deps/{lib,lib64}/libcrypto.{a,so} native/$OS_ARCH/ || true
-  cp -vL $deps/{lib,lib64}/libssl.{a,so} native/$OS_ARCH/ || true
-  cp -vL $deps/{lib,lib64}/libssh2.{a,so} native/$OS_ARCH/ || true
-  cp -vL $deps/lib/libgit2.{a,so} native/$OS_ARCH/ || true
+  linkerOpts="$(PKG_CONFIG_PATH=`pwd`/deps/lib/pkgconfig pkg-config --libs libgit2 --static)"
 
-  echo "Build complete."
+  mkdir -p src/nativeInterop/cinterop
+  cat > src/nativeInterop/cinterop/libgit2.def <<EOF
+package = com.github.git2
+headers = git2.h
+staticLibraries = libgit2.a
+libraryPaths = `pwd`/deps/lib
+compilerOpts = -I`pwd`/deps/include
+linkerOpts = $linkerOpts
+
+---
+
+typedef struct git_annotated_commit {} git_annotated_commit;
+typedef struct git_branch_iterator {} git_branch_iterator;
+typedef struct git_commit {} git_commit;
+typedef struct git_config {} git_config;
+typedef struct git_object {} git_object;
+typedef struct git_reference {} git_reference;
+typedef struct git_rebase {} git_rebase;
+typedef struct git_remote {} git_remote;
+typedef struct git_repository {} git_repository;
+EOF
+
+	echo "Done."
   exit 0
 }
 

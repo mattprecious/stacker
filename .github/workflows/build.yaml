@@ -17,55 +17,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
-        arch: [ amd64 ]
-        cmake-arch: [ x86_64 ]
-        openssl-arch: [ linux-x86_64 ]
         include:
+          #- os: ubuntu-latest
+          #  arch: amd64
+          #  cmake-arch: x86_64
+          #  openssl-arch: linux-x86_64
+          #  task: linkReleaseExecutableLinuxX64
           - os: macOS-latest
             arch: x86_64
             cmake-arch: x86_64
             openssl-arch: darwin64-x86_64-cc
+            task: linkReleaseExecutableMacosX64
           - os: macOS-latest
             arch: aarch64
             cmake-arch: arm64
             openssl-arch: darwin64-arm64-cc
+            task: linkReleaseExecutableMacosArm64
           # TODO: build on 'windows-latest'
 
     runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        if: matrix.os == 'macOS-latest'
-        run: brew install coreutils
-
-      - name: Build native library
-        run: ./.github/workflows/build-deps.sh -a ${{ matrix.arch }} -c ${{ matrix.cmake-arch }} -o ${{ matrix.openssl-arch }}
-
-      - name: Upload native libraries
-        uses: actions/upload-artifact@v3
-        with:
-          name: native-libraries
-          path: ./native/*
-          if-no-files-found: error
-
-      - name: Upload libgit2 includes
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v3
-        with:
-          name: libgit-include
-          path: ./libgit2/include
-          if-no-files-found: error
-
-  build:
-    needs: build_deps
-
-    strategy:
-      fail-fast: false
-
-    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -74,31 +44,18 @@ jobs:
           distribution: 'zulu'
           java-version: 21
 
-      - name: Download native libraries
-        uses: actions/download-artifact@master
-        with:
-          name: native-libraries
-          path: native
+      - name: Install dependencies
+        if: matrix.os == 'macOS-latest'
+        run: brew install coreutils
 
-      - name: Download libgit2 includes
-        uses: actions/download-artifact@master
-        with:
-          name: libgit-include
-          path: libgit2/include
+      - name: Build native libraries
+        run: ./build-deps.sh -a ${{ matrix.arch }} -c ${{ matrix.cmake-arch }} -o ${{ matrix.openssl-arch }}
 
-      - run: ./gradlew build
-
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: test-report
-          path: build/reports/tests/test/
-          if-no-files-found: ignore
+      - run: ./gradlew ${{ matrix.task }}
 
       - name: Upload distribution
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v3
         with:
-          name: st
-          path: ./build/distributions/st.tar
+          name: bin
+          path: build/bin
           if-no-files-found: error

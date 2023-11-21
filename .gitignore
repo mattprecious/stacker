@@ -9,8 +9,8 @@ build
 ### Mac OS ###
 .DS_Store
 
+src/nativeInterop/cinterop/libgit2.def
 deps/
 libgit2/
-libssh2/
-native/
+libssh2-*/
 openssl/

@@ -21,7 +21,7 @@ kotlin {
 	macosX64()
 
 	sourceSets {
-		all {
+		configureEach {
 			languageSettings.optIn("kotlin.ExperimentalStdlibApi")
 			languageSettings.optIn("kotlinx.cinterop.ExperimentalForeignApi")
 		}
@@ -51,11 +51,8 @@ kotlin {
 		binaries.executable {
 			entryPoint = "com.mattprecious.stacker.main"
 		}
-
 		compilations.getByName("main").cinterops {
-			create("libgit2") {
-				packageName("com.github.git2")
-			}
+			create("libgit2")
 		}
 	}
 }
@@ -80,17 +77,17 @@ spotless {
 	}
 }
 
-val requireNativeTask by tasks.register("requireNativeFiles") {
+val requireDepsTask = tasks.register("requireDepsFiles") {
 	outputs.upToDateWhen { false }
 
 	doFirst {
-		check(file("native").walk().any { it.isFile }) {
-			"'native' directory does not exist or is empty. This must be populated with libgit libraries.\n" +
-				"If developing locally, please run .github/workflows/build-deps.sh"
+		check(file("src/nativeInterop/libgit2.def").exists()) {
+			".def file does not exist. This must be populated with paths to native libraries.\n" +
+				"If developing locally, please run ./build-deps.sh"
 		}
 	}
 }
 
-tasks.withType<KotlinCompile>().all {
-	dependsOn(requireNativeTask)
+tasks.withType<KotlinCompile>().configureEach {
+	dependsOn(requireDepsTask)
 }
