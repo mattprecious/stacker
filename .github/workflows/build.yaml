@@ -25,10 +25,12 @@ jobs:
           - os: macOS-latest
             cmake-arch: x86_64
             openssl-arch: darwin64-x86_64-cc
+            sqlite-arch: x64-apple-macos
             task: linkReleaseExecutableMacosX64
           - os: macOS-latest
             cmake-arch: arm64
             openssl-arch: darwin64-arm64-cc
+            sqlite-arch: arm64-apple-macos
             task: linkReleaseExecutableMacosArm64
           # TODO: build on 'windows-latest'
 
@@ -46,7 +48,7 @@ jobs:
         run: brew install coreutils
 
       - name: Build native libraries
-        run: ./build-deps.sh -c ${{ matrix.cmake-arch }} -o ${{ matrix.openssl-arch }}
+        run: ./build-deps.sh -c ${{ matrix.cmake-arch }} -o ${{ matrix.openssl-arch }} -s ${{ matrix.sqlite-arch }}
 
       - run: ./gradlew ${{ matrix.task }}
 
