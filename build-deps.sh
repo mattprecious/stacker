@@ -88,7 +88,8 @@ function build() {
 		-DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
-		-DCURL_DISABLE_LDAP=ON
+		-DCURL_DISABLE_LDAP=ON \
+		-DENABLE_IPV6=OFF
 	cmake --build curl/build --target install
 
   git clone --depth 1 --branch libssh2-1.11.0 https://github.com/libssh2/libssh2.git
@@ -127,7 +128,7 @@ headers = git2.h
 staticLibraries = libgit2.a
 libraryPaths = `pwd`/deps/lib
 compilerOpts = -I`pwd`/deps/include
-linkerOpts = $linkerOpts
+linkerOpts = $linkerOpts -lcrypto -lssl -lcurl
 
 ---
 
