@@ -13,13 +13,6 @@ function usage {
 
   -h    Usage
 
-  -a    Chip architecture
-        Options:
-          - aarch64
-          - amd64
-          - x86_64
-        Example: -a aarch64
-
   -c    cmake architecture
         Options:
           - arm64
@@ -148,7 +141,7 @@ EOF
 }
 
 function processArguments {
-  while getopts "h?a:c:o:" opt; do
+  while getopts "h?c:o:" opt; do
     case "$opt" in
     h|\?)
         usage
