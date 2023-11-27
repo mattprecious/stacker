@@ -18,20 +18,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          #- os: ubuntu-latest
-          #  cmake-arch: x86_64
-          #  openssl-arch: linux-x86_64
-          #  task: linkReleaseExecutableLinuxX64
+#          - os: ubuntu-latest
+#            cmake-arch: x86_64
+#            openssl-arch: linux-x86_64
+#            task: linkReleaseExecutableLinuxX64
           - os: macOS-latest
             cmake-arch: x86_64
             openssl-arch: darwin64-x86_64-cc
             sqlite-arch: x64-apple-macos
             task: linkReleaseExecutableMacosX64
-          - os: macOS-latest
-            cmake-arch: arm64
-            openssl-arch: darwin64-arm64-cc
-            sqlite-arch: arm64-apple-macos
-            task: linkReleaseExecutableMacosArm64
+#          - os: macOS-latest
+#            cmake-arch: arm64
+#            openssl-arch: darwin64-arm64-cc
+#            sqlite-arch: arm64-apple-macos
+#            task: linkReleaseExecutableMacosArm64
           # TODO: build on 'windows-latest'
 
     runs-on: ${{ matrix.os }}
