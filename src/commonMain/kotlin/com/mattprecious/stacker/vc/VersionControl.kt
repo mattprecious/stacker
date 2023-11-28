@@ -1,6 +1,6 @@
 package com.mattprecious.stacker.vc
 
-import java.nio.file.Path
+import okio.Path
 
 interface VersionControl : AutoCloseable {
 	val repoDiscovered: Boolean

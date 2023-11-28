@@ -9,13 +9,14 @@ import com.mattprecious.stacker.shell.RealShell
 import com.mattprecious.stacker.stack.RealStackManager
 import com.mattprecious.stacker.vc.GitVersionControl
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.curl.Curl
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.cinterop.memScoped
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import java.lang.foreign.Arena
-import kotlin.io.path.div
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -29,21 +30,20 @@ internal fun withStacker(
 	remoteOverride: Remote? = null,
 	block: (Stacker) -> Unit,
 ) {
-	Arena.ofConfined().use { arena ->
+	memScoped {
+		val fs = FileSystem.SYSTEM
 		val shell = RealShell()
-		GitVersionControl(arena, shell).use { vc ->
-
+		GitVersionControl(this, fs, shell).use { vc ->
 			if (!vc.repoDiscovered) {
-				println("No repository found at ${System.getProperty("user.dir")}.")
+				println("No repository found at ${fs.canonicalize(".".toPath())}.")
 				exitProcess(-1)
 			}
 
-			val dbPath = vc.configDirectory / "stacker.db"
-			withDatabase(dbPath.toString()) { db ->
+			withDatabase(vc.configDirectory / "stacker.db") { db ->
 				val stackManager = RealStackManager(db)
-				val configManager = RealConfigManager(db, stackManager)
+				val configManager = RealConfigManager(db, fs, stackManager)
 				val locker = RealLocker(db, stackManager, vc)
-				val httpClient = HttpClient(CIO) {
+				val httpClient = HttpClient(Curl) {
 					install(ContentNegotiation) {
 						json(
 							Json {
