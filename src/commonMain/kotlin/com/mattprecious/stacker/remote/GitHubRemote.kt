@@ -77,7 +77,7 @@ class GitHubRemote(
 			}.bodyOrThrow<Pull>()
 
 			PrResult.Created(url = createdPr.html_url)
-		} else {
+		} else if (pr.base.ref != targetName) {
 			client.patch("$host/repos/$repoName/pulls/${pr.number}") {
 				auth()
 				contentType(ContentType.Application.Json)
@@ -85,6 +85,8 @@ class GitHubRemote(
 			}.requireSuccess()
 
 			PrResult.Updated(pr.html_url)
+		} else {
+			PrResult.NoChange(pr.html_url)
 		}
 	}
 
