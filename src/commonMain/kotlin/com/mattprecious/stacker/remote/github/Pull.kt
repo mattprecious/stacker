@@ -8,10 +8,16 @@ data class Pull(
 	val merged_at: String?,
 	val state: State,
 	val html_url: String,
+	val base: Base,
 ) {
 	@Serializable
 	enum class State {
 		Open,
 		Closed,
 	}
+
+	@Serializable
+	data class Base(
+		val ref: String,
+	)
 }

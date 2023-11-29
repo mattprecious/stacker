@@ -32,5 +32,6 @@ interface Remote {
 
 		data class Created(override val url: String) : PrResult
 		data class Updated(override val url: String) : PrResult
+		data class NoChange(override val url: String) : PrResult
 	}
 }

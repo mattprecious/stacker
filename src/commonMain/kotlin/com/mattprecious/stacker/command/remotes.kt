@@ -63,5 +63,6 @@ internal fun Branch.submit(
 	when (result) {
 		is Remote.PrResult.Created -> command.echo("Pull request created: ${result.url}")
 		is Remote.PrResult.Updated -> command.echo("Pull request updated: ${result.url}")
+		is Remote.PrResult.NoChange -> command.echo("Pull request already up-to-date: ${result.url}")
 	}
 }
