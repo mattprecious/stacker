@@ -4,7 +4,7 @@ ktor = "2.3.6"
 sqldelight = "2.1.0-SNAPSHOT"
 
 [libraries]
-assertk = "com.willowtreeapps.assertk:assertk:0.27.0"
+assertk = "com.willowtreeapps.assertk:assertk:0.28.0"
 clikt = "com.github.ajalt.clikt:clikt:4.2.1"
 kotlin-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test" }
