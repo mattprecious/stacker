@@ -6,6 +6,7 @@ import com.mattprecious.stacker.rendering.Ansi.cursorDown
 import com.mattprecious.stacker.rendering.Ansi.cursorUp
 import com.mattprecious.stacker.rendering.Ansi.reset
 import com.mattprecious.stacker.rendering.Ansi.restorePosition
+import com.mattprecious.stacker.rendering.Ansi.savePosition
 import com.mattprecious.stacker.rendering.Ansi.underline
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
@@ -39,8 +40,7 @@ fun <T> CliktCommand.interactivePrompt(
 		return options.single()
 	}
 
-	val builder = StringBuilder(options.size)
-	val outputTerminal = currentContext.terminal
+	val builder = StringBuilder()
 
 	val labelSuffix = if (message.last().isLetterOrDigit()) ": " else " "
 
@@ -82,11 +82,11 @@ fun <T> CliktCommand.interactivePrompt(
 			selected.let {
 				if (it == null) {
 					append(filter)
-					append(Ansi.savePosition)
+					append(savePosition)
 				} else {
 					val result = filteredOptions[it]
 					appendLine(valueTransform(result))
-					outputTerminal.rawPrint(toString())
+					print(toString())
 					return result
 				}
 			}
@@ -104,7 +104,7 @@ fun <T> CliktCommand.interactivePrompt(
 
 			append(restorePosition)
 
-			outputTerminal.rawPrint(toString())
+			print(toString())
 		}
 
 		withRaw {
