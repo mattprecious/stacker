@@ -11,25 +11,16 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
-import platform.posix.BRKINT
-import platform.posix.CS8
-import platform.posix.CSIZE
 import platform.posix.ECHO
-import platform.posix.ECHONL
 import platform.posix.ICANON
 import platform.posix.ICRNL
 import platform.posix.IEXTEN
-import platform.posix.IGNBRK
-import platform.posix.IGNCR
 import platform.posix.INLCR
 import platform.posix.ISIG
-import platform.posix.ISTRIP
 import platform.posix.IXON
-import platform.posix.OPOST
-import platform.posix.PARENB
-import platform.posix.PARMRK
 import platform.posix.STDIN_FILENO
 import platform.posix.TCSAFLUSH
+import platform.posix.exit
 import platform.posix.getchar
 import platform.posix.tcgetattr
 import platform.posix.tcsetattr
@@ -152,6 +143,12 @@ fun <T> CliktCommand.interactivePrompt(
 						}
 						break
 					}
+
+					// SIGINT.
+					3 -> {
+						updateTerminalFlags(raw = false)
+						exit(0)
+					}
 				}
 			}
 		}
@@ -168,27 +165,24 @@ private inline fun withRaw(block: () -> Unit) {
 }
 
 private fun updateTerminalFlags(raw: Boolean) = memScoped {
-	// TODO: Figure out ncurses, because this is ridiculous.
-
 	val termios = alloc<termios>()
 	check(tcgetattr(STDIN_FILENO, termios.ptr) == 0) {
 		"Unable to get the terminal attributes."
 	}
 
-	// These flags are sourced from cfmakeraw: https://www.man7.org/linux/man-pages/man3/termios.3.html
-	// This can maybe just call cfmakeraw directly, but I don't know how to reset it afterward.
+	// There seems to be no real consensus on which set of flags are set for raw mode... The ones chosen here are the ones
+	// that JLine uses (plus ISIG) because they work, and other sets (like from linux cfmakeraw) do not.
+	//
+	// ISIG is added because we manually handle it in our input loop in order to reset these flags before terminating.
+	// Otherwise, the terminal is left in raw mode.
+	//
+	// I would love for all of this to be replaced with curses raw/noraw, but I cannot figure out how to make it work.
 	if (raw) {
-		termios.c_iflag =
-			termios.c_iflag and (IGNBRK or BRKINT or PARMRK or ISTRIP or INLCR or IGNCR or ICRNL or IXON).inv().convert()
-		termios.c_oflag = termios.c_oflag and OPOST.inv().convert()
-		termios.c_lflag = termios.c_lflag and (ECHO or ECHONL or ICANON or ISIG or IEXTEN).inv().convert()
-		termios.c_cflag = termios.c_cflag and (CSIZE or PARENB).inv().convert() or CS8.convert()
+		termios.c_iflag = termios.c_iflag and (INLCR or ICRNL or IXON).inv().convert()
+		termios.c_lflag = termios.c_lflag and (ECHO or ICANON or ISIG or IEXTEN).inv().convert()
 	} else {
-		termios.c_iflag =
-			termios.c_iflag or (IGNBRK or BRKINT or PARMRK or ISTRIP or INLCR or IGNCR or ICRNL or IXON).convert()
-		termios.c_oflag = termios.c_oflag or OPOST.convert()
-		termios.c_lflag = termios.c_lflag or (ECHO or ECHONL or ICANON or ISIG or IEXTEN).convert()
-		termios.c_cflag = termios.c_cflag or (CSIZE or PARENB).convert() and CS8.inv().convert()
+		termios.c_iflag = termios.c_iflag or (INLCR or ICRNL or IXON).convert()
+		termios.c_lflag = termios.c_lflag or (ECHO or ICANON or ISIG or IEXTEN).convert()
 	}
 
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, termios.ptr)
