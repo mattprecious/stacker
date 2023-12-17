@@ -20,20 +20,11 @@ jobs:
         include:
           # TODO: Linking is not working on linux.
 #          - os: ubuntu-latest
-#            cmake-arch: x86_64
-#            openssl-arch: linux-x86_64
-#            sqlite-arch: x64-gnu-linux
 #            task: linkReleaseExecutableLinuxX64
           - os: macOS-latest
-            cmake-arch: x86_64
-            openssl-arch: darwin64-x86_64-cc
-            sqlite-arch: x64-apple-macos
             task: linkReleaseExecutableMacosX64
           # TODO: Cross-compilation is not working. There's so many dependencies that need to be manually built.
 #          - os: macOS-latest
-#            cmake-arch: arm64
-#            openssl-arch: darwin64-arm64-cc
-#            sqlite-arch: arm64-apple-macos
 #            task: linkReleaseExecutableMacosArm64
           # TODO: build on 'windows-latest'
 
@@ -47,12 +38,7 @@ jobs:
           java-version: 21
 
       - uses: gradle/gradle-build-action@v2
-        # Don't spend more than 5m rehydrating the cache. Otherwise just move on.
-        timeout-minutes: 5
         continue-on-error: true
-
-      - name: Build native libraries
-        run: ./build-deps.sh -c ${{ matrix.cmake-arch }} -o ${{ matrix.openssl-arch }} -s ${{ matrix.sqlite-arch }}
 
       - run: ./gradlew ${{ matrix.task }}
 

@@ -1,5 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.tasks.CInteropProcess
 
 plugins {
 	alias(libs.plugins.spotless)
@@ -76,17 +76,35 @@ spotless {
 	}
 }
 
-val requireDepsTask = tasks.register("requireDepsFiles") {
-	outputs.upToDateWhen { false }
+val buildDependenciesTask = tasks.register<BuildDependenciesTask>("buildDependencies") {
+	script = layout.projectDirectory.file("build-deps.sh")
+	defFile = layout.projectDirectory.file("src/nativeInterop/cinterop/libgit2.def")
+	outputDir = layout.projectDirectory.dir("deps")
+}
 
-	doFirst {
-		check(file("src/nativeInterop/libgit2.def").exists()) {
-			".def file does not exist. This must be populated with paths to native libraries.\n" +
-				"If developing locally, please run ./build-deps.sh"
-		}
+abstract class BuildDependenciesTask : Exec() {
+	@get:InputFile
+	abstract val script: RegularFileProperty
+
+	@get:OutputFile
+	abstract val defFile: RegularFileProperty
+
+	@get:OutputDirectory
+	abstract val outputDir: DirectoryProperty
+
+	override fun exec() {
+		setExecutable(script.get().asFile)
+		setArgs(
+			listOf(
+				"-d", defFile.get().asFile.absolutePath,
+				"-b", outputDir.get().asFile.absolutePath,
+			)
+		)
+
+		super.exec()
 	}
 }
 
-tasks.withType<KotlinCompile>().configureEach {
-	dependsOn(requireDepsTask)
+tasks.withType<CInteropProcess>().configureEach {
+	dependsOn(buildDependenciesTask)
 }
