@@ -2,11 +2,6 @@
 
 ## Development
 
-### Building Native Libraries
-
-This project uses [libgit2](https://github.com/libgit2/libgit2), which needs to be downloaded and built locally before
-the project will compile. This can be done by executing `./build-deps.sh`.
-
 ### Building
 
 The generic `assemble` and `build` tasks will attempt to build for all supported architectures, which cannot be done
