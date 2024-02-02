@@ -23,10 +23,10 @@ jobs:
 #            task: linkReleaseExecutableLinuxX64
           - os: macOS-13
             task: linkReleaseExecutableMacosX64
-            name: 'mac-x64'
+            target: 'macosX64'
           - os: macOS-14
             task: linkReleaseExecutableMacosArm64
-            name: 'mac-arm64'
+            target: 'macosArm64'
           # TODO: build on 'windows-latest'
 
     runs-on: ${{ matrix.os }}
@@ -46,6 +46,6 @@ jobs:
       - name: Upload distribution
         uses: actions/upload-artifact@v4
         with:
-          name: st-${{ matrix.name }}.kexe
-          path: build/bin/*/releaseExecutable/stacker.kexe
+          name: stacker-${{ matrix.target }}
+          path: build/bin/${{ matrix.target }}/releaseExecutable/stacker.kexe
           if-no-files-found: error
