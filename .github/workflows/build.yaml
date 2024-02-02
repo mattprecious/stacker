@@ -21,11 +21,12 @@ jobs:
           # TODO: Linking is not working on linux.
 #          - os: ubuntu-latest
 #            task: linkReleaseExecutableLinuxX64
-          - os: macOS-latest
+          - os: macOS-13
             task: linkReleaseExecutableMacosX64
-          # TODO: Cross-compilation is not working. There's so many dependencies that need to be manually built.
-#          - os: macOS-latest
-#            task: linkReleaseExecutableMacosArm64
+            name: 'mac-x64'
+          - os: macOS-14
+            task: linkReleaseExecutableMacosArm64
+            name: 'mac-arm64'
           # TODO: build on 'windows-latest'
 
     runs-on: ${{ matrix.os }}
@@ -45,6 +46,6 @@ jobs:
       - name: Upload distribution
         uses: actions/upload-artifact@v4
         with:
-          name: bin
-          path: build/bin
+          name: st-${{ matrix.name }}.kexe
+          path: build/bin/*/releaseExecutable/stacker.kexe
           if-no-files-found: error
