@@ -41,6 +41,11 @@ jobs:
       - uses: gradle/actions/setup-gradle@v3
         continue-on-error: true
 
+      - name: Uninstall Homebrew curl
+        if: matrix.os == 'macOS-13' || matrix.os == 'macOS-14'
+        # Forces libcurl to be statically linked by uninstalling the dynamic libs
+        run: brew uninstall --ignore-dependencies curl
+
       - run: ./gradlew ${{ matrix.task }}
 
       - name: Upload distribution
