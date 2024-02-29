@@ -22,8 +22,13 @@ class RealConfigManager(
 	private var userConfig: UserConfig by jsonFile(
 		fs = fs,
 		path = getpwuid(getuid())!!.pointed.pw_dir!!.toKString().toPath() / ".stacker_user_config",
-		permissions = Permissions.Posix(setOf(Permissions.Posix.Permission.OwnerRead)),
-		requirePermissionsOnRead = true,
+		createPermissions = Permissions.Posix(setOf(Permissions.Posix.Permission.OwnerRead)),
+		maximumAllowedPermissions = Permissions.Posix(
+			setOf(
+				Permissions.Posix.Permission.OwnerRead,
+				Permissions.Posix.Permission.OwnerWrite,
+			),
+		),
 	) {
 		UserConfig(
 			githubToken = null,
