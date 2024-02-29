@@ -20,35 +20,31 @@ import kotlin.reflect.typeOf
 inline fun <reified T : Any?> jsonFile(
 	fs: FileSystem,
 	path: Path,
-	permissions: Permissions = Permissions.Default,
-	requirePermissionsOnRead: Boolean = false,
+	createPermissions: Permissions = Permissions.Default,
+	maximumAllowedPermissions: Permissions.Posix? = null,
 	noinline default: (() -> T),
-) = JsonFileDelegate(typeOf<T>(), fs, path, permissions, requirePermissionsOnRead, default)
+) = JsonFileDelegate(typeOf<T>(), fs, path, createPermissions, maximumAllowedPermissions, default)
 
 class JsonFileDelegate<T : Any?>(
 	type: KType,
 	private val fs: FileSystem,
 	private val path: Path,
-	private val permissions: Permissions,
-	private val requirePermissionsOnRead: Boolean,
+	private val createPermissions: Permissions,
+	private val maximumAllowedPermissions: Permissions.Posix?,
 	private val default: () -> T,
 ) {
 	@Suppress("UNCHECKED_CAST")
 	private val serializer = Json.serializersModule.serializer(type) as KSerializer<T>
 	private var value: Optional<T> = Optional.None
 
-	init {
-		if (requirePermissionsOnRead) {
-			require(permissions !is Permissions.Default)
-		}
-	}
-
 	operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
 		return when (val v = value) {
 			is Optional.Some -> v.value
 			is Optional.None -> {
 				val loadedValue = if (fs.exists(path)) {
-					path.requirePermissions(permissions)
+					if (maximumAllowedPermissions != null) {
+						path.requirePermissions(maximumAllowedPermissions)
+					}
 
 					val json = fs.source(path).buffer().use { it.readUtf8() }
 					Json.decodeFromString(serializer, json)
@@ -66,7 +62,7 @@ class JsonFileDelegate<T : Any?>(
 	operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
 		fs.createDirectories(path.parent!!)
 		fs.sink(path).buffer().use { it.writeUtf8(Json.encodeToString(serializer, value)) }
-		path.setPermissions(permissions)
+		path.setPermissions(createPermissions)
 
 		this.value = Optional.Some(value)
 	}
@@ -76,15 +72,12 @@ class JsonFileDelegate<T : Any?>(
 			Permissions.Default -> {}
 			is Permissions.Posix -> {
 				// TODO: This won't work on Windows and assumes that the path root is system root.
-				chmod(this.toString(), permissions.intValue().convert())
+				chmod(this.toString(), permissions.value().intValue.convert())
 			}
 		}
-
 	}
 
-	private fun Path.requirePermissions(permissions: Permissions) {
-		if (permissions !is Permissions.Posix) return
-
+	private fun Path.requirePermissions(permissions: Permissions.Posix) {
 		// TODO: This won't work on Windows and assumes that the path root is system root.
 		memScoped {
 			val path = this@requirePermissions
@@ -92,13 +85,28 @@ class JsonFileDelegate<T : Any?>(
 			val stat = alloc<stat>()
 			stat(path.toString(), stat.ptr)
 
-			// The last nine bits are the user, group, and 'other' access permissions, with 3 bits allocated to each.
-			// We require the mode to be 400 (octal), which is 256 in decimal.
-			check(stat.st_mode.toInt() and 0b111111111 == permissions.intValue()) {
-				"User configuration file access is too permissive. Please set file mode of $path to 0400."
+			val maximumPermissions = permissions.value()
+			val pathPermissions = PosixPermissionsInt(stat.st_mode.toInt())
+
+			check(
+				pathPermissions.ownerValue <= maximumPermissions.ownerValue &&
+					pathPermissions.groupValue <= maximumPermissions.groupValue &&
+					pathPermissions.otherValue <= maximumPermissions.otherValue,
+			) {
+				"User configuration file access is too permissive. Please set file mode of $path to be no greater than " +
+					"'${maximumPermissions.intValue.toString(8)}'."
 			}
 		}
 	}
+}
+
+value class PosixPermissionsInt(val intValue: Int) {
+	val ownerValue: Int
+		get() = intValue shr 6 and 0b111
+	val groupValue: Int
+		get() = intValue shr 3 and 0b111
+	val otherValue: Int
+		get() = intValue and 0b111
 }
 
 sealed interface Permissions {
@@ -107,7 +115,7 @@ sealed interface Permissions {
 	data class Posix(
 		val permissions: Set<Permission>,
 	) : Permissions {
-		fun intValue() = permissions.sumOf { it.value }
+		fun value() = PosixPermissionsInt(permissions.sumOf { it.value })
 
 		enum class Permission(val value: Int) {
 			OwnerRead(1 shl 8),
