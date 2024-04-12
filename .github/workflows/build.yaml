@@ -20,12 +20,12 @@ jobs:
         include:
           # TODO: Linking is not working on linux.
 #          - os: ubuntu-latest
-#            task: linkReleaseExecutableLinuxX64
+#            task: linkReleaseExecutableLinuxX64 linuxX64Test
           - os: macOS-13
-            task: linkReleaseExecutableMacosX64
+            task: linkReleaseExecutableMacosX64 macosX64Test
             target: 'macosX64'
           - os: macOS-14
-            task: linkReleaseExecutableMacosArm64
+            task: linkReleaseExecutableMacosArm64 macosArm64Test
             target: 'macosArm64'
           # TODO: build on 'windows-latest'
 
