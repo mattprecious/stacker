@@ -194,7 +194,7 @@ class GitVersionControl(
 	}
 
 	override fun close() {
-		git_repository_free(repo)
+		nullableRepo?.let { git_repository_free(it.value!!) }
 		git_libgit2_shutdown()
 	}
 
