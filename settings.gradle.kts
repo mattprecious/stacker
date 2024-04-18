@@ -11,16 +11,17 @@ pluginManagement {
 }
 
 plugins {
-	id("com.gradle.enterprise") version ("3.17.2")
+	id("com.gradle.develocity") version ("3.17.2")
 }
 
-gradleEnterprise {
+develocity {
 	buildScan {
-		termsOfServiceUrl = "https://gradle.com/terms-of-service"
-		termsOfServiceAgree = "yes"
+		termsOfUseUrl = "https://gradle.com/help/legal-terms-of-use"
+		termsOfUseAgree = "yes"
 		if (System.getenv("CI") == "true") {
-			publishAlways()
 			tag("CI")
+		} else {
+			publishing.onlyIf { false }
 		}
 	}
 }
