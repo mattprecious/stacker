@@ -1,6 +1,6 @@
 [versions]
 kotlin = "1.9.24"
-ktor = "2.3.10"
+ktor = "2.3.11"
 sqldelight = "2.1.0-SNAPSHOT"
 
 [libraries]
