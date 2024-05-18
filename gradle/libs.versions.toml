@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.9.24"
 ktor = "2.3.11"
-sqldelight = "2.1.0-SNAPSHOT"
+sqldelight = "2.0.2"
 
 [libraries]
 assertk = "com.willowtreeapps.assertk:assertk:0.28.1"
