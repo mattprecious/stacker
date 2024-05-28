@@ -6,6 +6,9 @@ build
 # IntelliJ
 .idea
 
+# Kotlin
+.kotlin
+
 ### Mac OS ###
 .DS_Store
 
