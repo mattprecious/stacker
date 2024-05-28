@@ -15,6 +15,12 @@ repositories {
 	}
 }
 
+val buildDependenciesTask = tasks.register<BuildDependenciesTask>("buildDependencies") {
+	script = layout.projectDirectory.file("build-deps.sh")
+	defFile = layout.buildDirectory.file("generated/cinterop/libgit2.def")
+	outputDir = layout.projectDirectory.dir("deps")
+}
+
 kotlin {
 	macosArm64()
 	macosX64()
@@ -51,7 +57,9 @@ kotlin {
 			entryPoint = "com.mattprecious.stacker.main"
 		}
 		compilations.getByName("main").cinterops {
-			create("libgit2")
+			create("libgit2") {
+				definitionFile.set(buildDependenciesTask.flatMap { it.defFile })
+			}
 		}
 	}
 }
@@ -76,12 +84,6 @@ spotless {
 	}
 }
 
-val buildDependenciesTask = tasks.register<BuildDependenciesTask>("buildDependencies") {
-	script = layout.projectDirectory.file("build-deps.sh")
-	defFile = layout.projectDirectory.file("src/nativeInterop/cinterop/libgit2.def")
-	outputDir = layout.projectDirectory.dir("deps")
-}
-
 abstract class BuildDependenciesTask : Exec() {
 	@get:InputFile
 	abstract val script: RegularFileProperty
@@ -103,8 +105,4 @@ abstract class BuildDependenciesTask : Exec() {
 
 		super.exec()
 	}
-}
-
-tasks.withType<CInteropProcess>().configureEach {
-	dependsOn(buildDependenciesTask)
 }
