@@ -3,15 +3,20 @@ package com.mattprecious.stacker.test
 import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
+import assertk.assertions.message
+import com.mattprecious.stacker.RepoNotFoundException
 import okio.Path.Companion.toPath
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 
 class SimpleTest {
 	@Test
-	fun returnsErrorIfNoRepositoryFound() {
+	fun throwsErrorIfNoRepositoryFound() {
 		stackerTest {
-			// TODO: Assert against the message that's printed as well.
-			assertThat(runStacker()).isEqualTo(-1)
+			val t = assertFailsWith<RepoNotFoundException> { runStacker() }
+			assertThat(t).message()
+				.isEqualTo("No repository found at ${fileSystem.canonicalize(".".toPath())}.")
+
 			assertThat(fileSystem.list(".".toPath())).isEmpty()
 		}
 	}
