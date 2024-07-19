@@ -1,5 +1,6 @@
 package com.mattprecious.stacker.command.repo
 
+import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.config.ConfigManager
@@ -22,6 +23,16 @@ internal class Init(
 		}
 
 		val branches = vc.branches
+		if (branches.isEmpty()) {
+			// We need a SHA in order to initialize. Additionally, I don't know how to get the current branch name when it's
+			// an unborn branch.
+			echo(
+				message = "Stacker cannot be initialized in a completely empty repository. Please make a commit, first.",
+				err = true,
+			)
+			throw Abort()
+		}
+
 		val trunk = interactivePrompt(
 			message = "Select your trunk branch, which you open pull requests against",
 			options = branches,

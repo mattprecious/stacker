@@ -88,6 +88,7 @@ import com.github.git2.git_repository_config
 import com.github.git2.git_repository_discover
 import com.github.git2.git_repository_free
 import com.github.git2.git_repository_head
+import com.github.git2.git_repository_head_unborn
 import com.github.git2.git_repository_open
 import com.github.git2.git_repository_path
 import com.github.git2.git_repository_set_head
@@ -134,8 +135,11 @@ class GitVersionControl(
 	override val currentBranchName: String
 		get() = memScoped { git_reference_shorthand(getHead().pointer)!!.toKString() }
 
-	override val originUrl: String
-		get() = memScoped { git_remote_url(getOrigin().pointer)!!.toKString() }
+	override val originUrl: String?
+		get() = memScoped {
+			val origin = getOrigin() ?: return null
+			git_remote_url(origin.pointer)!!.toKString()
+		}
 
 	override val branches: List<String>
 		get() = memScoped {
@@ -306,7 +310,7 @@ class GitVersionControl(
 			populateRemoteCallbacks(it.callbacks)
 		}
 
-		val origin = getOrigin()
+		val origin = getOrigin()!!
 		checkError(git_remote_push(origin.ptr, refs.ptr, options.ptr))
 		git_remote_free(origin.ptr)
 	}
@@ -329,7 +333,7 @@ class GitVersionControl(
 			populateRemoteCallbacks(it.callbacks)
 		}
 
-		val origin = getOrigin()
+		val origin = getOrigin()!!
 		checkError(git_remote_fetch(origin.ptr, refs.ptr, pullOptions.ptr, null))
 		git_remote_free(origin.ptr)
 
@@ -395,8 +399,12 @@ class GitVersionControl(
 	}
 
 	/** Should be freed with [git_remote_free]. */
-	private fun MemScope.getOrigin(): git_remote {
-		return withAllocPointerTo { checkError(git_remote_lookup(it.ptr, repo, "origin")) }.pointed!!
+	private fun MemScope.getOrigin(): git_remote? {
+		return withAllocPointerTo {
+			val code = git_remote_lookup(it.ptr, repo, "origin")
+			if (code == ReturnCodes.ENOTFOUND) return null
+			checkError(code)
+		}.pointed!!
 	}
 
 	/** @param treeish git_commit* or git_object* */
