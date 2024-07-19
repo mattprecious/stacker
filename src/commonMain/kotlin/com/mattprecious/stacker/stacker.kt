@@ -4,6 +4,7 @@ import com.mattprecious.stacker.command.Stacker
 import com.mattprecious.stacker.config.RealConfigManager
 import com.mattprecious.stacker.lock.RealLocker
 import com.mattprecious.stacker.remote.GitHubRemote
+import com.mattprecious.stacker.remote.NoRemote
 import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.shell.RealShell
 import com.mattprecious.stacker.stack.RealStackManager
@@ -56,7 +57,12 @@ internal fun withStacker(
 					}
 				}
 
-				val remote = remoteOverride ?: GitHubRemote(httpClient, vc.originUrl, configManager)
+				val originUrl = vc.originUrl
+				val remote = when {
+					remoteOverride != null -> remoteOverride
+					originUrl != null -> GitHubRemote(httpClient, originUrl, configManager)
+					else -> NoRemote()
+				}
 
 				Stacker(
 					configManager = configManager,

@@ -6,7 +6,7 @@ interface VersionControl : AutoCloseable {
 	val repoDiscovered: Boolean
 	val configDirectory: Path
 	val currentBranchName: String
-	val originUrl: String
+	val originUrl: String?
 	val branches: List<String>
 	val editor: String?
 
