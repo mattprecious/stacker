@@ -14,39 +14,31 @@ import kotlin.test.assertFailsWith
 
 class SimpleTest {
 	@Test
-	fun throwsErrorIfNoRepositoryFound() {
-		stackerTest {
-			val t = assertFailsWith<RepoNotFoundException> { runStacker() }
-			assertThat(t).message()
-				.isEqualTo("No repository found at ${fileSystem.canonicalize(".".toPath())}.")
+	fun throwsErrorIfNoRepositoryFound() = stackerTest {
+		val t = assertFailsWith<RepoNotFoundException> { runStacker() }
+		assertThat(t).message()
+			.isEqualTo("No repository found at ${fileSystem.canonicalize(".".toPath())}.")
 
-			assertThat(fileSystem.list(".".toPath())).isEmpty()
-		}
+		assertThat(fileSystem.list(".".toPath())).isEmpty()
 	}
 
 	@Test
-	fun environmentSetupMakesGitShaDeterministic() {
-		stackerTest {
-			// TODO: Introduce helpers for all of these git operations.
-			environment.exec("git init")
-			environment.exec("touch hello.txt")
-			environment.exec("git add hello.txt")
-			environment.exec("git commit -m 'Testing'")
-			assertThat(environment.exec("git rev-parse HEAD"))
-				.isEqualTo("f8cdffa9a5c120b21a0042138806a930e72af88f")
-		}
+	fun environmentSetupMakesGitShaDeterministic() = stackerTest {
+		gitInit()
+		environment.exec("touch hello.txt")
+		gitAdd("hello.txt".toPath())
+		gitCommit("Testing")
+		assertThat(gitHeadSha()).isEqualTo("f8cdffa9a5c120b21a0042138806a930e72af88f")
 	}
 
 	@Test
-	fun dbIsCreatedInGitDirectory() {
-		stackerTest {
-			environment.exec("git init")
-			assertThat(fileSystem.exists(".git/stacker.db".toPath())).isFalse()
+	fun dbIsCreatedInGitDirectory() = stackerTest {
+		gitInit()
+		assertThat(fileSystem.exists(".git/stacker.db".toPath())).isFalse()
 
-			with(runStacker()) {
-				assertThat(statusCode).isZero()
-				assertThat(fileSystem.exists(".git/stacker.db".toPath())).isTrue()
-			}
+		with(runStacker()) {
+			assertThat(statusCode).isZero()
+			assertThat(fileSystem.exists(".git/stacker.db".toPath())).isTrue()
 		}
 	}
 }
