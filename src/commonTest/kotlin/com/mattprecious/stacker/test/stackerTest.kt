@@ -1,5 +1,7 @@
 package com.mattprecious.stacker.test
 
+import com.github.ajalt.clikt.testing.CliktCommandTestResult
+import com.github.ajalt.clikt.testing.test
 import com.mattprecious.stacker.remote.FakeRemote
 import com.mattprecious.stacker.withStacker
 import kotlinx.cinterop.convert
@@ -56,13 +58,16 @@ class StackerTestScope(
 ) {
 	val remote = FakeRemote()
 
-	fun runStacker(vararg args: String): Int {
-		return withStacker(
+	fun runStacker(vararg args: String): CliktCommandTestResult {
+		var result: CliktCommandTestResult? = null
+		withStacker(
 			fileSystem = fileSystem,
 			remoteOverride = remote,
 		) {
-			it.parse(args.asList())
+			result = it.test(args.asList())
 		}
+
+		return result!!
 	}
 }
 

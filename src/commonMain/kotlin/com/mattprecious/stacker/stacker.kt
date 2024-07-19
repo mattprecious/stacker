@@ -20,11 +20,12 @@ import okio.Path.Companion.toPath
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
-	val returnCode = withStacker {
-		it.main(args)
+	try {
+		withStacker { it.main(args) }
+	} catch (e: RepoNotFoundException) {
+		println(e.message)
+		exitProcess(-1)
 	}
-
-	exitProcess(returnCode)
 }
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -32,13 +33,12 @@ internal fun withStacker(
 	fileSystem: FileSystem = FileSystem.SYSTEM,
 	remoteOverride: Remote? = null,
 	block: (Stacker) -> Unit,
-): Int {
+) {
 	memScoped {
 		val shell = RealShell()
 		GitVersionControl(this, fileSystem, shell).use { vc ->
 			if (!vc.repoDiscovered) {
-				println("No repository found at ${fileSystem.canonicalize(".".toPath())}.")
-				return -1
+				throw RepoNotFoundException("No repository found at ${fileSystem.canonicalize(".".toPath())}.")
 			}
 
 			withDatabase(vc.configDirectory / "stacker.db") { db ->
@@ -68,6 +68,6 @@ internal fun withStacker(
 			}
 		}
 	}
-
-	return 0
 }
+
+class RepoNotFoundException(message: String) : RuntimeException(message)
