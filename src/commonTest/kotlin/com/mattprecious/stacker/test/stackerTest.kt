@@ -8,9 +8,7 @@ import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
-import okio.ForwardingFileSystem
 import okio.Path
-import okio.Path.Companion.toPath
 import platform.posix.chdir
 import platform.posix.fgets
 import platform.posix.getcwd
@@ -27,14 +25,14 @@ fun stackerTest(
 	validate: StackerTestScope.() -> Unit,
 ) {
 	val environment = Environment()
-	val fileSystem: FileSystem = TempFileSystem("StackerTest")
-	val root = "/".toPath()
+	val fileSystem = FileSystem.SYSTEM
+	val tmpPath = tmpPath("StackerTest")
 
 	try {
-		fileSystem.createDirectories(root, mustCreate = true)
+		fileSystem.createDirectories(tmpPath, mustCreate = true)
 
 		environment.withSnapshot {
-			environment.workingDirectory = fileSystem.canonicalize(root).toString()
+			environment.workingDirectory = fileSystem.canonicalize(tmpPath).toString()
 			environment.setGitNames("Stacker")
 			environment.setGitEmails("stacker@example.com")
 			environment.setGitDates("2020-01-01T12:00:00Z")
@@ -42,9 +40,15 @@ fun stackerTest(
 			StackerTestScope(environment, fileSystem).validate()
 		}
 	} finally {
-		fileSystem.deleteRecursively(root)
+		fileSystem.deleteRecursively(tmpPath)
 	}
 }
+
+private fun tmpPath(name: String): Path {
+	return FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "$name-${randomToken(16)}"
+}
+
+private fun randomToken(length: Int) = Random.nextBytes(length).toByteString(0, length).hex()
 
 class StackerTestScope(
 	val environment: Environment,
@@ -163,25 +167,4 @@ class Environment {
 		val gitAuthorDate: String?,
 		val gitCommitterDate: String?,
 	)
-}
-
-/** Creates a temporary folder and transforms all operations to be relative to this folder. */
-private class TempFileSystem(name: String) : ForwardingFileSystem(FileSystem.SYSTEM) {
-	private val base = FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "$name-${randomToken(16)}"
-
-	private fun randomToken(length: Int) = Random.nextBytes(length).toByteString(0, length).hex()
-
-	override fun onPathParameter(path: Path, functionName: String, parameterName: String): Path {
-		val forwardingPath = if (path.isRelative) "/$path".toPath() else path
-
-		return base.resolve(forwardingPath.relativeTo(ABSOLUTE_ROOT))
-	}
-
-	override fun onPathResult(path: Path, functionName: String): Path {
-		return path.relativeTo(base)
-	}
-
-	companion object {
-		private val ABSOLUTE_ROOT = "/".toPath()
-	}
 }

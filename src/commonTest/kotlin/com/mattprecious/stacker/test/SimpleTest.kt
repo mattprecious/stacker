@@ -12,7 +12,7 @@ class SimpleTest {
 		stackerTest {
 			// TODO: Assert against the message that's printed as well.
 			assertThat(runStacker()).isEqualTo(-1)
-			assertThat(fileSystem.list("/".toPath())).isEmpty()
+			assertThat(fileSystem.list(".".toPath())).isEmpty()
 		}
 	}
 
