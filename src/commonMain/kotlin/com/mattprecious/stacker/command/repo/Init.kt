@@ -33,11 +33,23 @@ internal class Init(
 			throw Abort()
 		}
 
+		val defaultTrunk = run defaultTrunk@ {
+			if (currentTrunk != null) return@defaultTrunk currentTrunk
+
+			if (branches.size == 1) return@defaultTrunk null
+
+			val defaultBranch = vc.defaultBranch
+			if (defaultBranch != null && branches.contains(defaultBranch)) {
+				return@defaultTrunk defaultBranch
+			}
+
+			return@defaultTrunk vc.currentBranchName
+		}
+
 		val trunk = interactivePrompt(
 			message = "Select your trunk branch, which you open pull requests against",
 			options = branches,
-			// TODO: Infer without hard coding.
-			default = currentTrunk ?: "main",
+			default = defaultTrunk,
 		)
 
 		val trunkSha = vc.getSha(trunk)
@@ -51,6 +63,8 @@ internal class Init(
 		val trailingTrunk = if (!useTrailing) {
 			null
 		} else {
+			// TODO: This assumes that the trailing trunk branch already exists. It will fail if there's
+			//  only one branch in the repo, and will auto-select if there's only two.
 			interactivePrompt(
 				message = "Select your trailing trunk branch, which you branch from",
 				options = branches.filterNot { it == trunk },

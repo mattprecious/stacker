@@ -153,25 +153,10 @@ class GitVersionControl(
 		}
 
 	override val editor: String?
-		get() = memScoped {
-			val config = withAllocPointerTo {	checkError(git_repository_config(it.ptr, repo)) }
-			val configSnapshot = withAllocPointerTo {
-				checkError(git_config_snapshot(it.ptr, config.value))
-			}
+		get() = memScoped { getConfigString("core.editor") }
 
-			return@memScoped try {
-				val editor = withAllocPointerTo {
-					val code = git_config_get_string(it.ptr, configSnapshot.value, "core.editor")
-					if (code == ReturnCodes.ENOTFOUND) return@memScoped null
-					checkError(code)
-				}
-
-				editor.value!!.toKString()
-			} finally {
-				git_config_free(configSnapshot.value)
-				git_config_free(config.value)
-			}
-		}
+	override val defaultBranch: String?
+		get() = memScoped { getConfigString("init.defaultBranch") }
 
 	init {
 		git_libgit2_init()
@@ -422,6 +407,26 @@ class GitVersionControl(
 		}
 
 		checkError(git_checkout_tree(repo, treeish.ptr, options.ptr))
+	}
+
+	private fun MemScope.getConfigString(name: String): String? {
+		val config = withAllocPointerTo {	checkError(git_repository_config(it.ptr, repo)) }
+		val configSnapshot = withAllocPointerTo {
+			checkError(git_config_snapshot(it.ptr, config.value))
+		}
+
+		return try {
+			val configValue = withAllocPointerTo {
+				val code = git_config_get_string(it.ptr, configSnapshot.value, name)
+				if (code == ReturnCodes.ENOTFOUND) return@getConfigString null
+				checkError(code)
+			}
+
+			configValue.value!!.toKString()
+		} finally {
+			git_config_free(configSnapshot.value)
+			git_config_free(config.value)
+		}
 	}
 
 	private data class MergeAnalysis(
