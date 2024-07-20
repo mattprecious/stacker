@@ -42,6 +42,7 @@ internal class Onto(
 		val options = stackManager.getBase()!!.prettyTree { it.name != currentBranchName }
 		val newParent = interactivePrompt(
 			message = "Select the parent branch for ${currentBranchName.styleBranch()}",
+			promptIfSingle = true,
 			options = options,
 			default = options.find { it.branch.name == currentBranch.parent!!.name },
 			displayTransform = { it.pretty },

@@ -48,6 +48,7 @@ internal class Init(
 
 		val trunk = interactivePrompt(
 			message = "Select your trunk branch, which you open pull requests against",
+			promptIfSingle = true,
 			options = branches,
 			default = defaultTrunk,
 		)
@@ -64,9 +65,10 @@ internal class Init(
 			null
 		} else {
 			// TODO: This assumes that the trailing trunk branch already exists. It will fail if there's
-			//  only one branch in the repo, and will auto-select if there's only two.
+			//  only one branch in the repo.
 			interactivePrompt(
 				message = "Select your trailing trunk branch, which you branch from",
+				promptIfSingle = true,
 				options = branches.filterNot { it == trunk },
 				default = currentTrailingTrunk,
 			)
