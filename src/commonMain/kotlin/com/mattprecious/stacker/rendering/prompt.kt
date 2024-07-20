@@ -31,12 +31,13 @@ fun <T> CliktCommand.interactivePrompt(
 	message: String,
 	options: List<T>,
 	filteringEnabled: Boolean = true,
+	promptIfSingle: Boolean = false,
 	default: T? = null,
 	displayTransform: (T) -> String = { it.toString() },
 	valueTransform: (T) -> String = { it.toString() },
 ): T {
 	require(options.isNotEmpty())
-	if (options.size == 1) {
+	if (!promptIfSingle && options.size == 1) {
 		return options.single()
 	}
 

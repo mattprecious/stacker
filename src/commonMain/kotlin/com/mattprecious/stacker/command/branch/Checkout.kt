@@ -27,6 +27,7 @@ internal class Checkout(
 			val options = stackManager.getBase()!!.prettyTree()
 			interactivePrompt(
 				message = "Checkout a branch",
+				promptIfSingle = true,
 				options = options,
 				default = options.find { it.branch.name == vc.currentBranchName },
 				displayTransform = { it.pretty },
