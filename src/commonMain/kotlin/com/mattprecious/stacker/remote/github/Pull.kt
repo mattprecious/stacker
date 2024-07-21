@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Pull(
-	val number: Int,
+	val number: Long,
 	val merged_at: String?,
 	val state: State,
 	val html_url: String,

@@ -3,6 +3,7 @@ package com.mattprecious.stacker
 import app.cash.sqldelight.db.use
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import co.touchlab.sqliter.DatabaseConfiguration
+import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.db.Lock
 import com.mattprecious.stacker.db.RepoDatabase
 import com.mattprecious.stacker.db.jsonAdapter

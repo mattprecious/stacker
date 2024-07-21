@@ -47,7 +47,7 @@ internal class Submit(
 		val branchesToSubmit = currentBranch.flattenStack()
 			.filterNot { it.name == configManager.trunk || it.name == configManager.trailingTrunk }
 		vc.pushBranches(branchesToSubmit.map { it.name })
-		branchesToSubmit.forEach { it.submit(this, configManager, remote, vc) }
+		branchesToSubmit.forEach { it.submit(this, configManager, remote, stackManager, vc) }
 	}
 
 	private fun Branch.flattenStack(): List<Branch> {

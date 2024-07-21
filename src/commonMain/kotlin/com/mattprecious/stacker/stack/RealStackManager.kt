@@ -36,6 +36,7 @@ class RealStackManager(
 			name = branchName,
 			parent = parentName,
 			parentSha = parentSha,
+			prNumber = null,
 		)
 	}
 
@@ -76,6 +77,16 @@ class RealStackManager(
 		branchQueries.updateParentSha(
 			branch = branch.name,
 			parentSha = parentSha,
+		)
+	}
+
+	override fun updatePrNumber(
+		branch: Branch,
+		prNumber: Long,
+	) {
+		branchQueries.updatePrNumber(
+			branch = branch.name,
+			prNumber = prNumber,
 		)
 	}
 
