@@ -7,6 +7,7 @@ import com.github.ajalt.mordant.terminal.ConversionResult
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.stack.Branch
+import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 internal fun CliktCommand.requireAuthenticated(remote: Remote) {
@@ -38,6 +39,7 @@ internal fun Branch.submit(
 	command: CliktCommand,
 	configManager: ConfigManager,
 	remote: Remote,
+	stackManager: StackManager,
 	vc: VersionControl,
 ) {
 	val target = parent!!.name.let {
@@ -59,6 +61,8 @@ internal fun Branch.submit(
 			body = info.body,
 		)
 	}
+
+	stackManager.updatePrNumber(this, result.number)
 
 	when (result) {
 		is Remote.PrResult.Created -> command.echo("Pull request created: ${result.url}")

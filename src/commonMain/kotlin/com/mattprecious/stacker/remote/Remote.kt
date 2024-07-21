@@ -29,9 +29,21 @@ interface Remote {
 
 	sealed interface PrResult {
 		val url: String
+		val number: Long
 
-		data class Created(override val url: String) : PrResult
-		data class Updated(override val url: String) : PrResult
-		data class NoChange(override val url: String) : PrResult
+		data class Created(
+			override val url: String,
+			override val number: Long,
+		) : PrResult
+
+		data class Updated(
+			override val url: String,
+			override val number: Long,
+		) : PrResult
+
+		data class NoChange(
+			override val url: String,
+			override val number: Long,
+		) : PrResult
 	}
 }

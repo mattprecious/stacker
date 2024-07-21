@@ -1,5 +1,4 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
-import org.jetbrains.kotlin.gradle.tasks.CInteropProcess
 
 plugins {
 	alias(libs.plugins.spotless)
@@ -69,6 +68,7 @@ sqldelight {
 		create("RepoDatabase") {
 			packageName.set("com.mattprecious.stacker.db")
 			dialect(libs.sqldelight.dialect)
+			schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
 		}
 	}
 }

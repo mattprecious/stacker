@@ -34,4 +34,9 @@ interface StackManager {
 		branch: Branch,
 		parentSha: String,
 	)
+
+	fun updatePrNumber(
+		branch: Branch,
+		prNumber: Long,
+	)
 }

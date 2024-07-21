@@ -1,13 +1,16 @@
+import kotlin.Int;
+
 CREATE TABLE branch (
 	name TEXT NOT NULL PRIMARY KEY,
 	parent TEXT,
 	parentSha TEXT,
+	prNumber INTEGER,
 	FOREIGN KEY(parent) REFERENCES branch(name) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 insert:
 INSERT INTO branch
-VALUES (?, ?, ?);
+VALUES (?, ?, ?, ?);
 
 remove:
 DELETE FROM branch
@@ -35,6 +38,11 @@ WHERE name = :branch;
 updateParentSha:
 UPDATE branch
 SET parentSha = :parentSha
+WHERE name = :branch;
+
+updatePrNumber:
+UPDATE branch
+SET prNumber = :prNumber
 WHERE name = :branch;
 
 selectAll:
