@@ -5,9 +5,10 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.ConversionResult
 import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.remote.Remote
-import com.mattprecious.stacker.stack.Branch
 import com.mattprecious.stacker.stack.StackManager
+import com.mattprecious.stacker.stack.TreeNode
 import com.mattprecious.stacker.vc.VersionControl
 
 internal fun CliktCommand.requireAuthenticated(remote: Remote) {
@@ -35,7 +36,7 @@ internal fun CliktCommand.requireAuthenticated(remote: Remote) {
 	}
 }
 
-internal fun Branch.submit(
+internal fun TreeNode<Branch>.submit(
 	command: CliktCommand,
 	configManager: ConfigManager,
 	remote: Remote,
@@ -62,7 +63,7 @@ internal fun Branch.submit(
 		)
 	}
 
-	stackManager.updatePrNumber(this, result.number)
+	stackManager.updatePrNumber(value, result.number)
 
 	when (result) {
 		is Remote.PrResult.Created -> command.echo("Pull request created: ${result.url}")

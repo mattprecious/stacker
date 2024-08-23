@@ -3,11 +3,13 @@ package com.mattprecious.stacker.command.repo
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.styleBranch
-import com.mattprecious.stacker.stack.Branch
 import com.mattprecious.stacker.stack.StackManager
+import com.mattprecious.stacker.stack.TreeNode
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Sync(
@@ -34,7 +36,7 @@ internal class Sync(
 	 *
 	 * Does not remember your selection if you say "no", and will ask again on subsequent calls.
 	 */
-	private fun Branch.offerBranchDeletion(filter: (Branch) -> Boolean) {
+	private fun TreeNode<Branch>.offerBranchDeletion(filter: (TreeNode<Branch>) -> Boolean) {
 		if (filter(this)) {
 			val status = remote.getPrStatus(name)
 			val prompt = when (status) {
@@ -55,7 +57,7 @@ internal class Sync(
 					vc.checkout(parent!!.name)
 				}
 
-				stackManager.untrackBranch(this)
+				stackManager.untrackBranch(value)
 				vc.delete(name)
 			}
 		}

@@ -73,11 +73,11 @@ class RealConfigManager(
 		require(!trunkChangingWithChildren && !trailingChangingWithChildren)
 
 		if (trailingTrunkChanging) {
-			currentTrailingTrunkBranch?.let(stackManager::untrackBranch)
+			currentTrailingTrunkBranch?.value?.let(stackManager::untrackBranch)
 		}
 
 		if (trunkChanging) {
-			currentTrunkBranch?.let(stackManager::untrackBranch)
+			currentTrunkBranch?.value?.let(stackManager::untrackBranch)
 		}
 
 		repoConfigQueries.insert(

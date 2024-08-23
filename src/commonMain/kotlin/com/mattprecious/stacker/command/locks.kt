@@ -27,7 +27,7 @@ internal fun Locker.Operation.Restack.perform(
 			}
 		}
 
-		stackManager.updateParentSha(branch, vc.getSha(branch.parent!!.name))
+		stackManager.updateParentSha(branch.value, vc.getSha(branch.parent!!.name))
 		lockScope.updateOperation(copy(branches = branches.subList(index + 1, branches.size)))
 	}
 

@@ -2,15 +2,17 @@ package com.mattprecious.stacker.command.stack
 
 import com.github.ajalt.clikt.core.Abort
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.requireAuthenticated
 import com.mattprecious.stacker.command.submit
 import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
-import com.mattprecious.stacker.stack.Branch
 import com.mattprecious.stacker.stack.StackManager
+import com.mattprecious.stacker.stack.TreeNode
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Submit(
@@ -50,16 +52,16 @@ internal class Submit(
 		branchesToSubmit.forEach { it.submit(this, configManager, remote, stackManager, vc) }
 	}
 
-	private fun Branch.flattenStack(): List<Branch> {
+	private fun TreeNode<Branch>.flattenStack(): List<TreeNode<Branch>> {
 		return buildList {
-			fun Branch.addParents() {
-				if (parent != null) {
-					parent!!.addParents()
-					add(parent!!)
+			fun TreeNode<Branch>.addParents() {
+				parent?.let {
+					it.addParents()
+					add(it)
 				}
 			}
 
-			fun Branch.addChildren() {
+			fun TreeNode<Branch>.addChildren() {
 				children.forEach {
 					add(it)
 					it.addChildren()

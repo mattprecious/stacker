@@ -67,7 +67,7 @@ class TreeNode<T : Any> internal constructor(
 
 /** Returns a sequence over the parent chain of this node. */
 val <T : Any> TreeNode<T>.ancestors
-	get() = generateSequence(parent) { it.parent}
+	get() = generateSequence(parent) { it.parent }
 
 /** Returns a sequence over the children of this node. This performs a depth-first traversal. */
 val <T : Any> TreeNode<T>.descendants: Sequence<TreeNode<T>>
@@ -76,6 +76,6 @@ val <T : Any> TreeNode<T>.descendants: Sequence<TreeNode<T>>
 /** Returns a sequence over this node and its descendants. */
 val <T : Any> TreeNode<T>.all: Sequence<TreeNode<T>>
 	get() = sequence {
-			yield(this@all)
-			yieldAll(descendants)
-		}
+		yield(this@all)
+		yieldAll(descendants)
+	}

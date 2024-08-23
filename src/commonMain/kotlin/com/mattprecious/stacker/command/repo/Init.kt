@@ -33,7 +33,7 @@ internal class Init(
 			throw Abort()
 		}
 
-		val defaultTrunk = run defaultTrunk@ {
+		val defaultTrunk = run defaultTrunk@{
 			if (currentTrunk != null) return@defaultTrunk currentTrunk
 
 			if (branches.size == 1) return@defaultTrunk null
