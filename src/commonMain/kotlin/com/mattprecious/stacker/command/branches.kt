@@ -1,6 +1,5 @@
 package com.mattprecious.stacker.command
 
-import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.stack.TreeNode
 
@@ -9,36 +8,6 @@ val TreeNode<Branch>.name: String
 
 val TreeNode<Branch>.parentSha: String?
 	get() = value.parentSha
-
-internal fun TreeNode<Branch>.flattenUp(): List<TreeNode<Branch>> {
-	return buildList {
-		fun TreeNode<Branch>.addChildren() {
-			children.forEach {
-				add(it)
-				it.addChildren()
-			}
-		}
-
-		add(this@flattenUp)
-		addChildren()
-	}
-}
-
-internal fun TreeNode<Branch>.flattenDown(
-	configManager: ConfigManager,
-): List<TreeNode<Branch>> {
-	val trunk = configManager.trunk
-	val trailingTrunk = configManager.trailingTrunk
-	return buildList {
-		var branch = this@flattenDown
-		while (branch.name != trailingTrunk && branch.name != trunk) {
-			add(branch)
-			branch = branch.parent ?: break
-		}
-
-		add(branch)
-	}
-}
 
 internal class PrettyBranch(
 	val branch: TreeNode<Branch>,

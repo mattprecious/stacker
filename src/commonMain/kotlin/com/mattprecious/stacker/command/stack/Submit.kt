@@ -6,13 +6,13 @@ import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.requireAuthenticated
 import com.mattprecious.stacker.command.submit
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.stack.StackManager
-import com.mattprecious.stacker.stack.TreeNode
+import com.mattprecious.stacker.stack.all
+import com.mattprecious.stacker.stack.ancestors
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Submit(
@@ -46,31 +46,10 @@ internal class Submit(
 
 		requireAuthenticated(remote)
 
-		val branchesToSubmit = currentBranch.flattenStack()
+		val branchesToSubmit = (currentBranch.ancestors.toList().asReversed() + currentBranch.all)
 			.filterNot { it.name == configManager.trunk || it.name == configManager.trailingTrunk }
+
 		vc.pushBranches(branchesToSubmit.map { it.name })
 		branchesToSubmit.forEach { it.submit(this, configManager, remote, stackManager, vc) }
-	}
-
-	private fun TreeNode<Branch>.flattenStack(): List<TreeNode<Branch>> {
-		return buildList {
-			fun TreeNode<Branch>.addParents() {
-				parent?.let {
-					it.addParents()
-					add(it)
-				}
-			}
-
-			fun TreeNode<Branch>.addChildren() {
-				children.forEach {
-					add(it)
-					it.addChildren()
-				}
-			}
-
-			addParents()
-			add(this@flattenStack)
-			addChildren()
-		}
 	}
 }
