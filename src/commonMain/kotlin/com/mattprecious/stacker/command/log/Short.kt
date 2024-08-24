@@ -1,6 +1,8 @@
 package com.mattprecious.stacker.command.log
 
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.name
+import com.mattprecious.stacker.command.parentSha
 import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.stack.StackManager

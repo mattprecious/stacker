@@ -2,6 +2,7 @@ package com.mattprecious.stacker.command.branch
 
 import com.github.ajalt.clikt.core.Abort
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.requireAuthenticated
 import com.mattprecious.stacker.command.submit
 import com.mattprecious.stacker.config.ConfigManager

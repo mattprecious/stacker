@@ -1,10 +1,12 @@
 package com.mattprecious.stacker.stack
 
+import com.mattprecious.stacker.db.Branch
+
 interface StackManager {
 	val trackedBranchNames: List<String>
 
-	fun getBase(): Branch?
-	fun getBranch(branchName: String): Branch?
+	fun getBase(): TreeNode<Branch>?
+	fun getBranch(branchName: String): TreeNode<Branch>?
 
 	fun trackBranch(
 		branchName: String,

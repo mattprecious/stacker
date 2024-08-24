@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.output.TermUi
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.flattenDown
+import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
@@ -72,16 +73,16 @@ internal class Edit(
 
 			when (action) {
 				RemovedOption.Cancel -> return
-				RemovedOption.Untrack -> stackManager.untrackBranch(branch)
+				RemovedOption.Untrack -> stackManager.untrackBranch(branch.value)
 				RemovedOption.Remove -> {
-					stackManager.updateParent(stackManager.getBranch(branchName)!!, stackManager.getBranch(trunk)!!)
+					stackManager.updateParent(stackManager.getBranch(branchName)!!.value, stackManager.getBranch(trunk)!!.value)
 				}
 				RemovedOption.Delete -> {
 					if (branchName == currentBranchName) {
 						vc.checkout(branch.parent!!.name)
 					}
 
-					stackManager.untrackBranch(branch)
+					stackManager.untrackBranch(branch.value)
 					vc.delete(branchName)
 				}
 			}
@@ -90,7 +91,7 @@ internal class Edit(
 		newStack.windowed(size = 2, step = 1, partialWindows = true).forEach {
 			val branch = stackManager.getBranch(it.first())!!
 			val parent = stackManager.getBranch(it.getOrNull(1) ?: trunk)!!
-			stackManager.updateParent(branch = branch, parent = parent)
+			stackManager.updateParent(branch = branch.value, parent = parent.value)
 		}
 
 		val operation = Locker.Operation.Restack(

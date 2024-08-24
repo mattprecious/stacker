@@ -3,6 +3,7 @@ package com.mattprecious.stacker.command.upstack
 import com.github.ajalt.clikt.core.Abort
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.flattenUp
+import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker

@@ -20,5 +20,5 @@ fun StackerTestScope.gitCommit(
 }
 
 fun StackerTestScope.gitHeadSha(): String {
-  return environment.exec("git rev-parse HEAD")
+	return environment.exec("git rev-parse HEAD")
 }

@@ -36,6 +36,6 @@ internal class Untrack(
 			return
 		}
 
-		stackManager.untrackBranch(currentBranch)
+		stackManager.untrackBranch(currentBranch.value)
 	}
 }

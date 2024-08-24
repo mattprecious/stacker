@@ -1,11 +1,18 @@
 package com.mattprecious.stacker.command
 
 import com.mattprecious.stacker.config.ConfigManager
-import com.mattprecious.stacker.stack.Branch
+import com.mattprecious.stacker.db.Branch
+import com.mattprecious.stacker.stack.TreeNode
 
-internal fun Branch.flattenUp(): List<Branch> {
+val TreeNode<Branch>.name: String
+	get() = value.name
+
+val TreeNode<Branch>.parentSha: String?
+	get() = value.parentSha
+
+internal fun TreeNode<Branch>.flattenUp(): List<TreeNode<Branch>> {
 	return buildList {
-		fun Branch.addChildren() {
+		fun TreeNode<Branch>.addChildren() {
 			children.forEach {
 				add(it)
 				it.addChildren()
@@ -17,9 +24,9 @@ internal fun Branch.flattenUp(): List<Branch> {
 	}
 }
 
-internal fun Branch.flattenDown(
+internal fun TreeNode<Branch>.flattenDown(
 	configManager: ConfigManager,
-): List<Branch> {
+): List<TreeNode<Branch>> {
 	val trunk = configManager.trunk
 	val trailingTrunk = configManager.trailingTrunk
 	return buildList {
@@ -34,13 +41,13 @@ internal fun Branch.flattenDown(
 }
 
 internal class PrettyBranch(
-	val branch: Branch,
+	val branch: TreeNode<Branch>,
 	val pretty: String,
 )
 
-internal fun Branch.prettyTree(
-	selected: Branch? = null,
-	filter: (Branch) -> Boolean = { true },
+internal fun TreeNode<Branch>.prettyTree(
+	selected: TreeNode<Branch>? = null,
+	filter: (TreeNode<Branch>) -> Boolean = { true },
 ): List<PrettyBranch> {
 	return if (!filter(this)) {
 		emptyList()
@@ -57,12 +64,12 @@ internal fun Branch.prettyTree(
 	}
 }
 
-private fun Branch.prettyTree(
+private fun TreeNode<Branch>.prettyTree(
 	builder: MutableList<PrettyBranch>,
 	inset: Int,
 	treeWidth: Int,
-	selected: Branch? = null,
-	filter: (Branch) -> Boolean,
+	selected: TreeNode<Branch>? = null,
+	filter: (TreeNode<Branch>) -> Boolean,
 ) {
 	val filteredChildren = children.filter(filter)
 	filteredChildren.forEachIndexed { index, child ->
@@ -96,8 +103,8 @@ private fun Branch.prettyTree(
 	)
 }
 
-private fun Branch.treeWidth(
-	filter: ((Branch) -> Boolean),
+private fun TreeNode<Branch>.treeWidth(
+	filter: ((TreeNode<Branch>) -> Boolean),
 ): Int {
 	return if (!filter(this)) {
 		0

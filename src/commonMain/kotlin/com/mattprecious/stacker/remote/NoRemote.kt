@@ -19,7 +19,7 @@ class NoRemote : Remote {
 	override fun openOrRetargetPullRequest(
 		branchName: String,
 		targetName: String,
-		prInfo: () -> Remote.PrInfo
+		prInfo: () -> Remote.PrInfo,
 	): Remote.PrResult {
 		throw NotImplementedError()
 	}

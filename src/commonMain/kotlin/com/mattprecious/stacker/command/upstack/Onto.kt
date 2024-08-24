@@ -3,6 +3,7 @@ package com.mattprecious.stacker.command.upstack
 import com.github.ajalt.clikt.core.Abort
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.flattenUp
+import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
@@ -49,7 +50,7 @@ internal class Onto(
 			valueTransform = { it.branch.name },
 		).branch
 
-		stackManager.updateParent(currentBranch, newParent)
+		stackManager.updateParent(currentBranch.value, newParent.value)
 
 		val operation = Locker.Operation.Restack(
 			startingBranch = currentBranch.name,

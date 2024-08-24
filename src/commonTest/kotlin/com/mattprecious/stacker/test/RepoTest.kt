@@ -14,7 +14,7 @@ class RepoTest {
 			assertThat(output)
 				.isEqualTo(
 					"Stacker cannot be initialized in a completely empty repository. " +
-						"Please make a commit, first.\n"
+						"Please make a commit, first.\n",
 				)
 		}
 	}

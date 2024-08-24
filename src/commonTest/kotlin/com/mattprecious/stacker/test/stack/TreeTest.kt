@@ -75,7 +75,7 @@ class TreeTest {
 			Item(key = "c", parent = "b"),
 			Item(key = "d", parent = "a"),
 			Item(key = "e", parent = "d"),
-			Item(key = "f", parent = "d")
+			Item(key = "f", parent = "d"),
 		).asTree()!!
 
 		a.assertKey("a")
@@ -118,7 +118,6 @@ class TreeTest {
 				Item(key = "b", parent = null),
 			).asTree()
 		}.hasMessage("Multiple elements have a null parent.")
-
 	}
 
 	@Test
@@ -150,7 +149,6 @@ class TreeTest {
 		// Ensure the Sequence can be consumed twice.
 		assertThat(descendants.count()).isEqualTo(list.size)
 	}
-
 
 	@Test
 	fun all() = runTest {
@@ -212,12 +210,11 @@ class TreeTest {
 		assertThat(ancestors.count()).isEqualTo(list.size)
 	}
 
-
 	private fun List<Item>.asTree() = treeOf(this, { it.key }, { it.parent })
 
 	private data class Item(
 		val key: String,
-		val parent: String?
+		val parent: String?,
 	)
 
 	private fun TreeNode<Item>.assertKey(key: String): TreeNode<Item> {

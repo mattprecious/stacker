@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.stack.StackManager
@@ -40,7 +41,7 @@ internal class Delete(
 				vc.checkout(branch.parent!!.name)
 			}
 
-			stackManager.untrackBranch(branch)
+			stackManager.untrackBranch(branch.value)
 		}
 
 		vc.delete(branchName)

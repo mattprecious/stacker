@@ -88,7 +88,6 @@ import com.github.git2.git_repository_config
 import com.github.git2.git_repository_discover
 import com.github.git2.git_repository_free
 import com.github.git2.git_repository_head
-import com.github.git2.git_repository_head_unborn
 import com.github.git2.git_repository_open
 import com.github.git2.git_repository_path
 import com.github.git2.git_repository_set_head
