@@ -46,6 +46,7 @@ kotlin {
 		getByName("commonTest") {
 			dependencies {
 				implementation(libs.assertk)
+				implementation(libs.coroutines.test)
 				implementation(libs.kotlin.test)
 			}
 		}
