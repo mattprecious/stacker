@@ -4,23 +4,25 @@ fun <K : Any, T : Any> treeOf(
 	elements: Collection<T>,
 	keySelector: (T) -> K,
 	parentSelector: (T) -> K?,
-): TreeNode<T>? {
-	if (elements.isEmpty()) {
-		return null
+): TreeNode<T> {
+	require(elements.isNotEmpty()) {
+		"elements must not be empty."
 	}
 
 	val elementsByKey = elements.associateBy(keySelector)
-	val parents = elements.associateBy(keySelector) {
-		elements.indexOf(elementsByKey[parentSelector(it)])
+	val parents = elementsByKey.mapValues {
+		elements.indexOf(elementsByKey[parentSelector(it.value)])
 	}
 	val children = elements.groupBy(parentSelector) { elements.indexOf(it) }
 
-	require(parents.values.count { it == -1 } == 1) {
-		"Multiple elements have a null parent."
+	require(children[null]!!.size == 1) {
+		val elementsList = elements.toList()
+		val roots = children[null]!!.map { keySelector(elementsList[it]) }
+		"Multiple elements have a null parent: $roots."
 	}
 
 	return Tree(
-		elements = elements.toList(),
+		elements = elements,
 		keySelector,
 		parentMap = parents,
 		childMap = children,
@@ -28,7 +30,7 @@ fun <K : Any, T : Any> treeOf(
 }
 
 internal class Tree<K : Any, T : Any>(
-	elements: List<T>,
+	elements: Collection<T>,
 	private val keySelector: (T) -> K,
 	private val parentMap: Map<K, Int>,
 	private val childMap: Map<K?, List<Int>>,

@@ -1,4 +1,5 @@
 [versions]
+coroutines = "1.8.1"
 kotlin = "2.0.20"
 ktor = "2.3.12"
 sqldelight = "2.0.2"
@@ -6,7 +7,8 @@ sqldelight = "2.0.2"
 [libraries]
 assertk = "com.willowtreeapps.assertk:assertk:0.28.1"
 clikt = "com.github.ajalt.clikt:clikt:4.4.0"
-coroutines-test = "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1"
+coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlin-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1"
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
