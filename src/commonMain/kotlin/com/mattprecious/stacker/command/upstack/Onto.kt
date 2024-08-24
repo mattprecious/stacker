@@ -2,7 +2,6 @@ package com.mattprecious.stacker.command.upstack
 
 import com.github.ajalt.clikt.core.Abort
 import com.mattprecious.stacker.command.StackerCommand
-import com.mattprecious.stacker.command.flattenUp
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.command.prettyTree
@@ -12,6 +11,7 @@ import com.mattprecious.stacker.rendering.interactivePrompt
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.stack.StackManager
+import com.mattprecious.stacker.stack.all
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Onto(
@@ -54,7 +54,7 @@ internal class Onto(
 
 		val operation = Locker.Operation.Restack(
 			startingBranch = currentBranch.name,
-			currentBranch.flattenUp().map { it.name },
+			currentBranch.all.map { it.name }.toList(),
 		)
 
 		locker.beginOperation(operation) {

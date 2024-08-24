@@ -3,7 +3,6 @@ package com.mattprecious.stacker.command.downstack
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.output.TermUi
 import com.mattprecious.stacker.command.StackerCommand
-import com.mattprecious.stacker.command.flattenDown
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
@@ -12,6 +11,7 @@ import com.mattprecious.stacker.rendering.interactivePrompt
 import com.mattprecious.stacker.rendering.styleBranch
 import com.mattprecious.stacker.rendering.styleCode
 import com.mattprecious.stacker.stack.StackManager
+import com.mattprecious.stacker.stack.ancestors
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Edit(
@@ -32,15 +32,16 @@ internal class Edit(
 			throw Abort()
 		}
 
-		val downstack = currentBranch.flattenDown(configManager).map { it.name }
-		val trunk = downstack.last()
+		val trunk = configManager.trunk
+		val trailingTrunk = configManager.trailingTrunk
 
-		val downstackWithoutTrunk = downstack.dropLast(1)
+		val downstack = (sequenceOf(currentBranch) + currentBranch.ancestors).map { it.name }.toList()
+		val firstTrunkIndex = downstack.indexOfFirst { it == trunk || it == trailingTrunk }
 
-		val downstackWithComments = downstack.toMutableList().apply {
-			removeLast()
-			add("# $trunk (trunk)")
-		}
+		val downstackTrunk = downstack[firstTrunkIndex]
+		val downstackWithoutTrunk = downstack.take(firstTrunkIndex)
+
+		val downstackWithComments = downstackWithoutTrunk + "# $downstackTrunk (trunk)"
 
 		val result = TermUi.editText(
 			text = downstackWithComments.joinToString("\n"),
@@ -65,8 +66,8 @@ internal class Edit(
 				"${branchName.styleBranch()} was removed from the list. What would you like to do?",
 				options = RemovedOption.entries,
 				filteringEnabled = false,
-				displayTransform = { it.render(trunk) },
-				valueTransform = { it.render(trunk) },
+				displayTransform = { it.render(downstackTrunk) },
+				valueTransform = { it.render(downstackTrunk) },
 			)
 
 			val branch = stackManager.getBranch(branchName)!!
@@ -75,7 +76,10 @@ internal class Edit(
 				RemovedOption.Cancel -> return
 				RemovedOption.Untrack -> stackManager.untrackBranch(branch.value)
 				RemovedOption.Remove -> {
-					stackManager.updateParent(stackManager.getBranch(branchName)!!.value, stackManager.getBranch(trunk)!!.value)
+					stackManager.updateParent(
+						branch = stackManager.getBranch(branchName)!!.value,
+						parent = stackManager.getBranch(downstackTrunk)!!.value,
+					)
 				}
 				RemovedOption.Delete -> {
 					if (branchName == currentBranchName) {
@@ -90,7 +94,7 @@ internal class Edit(
 
 		newStack.windowed(size = 2, step = 1, partialWindows = true).forEach {
 			val branch = stackManager.getBranch(it.first())!!
-			val parent = stackManager.getBranch(it.getOrNull(1) ?: trunk)!!
+			val parent = stackManager.getBranch(it.getOrNull(1) ?: downstackTrunk)!!
 			stackManager.updateParent(branch = branch.value, parent = parent.value)
 		}
 
