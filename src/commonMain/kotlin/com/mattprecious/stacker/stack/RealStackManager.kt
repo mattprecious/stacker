@@ -79,10 +79,15 @@ class RealStackManager(
 	}
 
 	private fun getTree(): TreeNode<Branch>? {
-		return treeOf(
-			elements = branchQueries.selectAll().executeAsList(),
-			keySelector = { it.name },
-			parentSelector = { it.parent },
-		)
+		val elements = branchQueries.selectAll().executeAsList()
+		return if (elements.isEmpty()) {
+			null
+		} else {
+			treeOf(
+				elements = elements,
+				keySelector = { it.name },
+				parentSelector = { it.parent },
+			)
+		}
 	}
 }

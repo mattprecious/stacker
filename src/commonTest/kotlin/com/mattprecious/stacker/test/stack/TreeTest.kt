@@ -19,8 +19,7 @@ import kotlin.test.Test
 class TreeTest {
 	@Test
 	fun empty() = runTest {
-		val tree = listOf<Item>().asTree()
-		assertThat(tree).isNull()
+		assertFailure { emptyList<Item>().asTree() }.hasMessage("elements must not be empty.")
 	}
 
 	@Test
@@ -115,9 +114,10 @@ class TreeTest {
 		assertFailure {
 			listOf(
 				Item(key = "a", parent = null),
-				Item(key = "b", parent = null),
+				Item(key = "b", parent = "a"),
+				Item(key = "c", parent = null),
 			).asTree()
-		}.hasMessage("Multiple elements have a null parent.")
+		}.hasMessage("Multiple elements have a null parent: [a, c].")
 	}
 
 	@Test
