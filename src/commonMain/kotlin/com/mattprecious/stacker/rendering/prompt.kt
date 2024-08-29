@@ -58,6 +58,18 @@ fun <T> CliktCommand.interactivePrompt(
 		highlighted = highlighted.coerceIn(0, (filteredOptions.size - 1).coerceAtLeast(0))
 	}
 
+	// We make use of the save/restore cursor position escape codes, which use the cursor's absolute
+	// position in the screen and do not account for any scrolling that happens in between. If our
+	// output causes scrolling to occur after we've saved the cursor position, then we will restore to
+	// the wrong location. We know how many lines we will be printing, so print that many new lines
+	// ahead of time and restore the cursor to the beginning before entering the interactive loop.
+	print(
+		buildString {
+			repeat(options.size + 1) { appendLine() }
+			repeat(options.size + 1) { append(cursorUp) }
+		}
+	)
+
 	while (true) {
 		with(builder) {
 			if (isNotEmpty()) {
