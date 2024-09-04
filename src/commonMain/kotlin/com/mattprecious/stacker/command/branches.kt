@@ -49,7 +49,7 @@ private fun TreeNode<Branch>.prettyTree(
 		repeat(inset) { append("│ ") }
 
 		if (this@prettyTree.name == selected?.name) {
-			append("◉")
+			append("●")
 		} else {
 			append("○")
 		}
