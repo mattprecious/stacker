@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.command.repo
 
 import com.github.ajalt.clikt.core.Abort
+import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.YesNoPrompt
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.config.ConfigManager

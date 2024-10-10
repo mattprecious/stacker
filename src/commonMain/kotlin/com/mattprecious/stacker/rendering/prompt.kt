@@ -67,7 +67,7 @@ fun <T> CliktCommand.interactivePrompt(
 		buildString {
 			repeat(options.size + 1) { appendLine() }
 			repeat(options.size + 1) { append(cursorUp) }
-		}
+		},
 	)
 
 	while (true) {
