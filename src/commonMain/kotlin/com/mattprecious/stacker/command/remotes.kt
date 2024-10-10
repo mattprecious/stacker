@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.ConversionResult
+import com.github.ajalt.mordant.terminal.prompt
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.remote.Remote

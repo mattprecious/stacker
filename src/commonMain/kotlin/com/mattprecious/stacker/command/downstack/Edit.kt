@@ -1,7 +1,6 @@
 package com.mattprecious.stacker.command.downstack
 
 import com.github.ajalt.clikt.core.Abort
-import com.github.ajalt.clikt.output.TermUi
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
@@ -43,11 +42,11 @@ internal class Edit(
 
 		val downstackWithComments = downstackWithoutTrunk + "# $downstackTrunk (trunk)"
 
-		val result = TermUi.editText(
-			text = downstackWithComments.joinToString("\n"),
-			editor = vc.editor,
+		val result = Editor(
+			editorPath = vc.editor,
 			requireSave = true,
-		) ?: return
+			extension = ".txt",
+		).edit(downstackWithComments.joinToString("\n")) ?: return
 
 		val newStack = result.lines().filter { !it.startsWith('#') && it.isNotBlank() }
 

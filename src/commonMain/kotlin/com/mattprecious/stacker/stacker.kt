@@ -1,5 +1,6 @@
 package com.mattprecious.stacker
 
+import com.github.ajalt.clikt.core.main
 import com.mattprecious.stacker.command.Stacker
 import com.mattprecious.stacker.config.RealConfigManager
 import com.mattprecious.stacker.lock.RealLocker
