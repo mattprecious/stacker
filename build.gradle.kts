@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
+	alias(libs.plugins.compose.compiler)
 	alias(libs.plugins.spotless)
 	alias(libs.plugins.sqldelight)
 	alias(libs.plugins.kotlin.multiplatform)
@@ -9,6 +10,7 @@ plugins {
 
 repositories {
 	mavenCentral()
+	google()
 	maven {
 		setUrl("https://oss.sonatype.org/content/repositories/snapshots/")
 	}
@@ -39,6 +41,7 @@ kotlin {
 				implementation(libs.ktor.client.curl)
 				implementation(libs.ktor.client.negotiation)
 				implementation(libs.ktor.serialization.json)
+				implementation(libs.mosaic)
 				implementation(libs.okio)
 				implementation(libs.sqldelight.driver)
 			}
