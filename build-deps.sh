@@ -91,14 +91,20 @@ function build() {
 	make -j$CMAKE_BUILD_PARALLEL_LEVEL install
 	popd
 
-  git clone --depth 1 --branch openssl-3.1.3 https://github.com/openssl/openssl.git
+  curl -L https://github.com/openssl/openssl/archive/refs/tags/openssl-3.1.3.zip > openssl.zip
+  tar -xf openssl.zip
+  rm openssl.zip
+  mv openssl-openssl-3.1.3 openssl
   pushd openssl
   ./Configure $OPENSSL_ARCH --prefix=$BUILD_PATH no-tests no-legacy no-shared
   make -j$CMAKE_BUILD_PARALLEL_LEVEL
   make -j$CMAKE_BUILD_PARALLEL_LEVEL install_sw
   popd
 
-	git clone --depth 1 --branch curl-8_4_0 https://github.com/curl/curl.git
+  curl -L https://github.com/curl/curl/archive/refs/tags/curl-8_4_0.zip > curl.zip
+  tar -xf curl.zip
+  rm curl.zip
+  mv curl-curl-8_4_0 curl
 	mkdir -p curl/build
 	cmake -S curl -B curl/build \
 		-DCMAKE_PREFIX_PATH="$BUILD_PATH" \
@@ -111,7 +117,10 @@ function build() {
 		-DENABLE_IPV6=OFF
 	cmake --build curl/build --target install
 
-  git clone --depth 1 --branch libssh2-1.11.0 https://github.com/libssh2/libssh2.git
+  curl -L https://github.com/libssh2/libssh2/archive/refs/tags/libssh2-1.11.0.zip > libssh2.zip
+  tar -xf libssh2.zip
+  rm libssh2.zip
+  mv libssh2-libssh2-1.11.0 libssh2
   mkdir -p libssh2/build
   cmake -S libssh2 -B libssh2/build \
     -DCMAKE_PREFIX_PATH="$BUILD_PATH" \
@@ -125,7 +134,10 @@ function build() {
   cmake --build libssh2/build --target install
 
   # Stuck on 1.4.6 due to https://github.com/libgit2/libgit2/issues/6371
-  git clone --depth 1 --branch v1.4.6 https://github.com/libgit2/libgit2.git
+  curl -L https://github.com/libgit2/libgit2/archive/refs/tags/v1.4.6.zip > libgit2.zip
+  tar -xf libgit2.zip
+  rm libgit2.zip
+  mv libgit2-1.4.6 libgit2
   mkdir -p libgit2/build
   cmake -S libgit2 -B libgit2/build\
     -DUSE_SSH=ON \
