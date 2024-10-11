@@ -1,5 +1,7 @@
 package com.mattprecious.stacker.stack
 
+import androidx.compose.runtime.Stable
+
 fun <K : Any, T : Any> treeOf(
 	elements: Collection<T>,
 	keySelector: (T) -> K,
@@ -53,6 +55,7 @@ internal class Tree<K : Any, T : Any>(
 	}
 }
 
+@Stable
 class TreeNode<T : Any> internal constructor(
 	private val tree: Tree<*, T>,
 	val value: T,
