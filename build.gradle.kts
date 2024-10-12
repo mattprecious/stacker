@@ -1,4 +1,6 @@
+
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+import org.jetbrains.kotlin.gradle.tasks.CInteropProcess
 
 plugins {
 	alias(libs.plugins.compose.compiler)
@@ -16,10 +18,27 @@ repositories {
 	}
 }
 
+val libgitDefFile = layout.buildDirectory.file("generated/cinterop/libgit2.def")
+
 val buildDependenciesTask = tasks.register<BuildDependenciesTask>("buildDependencies") {
 	script = layout.projectDirectory.file("build-deps.sh")
-	defFile = layout.buildDirectory.file("generated/cinterop/libgit2.def")
+	defFile = libgitDefFile
 	outputDir = layout.projectDirectory.dir("deps")
+}
+
+val checkDependenciesTask = tasks.register("checkDependencies") {
+	outputs.upToDateWhen { false }
+
+	doFirst {
+		check(file(libgitDefFile).exists()) {
+			"libgit2 def file does not exist. Please run the buildDependencies task."
+		}
+	}
+}
+
+tasks.withType<CInteropProcess>().configureEach {
+	dependsOn(checkDependenciesTask)
+	mustRunAfter(buildDependenciesTask)
 }
 
 kotlin {
@@ -62,7 +81,7 @@ kotlin {
 		}
 		compilations.getByName("main").cinterops {
 			create("libgit2") {
-				definitionFile.set(buildDependenciesTask.flatMap { it.defFile })
+				definitionFile.set(libgitDefFile)
 			}
 		}
 	}
