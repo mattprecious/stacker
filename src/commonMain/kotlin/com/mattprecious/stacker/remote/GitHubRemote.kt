@@ -20,8 +20,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMessageBuilder
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.runBlocking
+import kotlinx.io.IOException
 
 class GitHubRemote(
 	private val client: HttpClient,
