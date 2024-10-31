@@ -2,7 +2,7 @@ package com.mattprecious.stacker.command.branch
 
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerMosaicCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
@@ -18,10 +18,10 @@ internal class Track(
 	private val stackManager: StackManager,
 	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "tr") {
+) : StackerMosaicCommand(shortAlias = "tr") {
 	private val branchName: String? by argument().optional()
 
-	override fun run() {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 

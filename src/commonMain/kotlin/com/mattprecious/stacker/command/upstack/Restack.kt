@@ -1,7 +1,7 @@
 package com.mattprecious.stacker.command.upstack
 
 import com.github.ajalt.clikt.core.Abort
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerMosaicCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
@@ -17,8 +17,8 @@ internal class Restack(
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "r") {
-	override fun run() {
+) : StackerMosaicCommand(shortAlias = "r") {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 

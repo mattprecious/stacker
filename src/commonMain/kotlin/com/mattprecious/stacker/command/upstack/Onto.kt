@@ -1,7 +1,7 @@
 package com.mattprecious.stacker.command.upstack
 
 import com.github.ajalt.clikt.core.Abort
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerMosaicCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.command.prettyTree
@@ -20,8 +20,8 @@ internal class Onto(
 	private val stackManager: StackManager,
 	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "o") {
-	override fun run() {
+) : StackerMosaicCommand(shortAlias = "o") {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 

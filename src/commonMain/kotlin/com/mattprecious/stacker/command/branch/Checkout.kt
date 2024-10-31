@@ -4,7 +4,7 @@ import androidx.compose.runtime.remember
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerMosaicCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
@@ -20,7 +20,7 @@ internal class Checkout(
 	private val stackManager: StackManager,
 	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "co") {
+) : StackerMosaicCommand(shortAlias = "co") {
 	private val branchName: String? by argument().optional()
 
 	override suspend fun StackerCommandScope.work() {

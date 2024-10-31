@@ -47,6 +47,8 @@ jobs:
         run: brew uninstall --ignore-dependencies curl
 
       - run: ./gradlew buildDependencies ${{ matrix.task }}
+        env:
+          MOSAIC_RAW_MODE: false
 
       - uses: dorny/test-reporter@v1
         # Doesn't work with forks.

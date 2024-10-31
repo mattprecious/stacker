@@ -2,7 +2,7 @@ package com.mattprecious.stacker.command.branch
 
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerMosaicCommand
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.styleBranch
@@ -14,10 +14,10 @@ internal class Untrack(
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "ut") {
+) : StackerMosaicCommand(shortAlias = "ut") {
 	private val branchName: String? by argument().optional()
 
-	override fun run() {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 

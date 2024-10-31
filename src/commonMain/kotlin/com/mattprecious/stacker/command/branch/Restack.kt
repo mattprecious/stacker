@@ -3,7 +3,7 @@ package com.mattprecious.stacker.command.branch
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerMosaicCommand
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
@@ -17,10 +17,10 @@ internal class Restack(
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "r") {
+) : StackerMosaicCommand(shortAlias = "r") {
 	private val branchName: String? by argument().optional()
 
-	override fun run() {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 

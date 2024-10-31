@@ -1,6 +1,6 @@
 package com.mattprecious.stacker.command.log
 
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerMosaicCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.parentSha
 import com.mattprecious.stacker.command.prettyTree
@@ -13,8 +13,8 @@ internal class Short(
 	private val stackManager: StackManager,
 	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "s") {
-	override fun run() {
+) : StackerMosaicCommand(shortAlias = "s") {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		val trunk = configManager.trunk
 		val trailingTrunk = configManager.trailingTrunk
