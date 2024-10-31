@@ -204,8 +204,4 @@ fun <T> InteractivePrompt(
 			Text(text)
 		}
 	}
-
-	LaunchedEffect(Unit) {
-		awaitCancellation()
-	}
 }
