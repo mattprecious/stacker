@@ -9,9 +9,6 @@ on:
     tags-ignore:
       - '**'
 
-permissions:
-  checks: write
-
 env:
   GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.daemon=false -Dkotlin.incremental=false"
 
@@ -55,8 +52,8 @@ jobs:
         uses: dorny/test-reporter@v1
         if: success() || failure()
         with:
-          name: JUnit Tests
-          path: build/test-results/*/TEST-*.xml
+          name: ${{ matrix.os }} Tests
+          path: '**/build/test-results/**/TEST-*.xml'
           reporter: java-junit
 
       - name: Upload distribution
