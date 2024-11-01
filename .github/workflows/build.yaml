@@ -55,6 +55,7 @@ jobs:
           name: ${{ matrix.os }} Tests
           path: '**/build/test-results/**/TEST-*.xml'
           reporter: java-junit
+          use-actions-summary: 'true'
 
       - name: Upload distribution
         uses: actions/upload-artifact@v4
