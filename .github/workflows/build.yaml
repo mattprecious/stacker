@@ -48,8 +48,7 @@ jobs:
 
       - run: ./gradlew buildDependencies ${{ matrix.task }}
 
-      - name: Test Report
-        uses: dorny/test-reporter@v1
+      - uses: dorny/test-reporter@v1
         if: success() || failure()
         with:
           name: ${{ matrix.os }} Tests
