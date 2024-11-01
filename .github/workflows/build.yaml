@@ -53,7 +53,7 @@ jobs:
         if: success() || failure()
         with:
           name: JUnit Tests
-          path: build/test-results/**/TEST-*.xml
+          path: build/test-results/*/TEST-*.xml
           reporter: java-junit
 
       - name: Upload distribution
