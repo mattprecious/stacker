@@ -49,7 +49,7 @@ jobs:
       - run: ./gradlew buildDependencies ${{ matrix.task }}
 
       - uses: dorny/test-reporter@v1
-        if: success() || failure()
+        if: ${{ github.event.pull_request == null || github.event.pull_request.head.repo.full_name ==  github.event.pull_request.base.repo.full_name }}
         with:
           name: ${{ matrix.os }} Tests
           path: '**/build/test-results/**/TEST-*.xml'
