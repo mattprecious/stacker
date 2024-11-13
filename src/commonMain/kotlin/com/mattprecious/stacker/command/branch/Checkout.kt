@@ -18,6 +18,7 @@ internal class Checkout(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val stackManager: StackManager,
+	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
 ) : StackerCommand(shortAlias = "co") {
 	private val branchName: String? by argument().optional()
@@ -27,7 +28,7 @@ internal class Checkout(
 		requireNoLock(locker)
 
 		val branch = if (branchName == null) {
-			val options = stackManager.getBase()!!.prettyTree()
+			val options = stackManager.getBase()!!.prettyTree(useFancySymbols = useFancySymbols)
 			if (options.size == 1) {
 				options.single().branch.name
 			} else {

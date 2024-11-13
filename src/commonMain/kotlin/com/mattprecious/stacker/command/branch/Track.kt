@@ -16,6 +16,7 @@ internal class Track(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val stackManager: StackManager,
+	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
 ) : StackerCommand(shortAlias = "tr") {
 	private val branchName: String? by argument().optional()
@@ -36,7 +37,7 @@ internal class Track(
 
 		val defaultName = trailingTrunk ?: trunk
 
-		val options = stackManager.getBase()!!.prettyTree {
+		val options = stackManager.getBase()!!.prettyTree(useFancySymbols = useFancySymbols) {
 			it.name == trunk || it.name == trailingTrunk || vc.isAncestor(
 				branchName = branchName,
 				possibleAncestorName = it.name,

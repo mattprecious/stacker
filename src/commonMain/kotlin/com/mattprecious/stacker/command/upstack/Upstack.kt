@@ -11,11 +11,12 @@ internal class Upstack(
 	configManager: ConfigManager,
 	locker: Locker,
 	stackManager: StackManager,
+	useFancySymbols: Boolean,
 	vc: VersionControl,
 ) : StackerCommand(shortAlias = "us") {
 	init {
 		subcommands(
-			Onto(configManager, locker, stackManager, vc),
+			Onto(configManager, locker, stackManager, useFancySymbols, vc),
 			Restack(configManager, locker, stackManager, vc),
 		)
 	}

@@ -15,25 +15,35 @@ import io.ktor.client.engine.curl.Curl
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.toKString
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okio.FileSystem
 import okio.Path.Companion.toPath
+import platform.posix.getenv
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
 	try {
-		withStacker { it.main(args) }
+		val terminal = memScoped { getenv("TERM")?.toKString() ?: "" }
+		withStacker(useFancySymbols = supportsFancySymbols(terminal)) {
+			it.main(args)
+		}
 	} catch (e: RepoNotFoundException) {
 		println(e.message)
 		exitProcess(-1)
 	}
 }
 
+private fun supportsFancySymbols(term: String): Boolean {
+	return term == "xterm-ghostty" || term == "xterm-kitty"
+}
+
 @OptIn(ExperimentalSerializationApi::class)
 internal fun withStacker(
 	fileSystem: FileSystem = FileSystem.SYSTEM,
 	remoteOverride: Remote? = null,
+	useFancySymbols: Boolean = false,
 	block: (Stacker) -> Unit,
 ) {
 	memScoped {
@@ -70,6 +80,7 @@ internal fun withStacker(
 					locker = locker,
 					remote = remote,
 					stackManager = stackManager,
+					useFancySymbols = useFancySymbols,
 					vc = vc,
 				).let(block)
 			}

@@ -18,6 +18,7 @@ internal class Onto(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val stackManager: StackManager,
+	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
 ) : StackerCommand(shortAlias = "o") {
 	override fun run() {
@@ -40,7 +41,10 @@ internal class Onto(
 			throw Abort()
 		}
 
-		val options = stackManager.getBase()!!.prettyTree { it.name != currentBranchName }
+		val options = stackManager.getBase()!!.prettyTree(useFancySymbols = useFancySymbols) {
+			it.name != currentBranchName
+		}
+
 		val newParent = interactivePrompt(
 			message = "Select the parent branch for ${currentBranchName.styleBranch()}",
 			promptIfSingle = true,

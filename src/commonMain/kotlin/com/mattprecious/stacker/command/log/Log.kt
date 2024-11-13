@@ -9,11 +9,12 @@ import com.mattprecious.stacker.vc.VersionControl
 internal class Log(
 	configManager: ConfigManager,
 	stackManager: StackManager,
+	useFancySymbols: Boolean,
 	vc: VersionControl,
 ) : StackerCommand(shortAlias = "l") {
 	init {
 		subcommands(
-			Short(configManager, stackManager, vc),
+			Short(configManager, stackManager, useFancySymbols, vc),
 		)
 	}
 
