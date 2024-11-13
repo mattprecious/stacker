@@ -46,5 +46,22 @@ internal class Submit(
 
 		vc.pushBranches(listOf(currentBranch.name))
 		currentBranch.submit(this, configManager, remote, stackManager, vc)
+
+		// TODO: Update the entire stack. Adapt prettyTree for HTML tags.
+		// TODO: Re-use for stack submit.
+		val branchWithNumber = stackManager.getBranch(vc.currentBranchName)!!.value
+		remote.addOrUpdatePrBodyBlock(
+			prNumber = branchWithNumber.prNumber!!,
+			prBodyBlock = Remote.PrBodyBlock(
+				id = "stacker-stack",
+				title = "Stack Details",
+				content = """
+					|<ul>
+					|<li>#${branchWithNumber.prNumber}</li>
+					|</ul>
+					""".trimMargin(),
+				expanded = false,
+			)
+		)
 	}
 }

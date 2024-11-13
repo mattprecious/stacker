@@ -9,6 +9,7 @@ data class Pull(
 	val state: State,
 	val html_url: String,
 	val base: Base,
+	val body: String?,
 ) {
 	@Serializable
 	enum class State {

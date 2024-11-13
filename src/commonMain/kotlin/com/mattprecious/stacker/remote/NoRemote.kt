@@ -16,6 +16,10 @@ class NoRemote : Remote {
 		throw NotImplementedError()
 	}
 
+	override fun addOrUpdatePrBodyBlock(prNumber: Long, prBodyBlock: Remote.PrBodyBlock) {
+		throw NotImplementedError()
+	}
+
 	override fun openOrRetargetPullRequest(
 		branchName: String,
 		targetName: String,

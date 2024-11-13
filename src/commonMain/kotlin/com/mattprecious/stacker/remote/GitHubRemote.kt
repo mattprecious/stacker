@@ -106,6 +106,53 @@ class GitHubRemote(
 		}
 	}
 
+	override fun addOrUpdatePrBodyBlock(
+		prNumber: Long,
+		prBodyBlock: Remote.PrBodyBlock,
+	) = runBlocking {
+		val pr = client.get("$host/repos/$repoName/pulls/$prNumber") {
+			auth()
+		}.bodyOrThrow<Pull>()
+
+		if (pr.merged_at != null) return@runBlocking
+
+		val updatedBody = if (pr.body == null) {
+			prBodyBlock.toHtml()
+		} else {
+			val blockStartIndex = pr.body.indexOf("<details id=\"${prBodyBlock.id}\"")
+			if (blockStartIndex == -1) {
+				"""
+					|${pr.body}
+					|
+					|${prBodyBlock.toHtml()}
+					""".trimMargin()
+				} else {
+					val blockEndIndex = pr.body.indexOf("</details>", startIndex = blockStartIndex)
+					check(blockEndIndex != -1)
+
+					// The end index is increased by the length of the closing tag.
+					pr.body.replaceRange(blockStartIndex, blockEndIndex + 10, prBodyBlock.toHtml())
+				}
+		}
+
+		client.patch("$host/repos/$repoName/pulls/${pr.number}") {
+			auth()
+			contentType(ContentType.Application.Json)
+			setBody(UpdatePull(body = updatedBody))
+		}.requireSuccess()
+	}
+
+	private fun Remote.PrBodyBlock.toHtml(): String {
+		return """
+			|<details id="$id"${if (expanded) " open" else ""}>
+			|<summary>$title</summary>
+			|<p>
+			|$content
+			|</p>
+			|</details>
+			""".trimMargin()
+	}
+
 	private fun String.asHead() = "${repoOwnerAndName!!.first}:$this"
 
 	// TODO: Investigate using the Auth plugin further. It doesn't fit into the current API of this class.

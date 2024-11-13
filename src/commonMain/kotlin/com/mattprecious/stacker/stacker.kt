@@ -51,6 +51,7 @@ internal fun withStacker(
 					install(ContentNegotiation) {
 						json(
 							Json {
+								explicitNulls = false
 								ignoreUnknownKeys = true
 								decodeEnumsCaseInsensitive = true
 							},

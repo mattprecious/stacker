@@ -5,5 +5,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdatePull(
-	val base: String,
+	val base: String? = null,
+	val body: String? = null,
 )

@@ -15,6 +15,11 @@ interface Remote {
 		prInfo: () -> PrInfo,
 	): PrResult
 
+	fun addOrUpdatePrBodyBlock(
+		prNumber: Long,
+		prBodyBlock: PrBodyBlock,
+	)
+
 	data class PrInfo(
 		val title: String,
 		val body: String?,
@@ -46,4 +51,11 @@ interface Remote {
 			override val number: Long,
 		) : PrResult
 	}
+
+	data class PrBodyBlock(
+		val id: String,
+		val title: String,
+		val content: String,
+		val expanded: Boolean,
+	)
 }
