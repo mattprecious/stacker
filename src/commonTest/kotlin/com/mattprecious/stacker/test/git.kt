@@ -4,6 +4,7 @@ import okio.Path
 
 fun StackerTestScope.gitInit() {
 	environment.exec("git init")
+	environment.setGitDefaultBranch("main")
 }
 
 fun StackerTestScope.gitAdd(
@@ -16,7 +17,13 @@ fun StackerTestScope.gitCommit(
 	message: String,
 ) {
 	// TODO: Escaping.
-	environment.exec("git commit -m \"$message\"")
+	environment.exec("git commit --allow-empty -m \"$message\"")
+}
+
+fun StackerTestScope.gitCreateAndSwitchToBranch(
+	name: String,
+) {
+	environment.exec("git checkout -b $name")
 }
 
 fun StackerTestScope.gitHeadSha(): String {

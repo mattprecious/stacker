@@ -58,13 +58,16 @@ class StackerTestScope(
 ) {
 	val remote = FakeRemote()
 
-	fun runStacker(vararg args: String): CliktCommandTestResult {
+	fun runStacker(
+		vararg args: String,
+		stdin: String? = null,
+	): CliktCommandTestResult {
 		var result: CliktCommandTestResult? = null
 		withStacker(
 			fileSystem = fileSystem,
 			remoteOverride = remote,
 		) {
-			result = it.test(args.asList())
+			result = it.test(args.asList(), stdin = stdin ?: "")
 		}
 
 		return result!!
@@ -96,6 +99,14 @@ class Environment {
 	fun setGitNames(name: String) {
 		gitAuthorName = name
 		gitCommitterName = name
+	}
+
+	fun setGitDefaultBranch(name: String?) {
+		if (name == null) {
+			exec("git config --local --unset init.defaultBranch")
+		} else {
+			exec("git config --local init.defaultBranch $name")
+		}
 	}
 
 	/** Executes [command] and returns both the standard output and standard error. */
