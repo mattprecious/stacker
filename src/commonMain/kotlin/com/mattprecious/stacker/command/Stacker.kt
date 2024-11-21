@@ -19,6 +19,7 @@ internal class Stacker(
 	locker: Locker,
 	remote: Remote,
 	stackManager: StackManager,
+	useFancySymbols: Boolean,
 	vc: VersionControl,
 ) : StackerCommand(
 	name = "st",
@@ -32,6 +33,7 @@ internal class Stacker(
 				locker = locker,
 				remote = remote,
 				stackManager = stackManager,
+				useFancySymbols = useFancySymbols,
 				vc = vc,
 			),
 			Downstack(
@@ -43,6 +45,7 @@ internal class Stacker(
 			Log(
 				configManager = configManager,
 				stackManager = stackManager,
+				useFancySymbols = useFancySymbols,
 				vc = vc,
 			),
 			Rebase(
@@ -69,6 +72,7 @@ internal class Stacker(
 				configManager = configManager,
 				locker = locker,
 				stackManager = stackManager,
+				useFancySymbols = useFancySymbols,
 				vc = vc,
 			),
 		)

@@ -11,6 +11,7 @@ import com.mattprecious.stacker.vc.VersionControl
 internal class Short(
 	private val configManager: ConfigManager,
 	private val stackManager: StackManager,
+	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
 ) : StackerCommand(shortAlias = "s") {
 	override fun run() {
@@ -21,6 +22,7 @@ internal class Short(
 		echo(
 			stackManager.getBase()?.prettyTree(
 				selected = stackManager.getBranch(vc.currentBranchName),
+				useFancySymbols = useFancySymbols,
 			)?.joinToString("\n") {
 				val needsRestack = run needsRestack@{
 					val parent = it.branch.parent ?: return@needsRestack false

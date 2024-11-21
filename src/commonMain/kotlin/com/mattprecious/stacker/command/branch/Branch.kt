@@ -13,12 +13,13 @@ internal class Branch(
 	locker: Locker,
 	remote: Remote,
 	stackManager: StackManager,
+	useFancySymbols: Boolean,
 	vc: VersionControl,
 ) : StackerCommand(shortAlias = "b") {
 	init {
 		subcommands(
 			Bottom(configManager, locker, stackManager, vc),
-			Checkout(configManager, locker, stackManager, vc),
+			Checkout(configManager, locker, stackManager, useFancySymbols, vc),
 			Create(configManager, locker, stackManager, vc),
 			Delete(configManager, locker, stackManager, vc),
 			Down(configManager, locker, stackManager, vc),
@@ -26,7 +27,7 @@ internal class Branch(
 			Restack(configManager, locker, stackManager, vc),
 			Submit(configManager, locker, remote, stackManager, vc),
 			Top(configManager, locker, stackManager, vc),
-			Track(configManager, locker, stackManager, vc),
+			Track(configManager, locker, stackManager, useFancySymbols, vc),
 			Untrack(configManager, locker, stackManager, vc),
 			Up(configManager, locker, stackManager, vc),
 		)
