@@ -3,7 +3,7 @@ package com.mattprecious.stacker.command.branch
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
-import com.mattprecious.stacker.command.StackerMosaicCommand
+import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
@@ -15,10 +15,10 @@ internal class Delete(
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerMosaicCommand(shortAlias = "dl") {
+) : StackerCommand(shortAlias = "dl") {
 	private val branchName: String? by argument().optional()
 
-	override suspend fun StackerCommandScope.work() {
+	override fun run() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 

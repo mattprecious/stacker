@@ -1,7 +1,7 @@
 package com.mattprecious.stacker.command.downstack
 
 import com.github.ajalt.clikt.core.Abort
-import com.mattprecious.stacker.command.StackerMosaicCommand
+import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
@@ -18,8 +18,8 @@ internal class Edit(
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerMosaicCommand(shortAlias = "e") {
-	override suspend fun StackerCommandScope.work() {
+) : StackerCommand(shortAlias = "e") {
+	override fun run() {
 		val currentBranchName = vc.currentBranchName
 		val currentBranch = stackManager.getBranch(currentBranchName)
 		if (currentBranch == null) {

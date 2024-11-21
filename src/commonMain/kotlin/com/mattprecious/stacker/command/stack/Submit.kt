@@ -1,7 +1,7 @@
 package com.mattprecious.stacker.command.stack
 
 import com.github.ajalt.clikt.core.Abort
-import com.mattprecious.stacker.command.StackerMosaicCommand
+import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.requireAuthenticated
 import com.mattprecious.stacker.command.submit
@@ -21,8 +21,8 @@ internal class Submit(
 	private val remote: Remote,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerMosaicCommand(shortAlias = "s") {
-	override suspend fun StackerCommandScope.work() {
+) : StackerCommand(shortAlias = "s") {
+	override fun run() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 
@@ -50,6 +50,6 @@ internal class Submit(
 			.filterNot { it.name == configManager.trunk || it.name == configManager.trailingTrunk }
 
 		vc.pushBranches(branchesToSubmit.map { it.name })
-		branchesToSubmit.forEach { it.submit(this@Submit, configManager, remote, stackManager, vc) }
+		branchesToSubmit.forEach { it.submit(this, configManager, remote, stackManager, vc) }
 	}
 }

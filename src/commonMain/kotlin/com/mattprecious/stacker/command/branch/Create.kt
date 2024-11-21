@@ -2,7 +2,7 @@ package com.mattprecious.stacker.command.branch
 
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.parameters.arguments.argument
-import com.mattprecious.stacker.command.StackerMosaicCommand
+import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
@@ -16,10 +16,10 @@ internal class Create(
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerMosaicCommand(shortAlias = "c") {
+) : StackerCommand(shortAlias = "c") {
 	private val branchName by argument()
 
-	override suspend fun StackerCommandScope.work() {
+	override fun run() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 

@@ -3,7 +3,7 @@ package com.mattprecious.stacker.command.repo
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.YesNoPrompt
-import com.mattprecious.stacker.command.StackerMosaicCommand
+import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.interactivePrompt
@@ -13,8 +13,8 @@ internal class Init(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val vc: VersionControl,
-) : StackerMosaicCommand() {
-	override suspend fun StackerCommandScope.work() {
+) : StackerCommand() {
+	override fun run() {
 		requireNoLock(locker)
 
 		val (currentTrunk, currentTrailingTrunk) = if (configManager.repoInitialized) {

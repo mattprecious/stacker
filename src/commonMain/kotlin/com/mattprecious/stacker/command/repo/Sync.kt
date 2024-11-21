@@ -2,7 +2,7 @@ package com.mattprecious.stacker.command.repo
 
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.YesNoPrompt
-import com.mattprecious.stacker.command.StackerMosaicCommand
+import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.db.Branch
@@ -17,10 +17,10 @@ internal class Sync(
 	private val remote: Remote,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerMosaicCommand(
+) : StackerCommand(
 	shortAlias = "s",
 ) {
-	override suspend fun StackerCommandScope.work() {
+	override fun run() {
 		val trunk = configManager.trunk!!
 		val trailingTrunk = configManager.trailingTrunk
 

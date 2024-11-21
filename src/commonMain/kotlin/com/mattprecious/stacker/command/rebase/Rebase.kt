@@ -4,7 +4,7 @@ import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.PrintHelpMessage
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import com.mattprecious.stacker.command.StackerMosaicCommand
+import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
@@ -16,11 +16,11 @@ internal class Rebase(
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerMosaicCommand() {
+) : StackerCommand() {
 	private val abort: Boolean by option().flag()
 	private val cont by option("--continue").flag()
 
-	override suspend fun StackerCommandScope.work() {
+	override fun run() {
 		requireInitialized(configManager)
 
 		when {
