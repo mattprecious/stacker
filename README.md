@@ -1,4 +1,8 @@
 # Stacker
+This project is currently **experimental** and undergoing frequent infrastructure/API changes, thus is not ready for
+general usage. If you're feeling adventurous, you're welcome to build the project locally, but please familiarize
+yourself with the current list of [issues](https://github.com/mattprecious/stacker/issues) and
+[git-reflog](https://git-scm.com/docs/git-reflog).
 
 ## Development
 
