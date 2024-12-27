@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.CliktCommand
 import com.jakewharton.mosaic.runMosaicBlocking
+import com.jakewharton.mosaic.text.AnnotatedString
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.LocalPrinter
@@ -88,6 +89,10 @@ internal abstract class StackerCommand(
 
 	inner class StackerCommandScope {
 		fun printStatic(message: String) {
+			printer.printStatic(message)
+		}
+
+		fun printStatic(message: AnnotatedString) {
 			printer.printStatic(message)
 		}
 
