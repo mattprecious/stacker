@@ -1,20 +1,35 @@
 package com.mattprecious.stacker.command.repo
 
-import com.github.ajalt.clikt.core.Abort
-import com.github.ajalt.clikt.core.terminal
-import com.github.ajalt.mordant.terminal.YesNoPrompt
+import androidx.compose.runtime.remember
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
-import com.mattprecious.stacker.rendering.interactivePrompt
+import com.mattprecious.stacker.rendering.InteractivePrompt
+import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.YesNoPrompt
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Init(
+	configManager: ConfigManager,
+	locker: Locker,
+	vc: VersionControl,
+) : StackerCliktCommand() {
+	override val command by lazy {
+		InitCommand(
+			configManager = configManager,
+			locker = locker,
+			vc = vc,
+		)
+	}
+}
+
+internal class InitCommand(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val vc: VersionControl,
 ) : StackerCommand() {
-	override fun run() {
+	override suspend fun StackerCommandScope.work() {
 		requireNoLock(locker)
 
 		val (currentTrunk, currentTrailingTrunk) = if (configManager.repoInitialized) {
@@ -27,11 +42,10 @@ internal class Init(
 		if (branches.isEmpty()) {
 			// We need a SHA in order to initialize. Additionally, I don't know how to get the current branch name when it's
 			// an unborn branch.
-			echo(
-				message = "Stacker cannot be initialized in a completely empty repository. Please make a commit, first.",
-				err = true,
+			printStaticError(
+				"Stacker cannot be initialized in a completely empty repository. Please make a commit first.",
 			)
-			throw Abort()
+			abort()
 		}
 
 		val defaultTrunk = run defaultTrunk@{
@@ -47,32 +61,50 @@ internal class Init(
 			return@defaultTrunk vc.currentBranchName
 		}
 
-		val trunk = interactivePrompt(
-			message = "Select your trunk branch, which you open pull requests against",
-			promptIfSingle = true,
-			options = branches,
-			default = defaultTrunk,
-		)
+		val trunk = render { onResult ->
+			InteractivePrompt(
+				message = "Select your trunk branch, which you open pull requests against",
+				state = remember {
+					PromptState(
+						options = branches,
+						default = defaultTrunk,
+						displayTransform = { it },
+						valueTransform = { it },
+					)
+				},
+				onSelected = { onResult(it) },
+			)
+		}
 
 		val trunkSha = vc.getSha(trunk)
 
-		val useTrailing = YesNoPrompt(
-			terminal = currentContext.terminal,
-			prompt = "Do you use a trailing-trunk workflow?",
-			default = currentTrailingTrunk != null,
-		).ask() == true
+		val useTrailing = render { onResult ->
+			YesNoPrompt(
+				message = "Do you use a trailing-trunk workflow?",
+				default = currentTrailingTrunk != null,
+				onSubmit = { onResult(it) },
+			)
+		}
 
-		val trailingTrunk = if (!useTrailing) {
+		val trailingTrunk: String? = if (!useTrailing) {
 			null
 		} else {
 			// TODO: This assumes that the trailing trunk branch already exists. It will fail if there's
 			//  only one branch in the repo.
-			interactivePrompt(
-				message = "Select your trailing trunk branch, which you branch from",
-				promptIfSingle = true,
-				options = branches.filterNot { it == trunk },
-				default = currentTrailingTrunk,
-			)
+			render { onResult ->
+				InteractivePrompt(
+					message = "Select your trailing trunk branch, which you branch from",
+					state = remember {
+						PromptState(
+							options = branches.filterNot { it == trunk },
+							default = currentTrailingTrunk,
+							displayTransform = { it },
+							valueTransform = { it },
+						)
+					},
+					onSelected = { onResult(it) },
+				)
+			}
 		}
 
 		configManager.initializeRepo(trunk = trunk, trunkSha = trunkSha, trailingTrunk = trailingTrunk)

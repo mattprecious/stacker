@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.command.branch
 
-import com.github.ajalt.clikt.core.Abort
+import com.jakewharton.mosaic.text.buildAnnotatedString
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.requireAuthenticated
@@ -8,43 +9,68 @@ import com.mattprecious.stacker.command.submit
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.remote.Remote
-import com.mattprecious.stacker.rendering.styleBranch
-import com.mattprecious.stacker.rendering.styleCode
+import com.mattprecious.stacker.rendering.branch
+import com.mattprecious.stacker.rendering.code
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Submit(
+	configManager: ConfigManager,
+	locker: Locker,
+	remote: Remote,
+	stackManager: StackManager,
+	vc: VersionControl,
+) : StackerCliktCommand(shortAlias = "s") {
+	override val command by lazy {
+		SubmitCommand(
+			configManager = configManager,
+			locker = locker,
+			remote = remote,
+			stackManager = stackManager,
+			vc = vc,
+		)
+	}
+}
+
+internal class SubmitCommand(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val remote: Remote,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "s") {
-	override fun run() {
+) : StackerCommand() {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 
 		val currentBranch = stackManager.getBranch(vc.currentBranchName)
 		if (currentBranch == null) {
-			echo(
-				message = "Cannot create a pull request from ${vc.currentBranchName.styleBranch()} since it is " +
-					"not tracked. Please track with ${"st branch track".styleCode()}.",
-				err = true,
+			printStaticError(
+				buildAnnotatedString {
+					append("Cannot create a pull request from ")
+					branch { append(vc.currentBranchName) }
+					append(" since it is not tracked. Please track with ")
+					code { append("st branch track") }
+					append(".")
+				},
 			)
-			throw Abort()
+			abort()
 		}
 
 		if (currentBranch.name == configManager.trunk || currentBranch.name == configManager.trailingTrunk) {
-			echo(
-				message = "Cannot create a pull request from trunk branch ${currentBranch.name.styleBranch()}.",
-				err = true,
+			printStaticError(
+				buildAnnotatedString {
+					append("Cannot create a pull request from trunk branch ")
+					branch { append(currentBranch.name) }
+					append(".")
+				},
 			)
-			throw Abort()
+			abort()
 		}
 
 		requireAuthenticated(remote)
 
 		vc.pushBranches(listOf(currentBranch.name))
-		currentBranch.submit(this, configManager, remote, stackManager, vc)
+		currentBranch.submit(this@work, configManager, remote, stackManager, vc)
 	}
 }

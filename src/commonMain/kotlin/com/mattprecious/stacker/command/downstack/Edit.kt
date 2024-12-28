@@ -1,34 +1,56 @@
 package com.mattprecious.stacker.command.downstack
 
-import com.github.ajalt.clikt.core.Abort
+import androidx.compose.runtime.remember
+import com.jakewharton.mosaic.text.buildAnnotatedString
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
-import com.mattprecious.stacker.rendering.interactivePrompt
-import com.mattprecious.stacker.rendering.styleBranch
-import com.mattprecious.stacker.rendering.styleCode
+import com.mattprecious.stacker.rendering.InteractivePrompt
+import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.branch
+import com.mattprecious.stacker.rendering.code
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.stack.ancestors
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Edit(
+	configManager: ConfigManager,
+	locker: Locker,
+	stackManager: StackManager,
+	vc: VersionControl,
+) : StackerCliktCommand(shortAlias = "e") {
+	override val command by lazy {
+		EditCommand(
+			configManager = configManager,
+			locker = locker,
+			stackManager = stackManager,
+			vc = vc,
+		)
+	}
+}
+
+internal class EditCommand(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "e") {
-	override fun run() {
+) : StackerCommand() {
+	override suspend fun StackerCommandScope.work() {
 		val currentBranchName = vc.currentBranchName
 		val currentBranch = stackManager.getBranch(currentBranchName)
 		if (currentBranch == null) {
-			echo(
-				message = "Cannot edit downstack since ${currentBranchName.styleBranch()} is not tracked. " +
-					"Please track with ${"st branch track".styleCode()}.",
-				err = true,
+			printStaticError(
+				buildAnnotatedString {
+					append("Cannot edit downstack since ")
+					branch { append(currentBranchName) }
+					append(" is not tracked. Please track with ")
+					code { append("st branch track") }
+				},
 			)
-			throw Abort()
+			abort()
 		}
 
 		val trunk = configManager.trunk
@@ -43,6 +65,7 @@ internal class Edit(
 		val downstackWithComments = downstackWithoutTrunk + "# $downstackTrunk (trunk)"
 
 		val result = Editor(
+			commandScope = this,
 			editorPath = vc.editor,
 			requireSave = true,
 			extension = ".txt",
@@ -52,22 +75,32 @@ internal class Edit(
 
 		val addedBranches = newStack.subtract(downstackWithoutTrunk.toSet())
 		if (addedBranches.isNotEmpty()) {
-			echo(
-				message = "Inserting new branches is not supported: $addedBranches.",
-				err = true,
+			printStaticError(
+				"Inserting new branches is not supported: $addedBranches.",
 			)
-			throw Abort()
+			abort()
 		}
 
 		val removedBranches = downstackWithoutTrunk.subtract(newStack.toSet())
 		removedBranches.forEach { branchName ->
-			val action = interactivePrompt(
-				"${branchName.styleBranch()} was removed from the list. What would you like to do?",
-				options = RemovedOption.entries,
-				filteringEnabled = false,
-				displayTransform = { it.render(downstackTrunk) },
-				valueTransform = { it.render(downstackTrunk) },
-			)
+			val action = render { onResult ->
+				InteractivePrompt(
+					message = buildAnnotatedString {
+						branch { append(branchName) }
+						append(" was removed from the list. What would you like to do?")
+					},
+					filteringEnabled = false,
+					state = remember {
+						PromptState(
+							options = RemovedOption.entries,
+							default = null,
+							displayTransform = { it.render(downstackTrunk) },
+							valueTransform = { it.render(downstackTrunk) },
+						)
+					},
+					onSelected = { onResult(it) },
+				)
+			}
 
 			val branch = stackManager.getBranch(branchName)!!
 
@@ -103,7 +136,7 @@ internal class Edit(
 		)
 
 		locker.beginOperation(operation) {
-			operation.perform(this@Edit, this@beginOperation, stackManager, vc)
+			operation.perform(this@work, this@beginOperation, stackManager, vc)
 		}
 	}
 

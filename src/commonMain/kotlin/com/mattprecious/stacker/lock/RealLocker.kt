@@ -16,9 +16,9 @@ class RealLocker(
 		return lockQueries.hasLock().executeAsOne()
 	}
 
-	override fun <T : Operation> beginOperation(
+	override suspend fun <T : Operation> beginOperation(
 		operation: T,
-		block: Locker.LockScope.() -> Unit,
+		block: suspend Locker.LockScope.() -> Unit,
 	) {
 		require(!hasLock())
 
@@ -35,7 +35,9 @@ class RealLocker(
 		lockQueries.delete()
 	}
 
-	override fun continueOperation(block: Locker.LockScope.(operation: Operation) -> Unit) {
+	override suspend fun continueOperation(
+		block: suspend Locker.LockScope.(operation: Operation) -> Unit,
+	) {
 		val operation = lockQueries.select().executeAsOne()
 
 		val scope = object : Locker.LockScope {
@@ -49,8 +51,8 @@ class RealLocker(
 		lockQueries.delete()
 	}
 
-	override fun cancelOperation(
-		block: (operation: Operation) -> Unit,
+	override suspend fun cancelOperation(
+		block: suspend (operation: Operation) -> Unit,
 	) {
 		val operation = lockQueries.select().executeAsOne()
 		block(operation)

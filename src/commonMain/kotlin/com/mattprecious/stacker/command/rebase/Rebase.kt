@@ -1,9 +1,9 @@
 package com.mattprecious.stacker.command.rebase
 
-import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.core.PrintHelpMessage
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.config.ConfigManager
@@ -12,28 +12,45 @@ import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Rebase(
-	private val configManager: ConfigManager,
-	private val locker: Locker,
-	private val stackManager: StackManager,
-	private val vc: VersionControl,
-) : StackerCommand() {
+	configManager: ConfigManager,
+	locker: Locker,
+	stackManager: StackManager,
+	vc: VersionControl,
+) : StackerCliktCommand() {
 	private val abort: Boolean by option().flag()
-	private val cont by option("--continue").flag()
+	private val cont: Boolean by option("--continue").flag()
 
-	override fun run() {
-		requireInitialized(configManager)
-
+	override val command by lazy {
 		when {
-			abort -> abortOperation()
-			cont -> continueOperation()
+			abort -> RebaseAbortCommand(
+				configManager = configManager,
+				locker = locker,
+				vc = vc,
+			)
+
+			cont -> RebaseContinueCommand(
+				configManager = configManager,
+				locker = locker,
+				stackManager = stackManager,
+				vc = vc,
+			)
+			// TODO
 			else -> throw PrintHelpMessage(currentContext, error = true)
 		}
 	}
+}
 
-	private fun abortOperation() {
+internal class RebaseAbortCommand(
+	private val configManager: ConfigManager,
+	private val locker: Locker,
+	private val vc: VersionControl,
+) : StackerCommand() {
+	override suspend fun StackerCommandScope.work() {
+		requireInitialized(configManager)
+
 		if (!locker.hasLock()) {
-			echo("Nothing to abort.", err = true)
-			throw Abort()
+			printStaticError("Nothing to abort.")
+			abort()
 		}
 
 		locker.cancelOperation { operation ->
@@ -45,18 +62,27 @@ internal class Rebase(
 			}
 		}
 	}
+}
 
-	private fun continueOperation() {
+internal class RebaseContinueCommand(
+	private val configManager: ConfigManager,
+	private val locker: Locker,
+	private val stackManager: StackManager,
+	private val vc: VersionControl,
+) : StackerCommand() {
+	override suspend fun StackerCommandScope.work() {
+		requireInitialized(configManager)
+
 		if (!locker.hasLock()) {
-			echo("Nothing to continue.", err = true)
-			throw Abort()
+			printStaticError("Nothing to continue.")
+			abort()
 		}
 
 		locker.continueOperation { operation ->
 			when (operation) {
 				is Locker.Operation.Restack -> {
 					if (vc.continueRebase(operation.branches.first())) {
-						operation.perform(this@Rebase, this, stackManager, vc, continuing = true)
+						operation.perform(this@work, this, stackManager, vc, continuing = true)
 					}
 				}
 			}

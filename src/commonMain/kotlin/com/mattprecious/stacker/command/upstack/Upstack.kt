@@ -1,7 +1,7 @@
 package com.mattprecious.stacker.command.upstack
 
 import com.github.ajalt.clikt.core.subcommands
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.stack.StackManager
@@ -13,13 +13,11 @@ internal class Upstack(
 	stackManager: StackManager,
 	useFancySymbols: Boolean,
 	vc: VersionControl,
-) : StackerCommand(shortAlias = "us") {
+) : StackerCliktCommand(shortAlias = "us") {
 	init {
 		subcommands(
 			Onto(configManager, locker, stackManager, useFancySymbols, vc),
 			Restack(configManager, locker, stackManager, vc),
 		)
 	}
-
-	override fun run() = Unit
 }

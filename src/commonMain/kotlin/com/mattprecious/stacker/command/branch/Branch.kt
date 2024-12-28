@@ -1,7 +1,7 @@
 package com.mattprecious.stacker.command.branch
 
 import com.github.ajalt.clikt.core.subcommands
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.remote.Remote
@@ -15,7 +15,7 @@ internal class Branch(
 	stackManager: StackManager,
 	useFancySymbols: Boolean,
 	vc: VersionControl,
-) : StackerCommand(shortAlias = "b") {
+) : StackerCliktCommand(shortAlias = "b") {
 	init {
 		subcommands(
 			Bottom(configManager, locker, stackManager, vc),
@@ -32,6 +32,4 @@ internal class Branch(
 			Up(configManager, locker, stackManager, vc),
 		)
 	}
-
-	override fun run() = Unit
 }

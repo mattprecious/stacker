@@ -21,7 +21,7 @@ internal class Stacker(
 	stackManager: StackManager,
 	useFancySymbols: Boolean,
 	vc: VersionControl,
-) : StackerCommand(
+) : StackerCliktCommand(
 	name = "st",
 ) {
 	init {
@@ -77,8 +77,6 @@ internal class Stacker(
 			),
 		)
 	}
-
-	override fun run() = Unit
 
 	private fun StackManager.reconcileBranches(
 		vc: VersionControl,

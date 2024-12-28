@@ -1,58 +1,92 @@
 package com.mattprecious.stacker.command.upstack
 
-import com.github.ajalt.clikt.core.Abort
+import androidx.compose.runtime.remember
+import com.jakewharton.mosaic.text.buildAnnotatedString
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.perform
 import com.mattprecious.stacker.command.prettyTree
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
-import com.mattprecious.stacker.rendering.interactivePrompt
-import com.mattprecious.stacker.rendering.styleBranch
-import com.mattprecious.stacker.rendering.styleCode
+import com.mattprecious.stacker.rendering.InteractivePrompt
+import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.branch
+import com.mattprecious.stacker.rendering.code
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.stack.all
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Onto(
+	configManager: ConfigManager,
+	locker: Locker,
+	stackManager: StackManager,
+	useFancySymbols: Boolean,
+	vc: VersionControl,
+) : StackerCliktCommand(shortAlias = "o") {
+	override val command by lazy {
+		OntoCommand(
+			configManager = configManager,
+			locker = locker,
+			stackManager = stackManager,
+			useFancySymbols = useFancySymbols,
+			vc = vc,
+		)
+	}
+}
+
+internal class OntoCommand(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "o") {
-	override fun run() {
+) : StackerCommand() {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 
 		val currentBranchName = vc.currentBranchName
 		val currentBranch = stackManager.getBranch(currentBranchName)
 		if (currentBranch == null) {
-			echo(
-				message = "Cannot retarget ${currentBranchName.styleBranch()} since it is not tracked. " +
-					"Please track with ${"st branch track".styleCode()}.",
-				err = true,
+			printStaticError(
+				buildAnnotatedString {
+					append("Cannot retarget ")
+					branch { append(currentBranchName) }
+					append(" since it is not tracked. Please track with ")
+					code { append("st branch track") }
+					append(".")
+				},
 			)
-			throw Abort()
+			abort()
 		}
 
 		if (currentBranchName == configManager.trunk || currentBranchName == configManager.trailingTrunk) {
-			echo(message = "Cannot retarget a trunk branch.", err = true)
-			throw Abort()
+			printStaticError("Cannot retarget a trunk branch.")
+			abort()
 		}
 
 		val options = stackManager.getBase()!!.prettyTree(useFancySymbols = useFancySymbols) {
 			it.name != currentBranchName
 		}
 
-		val newParent = interactivePrompt(
-			message = "Select the parent branch for ${currentBranchName.styleBranch()}",
-			promptIfSingle = true,
-			options = options,
-			default = options.find { it.branch.name == currentBranch.parent!!.name },
-			displayTransform = { it.pretty },
-			valueTransform = { it.branch.name },
-		).branch
+		val newParent = render { onResult ->
+			InteractivePrompt(
+				message = buildAnnotatedString {
+					append("Select the parent branch for ")
+					branch { append(currentBranchName) }
+				},
+				state = remember {
+					PromptState(
+						options = options,
+						default = options.find { it.branch.name == currentBranch.parent!!.name },
+						displayTransform = { it.pretty },
+						valueTransform = { it.branch.name },
+					)
+				},
+				onSelected = { onResult(it.branch) },
+			)
+		}
 
 		stackManager.updateParent(currentBranch.value, newParent.value)
 
@@ -62,7 +96,7 @@ internal class Onto(
 		)
 
 		locker.beginOperation(operation) {
-			operation.perform(this@Onto, this@beginOperation, stackManager, vc)
+			operation.perform(this@work, this@beginOperation, stackManager, vc)
 		}
 	}
 }

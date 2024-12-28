@@ -1,7 +1,7 @@
 package com.mattprecious.stacker.command.stack
 
 import com.github.ajalt.clikt.core.subcommands
-import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.remote.Remote
@@ -14,12 +14,10 @@ internal class Stack(
 	remote: Remote,
 	stackManager: StackManager,
 	vc: VersionControl,
-) : StackerCommand(shortAlias = "s") {
+) : StackerCliktCommand(shortAlias = "s") {
 	init {
 		subcommands(
 			Submit(configManager, locker, remote, stackManager, vc),
 		)
 	}
-
-	override fun run() = Unit
 }

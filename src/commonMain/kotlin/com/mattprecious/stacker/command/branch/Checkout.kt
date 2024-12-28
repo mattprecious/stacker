@@ -1,9 +1,9 @@
 package com.mattprecious.stacker.command.branch
 
 import androidx.compose.runtime.remember
-import com.github.ajalt.clikt.core.Abort
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.command.prettyTree
@@ -15,14 +15,34 @@ import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Checkout(
+	configManager: ConfigManager,
+	locker: Locker,
+	stackManager: StackManager,
+	useFancySymbols: Boolean,
+	vc: VersionControl,
+) : StackerCliktCommand(shortAlias = "co") {
+	private val branchName: String? by argument().optional()
+
+	override val command by lazy {
+		BranchCheckout(
+			branchName = branchName,
+			configManager = configManager,
+			locker = locker,
+			stackManager = stackManager,
+			useFancySymbols = useFancySymbols,
+			vc = vc,
+		)
+	}
+}
+
+internal class BranchCheckout(
+	private val branchName: String?,
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "co") {
-	private val branchName: String? by argument().optional()
-
+) : StackerCommand() {
 	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
@@ -48,10 +68,10 @@ internal class Checkout(
 				}
 			}
 		} else if (vc.branches.contains(branchName)) {
-			branchName!!
+			branchName
 		} else {
-			echo("'$branchName' does not match any branches known to git.", err = true)
-			throw Abort()
+			printStaticError("'$branchName' does not match any branches known to git.")
+			abort()
 		}
 
 		vc.checkout(branch)

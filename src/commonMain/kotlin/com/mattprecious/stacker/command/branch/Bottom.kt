@@ -1,6 +1,6 @@
 package com.mattprecious.stacker.command.branch
 
-import com.github.ajalt.clikt.core.Abort
+import com.mattprecious.stacker.command.StackerCliktCommand
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.config.ConfigManager
@@ -9,12 +9,28 @@ import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 internal class Bottom(
+	configManager: ConfigManager,
+	locker: Locker,
+	stackManager: StackManager,
+	vc: VersionControl,
+) : StackerCliktCommand(shortAlias = "b") {
+	override val command by lazy {
+		BottomCommand(
+			configManager = configManager,
+			locker = locker,
+			stackManager = stackManager,
+			vc = vc,
+		)
+	}
+}
+
+internal class BottomCommand(
 	private val configManager: ConfigManager,
 	private val locker: Locker,
 	private val stackManager: StackManager,
 	private val vc: VersionControl,
-) : StackerCommand(shortAlias = "b") {
-	override fun run() {
+) : StackerCommand() {
+	override suspend fun StackerCommandScope.work() {
 		requireInitialized(configManager)
 		requireNoLock(locker)
 
@@ -23,8 +39,8 @@ internal class Bottom(
 		val currentBranch = stackManager.getBranch(vc.currentBranchName)!!
 
 		if (currentBranch.name == trailingTrunk || currentBranch.name == trunk) {
-			echo("Not in a stack.", err = true)
-			throw Abort()
+			printStatic("Not in a stack.")
+			abort()
 		}
 
 		var bottom = currentBranch
