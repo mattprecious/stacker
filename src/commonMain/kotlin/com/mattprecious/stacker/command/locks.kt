@@ -1,14 +1,13 @@
 package com.mattprecious.stacker.command
 
-import com.github.ajalt.clikt.core.Abort
-import com.github.ajalt.clikt.core.CliktCommand
+import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.mattprecious.stacker.lock.Locker
-import com.mattprecious.stacker.rendering.styleCode
+import com.mattprecious.stacker.rendering.code
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
-internal fun Locker.Operation.Restack.perform(
-	command: CliktCommand,
+internal suspend fun Locker.Operation.Restack.perform(
+	commandScope: StackerCommandScope,
 	lockScope: Locker.LockScope,
 	stackManager: StackManager,
 	vc: VersionControl,
@@ -18,12 +17,16 @@ internal fun Locker.Operation.Restack.perform(
 		val branch = stackManager.getBranch(branchName)!!
 		if (!continuing || index > 0) {
 			if (!vc.restack(branchName = branch.name, parentName = branch.parent!!.name, parentSha = branch.parentSha!!)) {
-				command.echo(
-					message = "Merge conflict. Resolve all conflicts manually and then run " +
-						"${"st rebase --continue".styleCode()}. To abort, run ${"st rebase --abort".styleCode()}",
-					err = true,
+				commandScope.printStaticError(
+					buildAnnotatedString {
+						append("Merge conflict. Resolve all conflicts manually and then run ")
+						code { append("st rebase --continue") }
+						append(". To abort, run ")
+						code { append("st rebase --abort") }
+						append(".")
+					},
 				)
-				throw Abort()
+				commandScope.abort()
 			}
 		}
 

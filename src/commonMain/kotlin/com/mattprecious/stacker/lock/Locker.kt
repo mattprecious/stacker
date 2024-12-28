@@ -5,17 +5,17 @@ import kotlinx.serialization.Serializable
 interface Locker {
 	fun hasLock(): Boolean
 
-	fun <T : Operation> beginOperation(
+	suspend fun <T : Operation> beginOperation(
 		operation: T,
-		block: LockScope.() -> Unit,
+		block: suspend LockScope.() -> Unit,
 	)
 
-	fun continueOperation(
-		block: LockScope.(operation: Operation) -> Unit,
+	suspend fun continueOperation(
+		block: suspend LockScope.(operation: Operation) -> Unit,
 	)
 
-	fun cancelOperation(
-		block: (operation: Operation) -> Unit,
+	suspend fun cancelOperation(
+		block: suspend (operation: Operation) -> Unit,
 	)
 
 	interface LockScope {

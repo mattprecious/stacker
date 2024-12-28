@@ -1,13 +1,15 @@
 package com.mattprecious.stacker.test
 
-import com.github.ajalt.clikt.testing.CliktCommandTestResult
-import com.github.ajalt.clikt.testing.test
+import CommandTestScope
+import com.mattprecious.stacker.StackerDeps
+import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.remote.FakeRemote
 import com.mattprecious.stacker.withStacker
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
+import kotlinx.coroutines.runBlocking
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
 import okio.Path
@@ -19,27 +21,31 @@ import platform.posix.pclose
 import platform.posix.popen
 import platform.posix.setenv
 import platform.posix.unsetenv
+import test
 import kotlin.random.Random
 import kotlin.reflect.KProperty
 import kotlin.test.fail
 
-fun stackerTest(
-	validate: StackerTestScope.() -> Unit,
+internal fun stackerTest(
+	validate: suspend StackerTestScope.() -> Unit,
 ) {
 	val environment = Environment()
 	val fileSystem = FileSystem.SYSTEM
+	val remote = FakeRemote()
 	val tmpPath = tmpPath("StackerTest")
 
 	try {
 		fileSystem.createDirectories(tmpPath, mustCreate = true)
 
-		environment.withSnapshot {
-			environment.workingDirectory = fileSystem.canonicalize(tmpPath).toString()
-			environment.setGitNames("Stacker")
-			environment.setGitEmails("stacker@example.com")
-			environment.setGitDates("2020-01-01T12:00:00Z")
+		runBlocking {
+			environment.withSnapshot {
+				environment.workingDirectory = fileSystem.canonicalize(tmpPath).toString()
+				environment.setGitNames("Stacker")
+				environment.setGitEmails("stacker@example.com")
+				environment.setGitDates("2020-01-01T12:00:00Z")
 
-			StackerTestScope(environment, fileSystem).validate()
+				StackerTestScope(environment, fileSystem, remote).validate()
+			}
 		}
 	} finally {
 		fileSystem.deleteRecursively(tmpPath)
@@ -55,19 +61,29 @@ private fun randomToken(length: Int) = Random.nextBytes(length).toByteString(0, 
 class StackerTestScope(
 	val environment: Environment,
 	val fileSystem: FileSystem,
+	val remote: FakeRemote,
 ) {
-	val remote = FakeRemote()
+	suspend fun testInit() {
+		withStacker { }
+	}
 
-	fun runStacker(vararg args: String): CliktCommandTestResult {
-		var result: CliktCommandTestResult? = null
+	suspend fun testCommand(
+		commandBuilder: StackerDeps.() -> StackerCommand,
+		validate: suspend CommandTestScope.() -> Unit,
+	) {
+		withStacker {
+			it.commandBuilder().test(validate)
+		}
+	}
+
+	private suspend fun withStacker(
+		block: suspend (StackerDeps) -> Unit,
+	) {
 		withStacker(
 			fileSystem = fileSystem,
 			remoteOverride = remote,
-		) {
-			result = it.test(args.asList())
-		}
-
-		return result!!
+			block = block,
+		)
 	}
 }
 
@@ -120,7 +136,7 @@ class Environment {
 	 *  Captures the existing values for all the mutable properties in [Environment] and restores them
 	 *  after [block] returns.
 	 */
-	fun withSnapshot(block: () -> Unit) {
+	suspend fun withSnapshot(block: suspend () -> Unit) {
 		val snapshot = snapshot()
 		try {
 			block()

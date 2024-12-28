@@ -5,7 +5,6 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import assertk.assertions.isZero
 import assertk.assertions.message
 import com.mattprecious.stacker.RepoNotFoundException
 import okio.Path.Companion.toPath
@@ -15,7 +14,7 @@ import kotlin.test.assertFailsWith
 class SimpleTest {
 	@Test
 	fun throwsErrorIfNoRepositoryFound() = stackerTest {
-		val t = assertFailsWith<RepoNotFoundException> { runStacker() }
+		val t = assertFailsWith<RepoNotFoundException> { testInit() }
 		assertThat(t).message()
 			.isEqualTo("No repository found at ${fileSystem.canonicalize(".".toPath())}.")
 
@@ -36,9 +35,7 @@ class SimpleTest {
 		gitInit()
 		assertThat(fileSystem.exists(".git/stacker.db".toPath())).isFalse()
 
-		with(runStacker()) {
-			assertThat(statusCode).isZero()
-			assertThat(fileSystem.exists(".git/stacker.db".toPath())).isTrue()
-		}
+		testInit()
+		assertThat(fileSystem.exists(".git/stacker.db".toPath())).isTrue()
 	}
 }

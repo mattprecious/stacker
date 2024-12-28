@@ -2,17 +2,14 @@ package com.mattprecious.stacker.rendering
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.github.ajalt.clikt.core.CliktCommand
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
-import com.jakewharton.mosaic.runMosaicBlocking
 import com.jakewharton.mosaic.text.AnnotatedString
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
@@ -20,8 +17,6 @@ import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
-import kotlinx.coroutines.awaitCancellation
-import platform.posix.exit
 
 @Composable
 fun Prompt(
@@ -56,9 +51,6 @@ fun Prompt(
 		Text(prompt)
 		Text(
 			modifier = Modifier.onKeyEvent {
-				// TODO: Remove once mosaic is pushed all the way to the top.
-				if (it.ctrl && it.key == "c") exit(0)
-
 				when {
 					it.key == "Enter" -> {
 						printer.printStatic(prompt + buildAnnotatedString { append(input) })
@@ -129,9 +121,6 @@ fun YesNoPrompt(
 		Text(prompt)
 		Text(
 			modifier = Modifier.onKeyEvent {
-				// TODO: Remove once mosaic is pushed all the way to the top.
-				if (it.ctrl && it.key == "c") exit(0)
-
 				when {
 					it.key == "Enter" -> when (input) {
 						"y", "Y" -> submit(true)
@@ -152,51 +141,6 @@ fun YesNoPrompt(
 			value = input,
 		)
 	}
-}
-
-fun <T> CliktCommand.interactivePrompt(
-	message: String,
-	options: List<T>,
-	filteringEnabled: Boolean = true,
-	default: T? = null,
-	promptIfSingle: Boolean = false,
-	displayTransform: (T) -> String = { it.toString() },
-	valueTransform: (T) -> String = { it.toString() },
-): T {
-	require(options.isNotEmpty())
-	if (!promptIfSingle && options.size == 1) {
-		return options.first()
-	}
-
-	var selected by mutableStateOf<T?>(null)
-
-	runMosaicBlocking {
-		LocalPrinter.current.Messages()
-
-		val state = remember {
-			PromptState(
-				options = options,
-				default = default,
-				displayTransform = displayTransform,
-				valueTransform = valueTransform,
-			)
-		}
-
-		if (selected == null) {
-			InteractivePrompt(
-				message = message,
-				state = state,
-				filteringEnabled = filteringEnabled,
-				onSelected = { selected = it },
-			)
-
-			LaunchedEffect(Unit) {
-				awaitCancellation()
-			}
-		}
-	}
-
-	return selected!!
 }
 
 @Stable
@@ -273,6 +217,21 @@ fun <T> InteractivePrompt(
 	filteringEnabled: Boolean = true,
 	onSelected: (T) -> Unit,
 ) {
+	InteractivePrompt(
+		message = buildAnnotatedString { append(message) },
+		state = state,
+		filteringEnabled = filteringEnabled,
+		onSelected = onSelected,
+	)
+}
+
+@Composable
+fun <T> InteractivePrompt(
+	message: AnnotatedString,
+	state: PromptState<T>,
+	filteringEnabled: Boolean = true,
+	onSelected: (T) -> Unit,
+) {
 	val printer = LocalPrinter.current
 	val prompt = remember(message) {
 		"$message${if (message.last().isLetterOrDigit()) ":" else ""}"
@@ -281,9 +240,6 @@ fun <T> InteractivePrompt(
 	Column(
 		modifier = Modifier
 			.onKeyEvent {
-				// TODO: Remove once mosaic is pushed all the way to the top.
-				if (it.ctrl && it.key == "c") exit(0)
-
 				when {
 					it.key == "Enter" -> {
 						state.select()?.let { selected ->
