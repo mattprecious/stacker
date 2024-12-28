@@ -13,13 +13,146 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.runMosaicBlocking
+import com.jakewharton.mosaic.text.AnnotatedString
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.ui.Column
+import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
 import kotlinx.coroutines.awaitCancellation
 import platform.posix.exit
+
+@Composable
+fun Prompt(
+	message: String,
+	hideInput: Boolean = false,
+	onSubmit: (String) -> Unit,
+) {
+	Prompt(
+		message = buildAnnotatedString { append(message) },
+		hideInput = hideInput,
+		onSubmit = onSubmit,
+	)
+}
+
+@Composable
+fun Prompt(
+	message: AnnotatedString,
+	hideInput: Boolean = false,
+	onSubmit: (String) -> Unit,
+) {
+	val printer = LocalPrinter.current
+	var input by remember { mutableStateOf("") }
+
+	val prompt = remember {
+		buildAnnotatedString {
+			append(message)
+			append(": ")
+		}
+	}
+
+	Row {
+		Text(prompt)
+		Text(
+			modifier = Modifier.onKeyEvent {
+				// TODO: Remove once mosaic is pushed all the way to the top.
+				if (it.ctrl && it.key == "c") exit(0)
+
+				when {
+					it.key == "Enter" -> {
+						printer.printStatic(prompt + buildAnnotatedString { append(input) })
+						onSubmit(input)
+					}
+
+					it.key == "Backspace" -> input = input.dropLast(1)
+					it.key.singleOrNull()?.code in 32..126 -> input += it.key.single()
+					else -> return@onKeyEvent false
+				}
+
+				return@onKeyEvent true
+			},
+			value = if (hideInput) "" else input,
+		)
+	}
+}
+
+@Composable
+fun YesNoPrompt(
+	message: String,
+	default: Boolean? = null,
+	onSubmit: (Boolean) -> Unit,
+) {
+	YesNoPrompt(
+		message = buildAnnotatedString { append(message) },
+		default = default,
+		onSubmit = onSubmit,
+	)
+}
+
+@Composable
+fun YesNoPrompt(
+	message: AnnotatedString,
+	default: Boolean? = null,
+	onSubmit: (Boolean) -> Unit,
+) {
+	val printer = LocalPrinter.current
+	var input by remember { mutableStateOf("") }
+
+	val prompt = remember {
+		buildAnnotatedString {
+			append(message)
+			append(" ")
+
+			code {
+				val yes = if (default == true) "Y" else "y"
+				val no = if (default == false) "N" else "n"
+				append("[$yes/$no]")
+			}
+
+			append(": ")
+		}
+	}
+
+	fun submit(result: Boolean) {
+		val staticMessage = if (input == "") {
+			prompt
+		} else {
+			prompt + buildAnnotatedString { append(input) }
+		}
+
+		printer.printStatic(staticMessage)
+		onSubmit(result)
+	}
+
+	Row {
+		Text(prompt)
+		Text(
+			modifier = Modifier.onKeyEvent {
+				// TODO: Remove once mosaic is pushed all the way to the top.
+				if (it.ctrl && it.key == "c") exit(0)
+
+				when {
+					it.key == "Enter" -> when (input) {
+						"y", "Y" -> submit(true)
+						"n", "N" -> submit(false)
+						"" -> if (default != null) {
+							submit(default)
+						}
+						else -> input = ""
+					}
+
+					it.key == "Backspace" -> input = input.dropLast(1)
+					it.key.singleOrNull()?.code in 32..126 -> input += it.key.single()
+					else -> return@onKeyEvent false
+				}
+
+				return@onKeyEvent true
+			},
+			value = input,
+		)
+	}
+}
 
 fun <T> CliktCommand.interactivePrompt(
 	message: String,
