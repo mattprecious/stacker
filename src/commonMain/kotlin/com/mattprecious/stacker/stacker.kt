@@ -1,7 +1,9 @@
 package com.mattprecious.stacker
 
 import com.github.ajalt.clikt.core.main
-import com.mattprecious.stacker.command.Stacker
+import com.mattprecious.stacker.cli.StackerCli
+import com.mattprecious.stacker.command.CommandExecutor
+import com.mattprecious.stacker.command.RealCommandExecutor
 import com.mattprecious.stacker.config.RealConfigManager
 import com.mattprecious.stacker.lock.RealLocker
 import com.mattprecious.stacker.remote.GitHubRemote
@@ -27,7 +29,8 @@ fun main(args: Array<String>) {
 	try {
 		val terminal = memScoped { getenv("TERM")?.toKString() ?: "" }
 		withStacker(useFancySymbols = supportsFancySymbols(terminal)) {
-			it.main(args)
+			it.cleanUpBranches()
+			StackerCli(it).main(args)
 		}
 	} catch (e: RepoNotFoundException) {
 		println(e.message)
@@ -41,6 +44,7 @@ private fun supportsFancySymbols(term: String): Boolean {
 
 @OptIn(ExperimentalSerializationApi::class)
 internal fun withStacker(
+	commandExecutor: CommandExecutor = RealCommandExecutor(),
 	fileSystem: FileSystem = FileSystem.SYSTEM,
 	remoteOverride: Remote? = null,
 	useFancySymbols: Boolean = false,
@@ -75,14 +79,17 @@ internal fun withStacker(
 					else -> NoRemote()
 				}
 
-				Stacker(
-					configManager = configManager,
-					locker = locker,
-					remote = remote,
-					stackManager = stackManager,
-					useFancySymbols = useFancySymbols,
-					vc = vc,
-				).let(block)
+				block(
+					Stacker(
+						commandExecutor = commandExecutor,
+						configManager = configManager,
+						locker = locker,
+						remote = remote,
+						stackManager = stackManager,
+						useFancySymbols = useFancySymbols,
+						vc = vc,
+					),
+				)
 			}
 		}
 	}

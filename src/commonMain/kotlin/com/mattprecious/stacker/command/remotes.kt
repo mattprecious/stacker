@@ -1,7 +1,6 @@
 package com.mattprecious.stacker.command
 
 import com.github.ajalt.mordant.terminal.ConversionResult
-import com.mattprecious.stacker.command.StackerCommand.StackerCommandScope
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.remote.Remote

@@ -1,9 +1,8 @@
 package com.mattprecious.stacker.test
 
-import com.github.ajalt.clikt.testing.CliktCommandTestResult
-import com.github.ajalt.clikt.testing.test
+import com.mattprecious.stacker.Stacker
 import com.mattprecious.stacker.remote.FakeRemote
-import com.mattprecious.stacker.withStacker
+import com.mattprecious.stacker.test.command.TestCommandExecutor
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
@@ -23,11 +22,13 @@ import kotlin.random.Random
 import kotlin.reflect.KProperty
 import kotlin.test.fail
 
-fun stackerTest(
+internal fun stackerTest(
 	validate: StackerTestScope.() -> Unit,
 ) {
+	val commandExecutor = TestCommandExecutor()
 	val environment = Environment()
 	val fileSystem = FileSystem.SYSTEM
+	val remote = FakeRemote()
 	val tmpPath = tmpPath("StackerTest")
 
 	try {
@@ -39,7 +40,7 @@ fun stackerTest(
 			environment.setGitEmails("stacker@example.com")
 			environment.setGitDates("2020-01-01T12:00:00Z")
 
-			StackerTestScope(environment, fileSystem).validate()
+			StackerTestScope(commandExecutor, environment, fileSystem, remote).validate()
 		}
 	} finally {
 		fileSystem.deleteRecursively(tmpPath)
@@ -53,21 +54,18 @@ private fun tmpPath(name: String): Path {
 private fun randomToken(length: Int) = Random.nextBytes(length).toByteString(0, length).hex()
 
 class StackerTestScope(
+	val commandExecutor: TestCommandExecutor,
 	val environment: Environment,
 	val fileSystem: FileSystem,
+	val remote: FakeRemote,
 ) {
-	val remote = FakeRemote()
-
-	fun runStacker(vararg args: String): CliktCommandTestResult {
-		var result: CliktCommandTestResult? = null
-		withStacker(
+	fun withStacker(block: (Stacker) -> Unit) {
+		com.mattprecious.stacker.withStacker(
+			commandExecutor = commandExecutor,
 			fileSystem = fileSystem,
 			remoteOverride = remote,
-		) {
-			result = it.test(args.asList())
-		}
-
-		return result!!
+			block = block,
+		)
 	}
 }
 

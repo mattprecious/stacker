@@ -19,6 +19,7 @@ mosaic = "com.jakewharton.mosaic:mosaic-runtime:0.14.0"
 okio = "com.squareup.okio:okio:3.9.1"
 sqldelight-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
 sqldelight-dialect = { module = "app.cash.sqldelight:sqlite-3-38-dialect", version.ref = "sqldelight" }
+turbine = "app.cash.turbine:turbine:1.2.0"
 
 [plugins]
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

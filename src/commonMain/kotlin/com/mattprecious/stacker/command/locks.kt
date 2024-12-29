@@ -1,7 +1,6 @@
 package com.mattprecious.stacker.command
 
 import com.jakewharton.mosaic.text.buildAnnotatedString
-import com.mattprecious.stacker.command.StackerCommand.StackerCommandScope
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.code
 import com.mattprecious.stacker.stack.StackManager

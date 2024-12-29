@@ -16,7 +16,7 @@
 
 package com.mattprecious.stacker.command.downstack
 
-import com.mattprecious.stacker.command.StackerCommand.StackerCommandScope
+import com.mattprecious.stacker.command.StackerCommandScope
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.MemScope
