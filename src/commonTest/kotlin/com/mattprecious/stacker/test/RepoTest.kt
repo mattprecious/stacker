@@ -11,7 +11,6 @@ class RepoTest {
 		gitInit()
 		withStacker {
 			assertThat(it.repoInit()).isFalse()
-			commandExecutor.outputs.awaitItem()
 			assertThat(commandExecutor.outputs.awaitItem())
 				.isEqualTo(
 					"Stacker cannot be initialized in a completely empty repository. " +
