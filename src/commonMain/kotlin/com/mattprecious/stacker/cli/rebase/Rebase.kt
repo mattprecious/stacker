@@ -12,7 +12,7 @@ internal class Rebase(
 	private val abort: Boolean by option().flag()
 	private val cont: Boolean by option("--continue").flag()
 
-	override fun runCommand(): Boolean {
+	override suspend fun runCommand(): Boolean {
 		return when {
 			abort -> stacker.rebaseAbort()
 			cont -> stacker.rebaseContinue()

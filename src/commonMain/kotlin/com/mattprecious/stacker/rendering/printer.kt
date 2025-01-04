@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.rendering
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.jakewharton.mosaic.text.AnnotatedString
@@ -23,6 +24,7 @@ class Printer {
 	@Composable
 	fun Messages() {
 		Static(messages) {
+			SideEffect { println("PRINTING $it") }
 			Text(it)
 		}
 	}

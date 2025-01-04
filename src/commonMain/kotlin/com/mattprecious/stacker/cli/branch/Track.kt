@@ -10,5 +10,5 @@ internal class Track(
 ) : StackerCliktCommand(shortAlias = "tr") {
 	private val branchName: String? by argument().optional()
 
-	override fun runCommand() = stacker.branchTrack(branchName)
+	override suspend fun runCommand() = stacker.branchTrack(branchName)
 }

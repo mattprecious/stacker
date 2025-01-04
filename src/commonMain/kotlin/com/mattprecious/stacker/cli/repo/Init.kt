@@ -6,5 +6,5 @@ import com.mattprecious.stacker.cli.StackerCliktCommand
 internal class Init(
 	private val stacker: Stacker,
 ) : StackerCliktCommand() {
-	override fun runCommand() = stacker.repoInit()
+	override suspend fun runCommand() = stacker.repoInit()
 }

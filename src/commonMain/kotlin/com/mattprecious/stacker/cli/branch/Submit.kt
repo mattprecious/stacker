@@ -6,5 +6,5 @@ import com.mattprecious.stacker.cli.StackerCliktCommand
 internal class Submit(
 	private val stacker: Stacker,
 ) : StackerCliktCommand(shortAlias = "s") {
-	override fun runCommand() = stacker.branchSubmit()
+	override suspend fun runCommand() = stacker.branchSubmit()
 }

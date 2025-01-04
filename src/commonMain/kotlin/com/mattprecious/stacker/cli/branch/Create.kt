@@ -9,5 +9,5 @@ internal class Create(
 ) : StackerCliktCommand(shortAlias = "c") {
 	private val branchName by argument()
 
-	override fun runCommand() = stacker.branchCreate(branchName)
+	override suspend fun runCommand() = stacker.branchCreate(branchName)
 }

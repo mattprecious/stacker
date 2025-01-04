@@ -10,5 +10,5 @@ internal class Delete(
 ) : StackerCliktCommand(shortAlias = "dl") {
 	private val branchName: String? by argument().optional()
 
-	override fun runCommand() = stacker.branchDelete(branchName)
+	override suspend fun runCommand() = stacker.branchDelete(branchName)
 }

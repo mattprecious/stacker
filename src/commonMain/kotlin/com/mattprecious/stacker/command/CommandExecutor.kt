@@ -1,16 +1,16 @@
 package com.mattprecious.stacker.command
 
-import com.jakewharton.mosaic.runMosaicBlocking
+import com.jakewharton.mosaic.runMosaic
 
 interface CommandExecutor {
-	fun execute(command: StackerCommand): Boolean
+	suspend fun execute(command: StackerCommand): Boolean
 }
 
 internal class RealCommandExecutor : CommandExecutor {
-	override fun execute(command: StackerCommand): Boolean {
+	override suspend fun execute(command: StackerCommand): Boolean {
 		var result = false
 
-		runMosaicBlocking {
+		runMosaic {
 			command.Work(onFinish = { result = it })
 		}
 

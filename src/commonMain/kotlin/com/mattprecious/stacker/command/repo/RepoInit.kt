@@ -27,10 +27,11 @@ internal class RepoInit(
 		val branches = vc.branches
 		if (branches.isEmpty()) {
 			println("ERROR")
-			// We need a SHA in order to initialize. Additionally, I don't know how to get the current branch name when it's
-			// an unborn branch.
+			// We need a SHA in order to initialize. Additionally, I don't know how to get the current
+			// branch name when it's an unborn branch.
 			printStaticError(
-				"Stacker cannot be initialized in a completely empty repository. Please make a commit first.",
+				"Stacker cannot be initialized in a completely empty repository. Please make a commit " +
+					"first.",
 			)
 			abort()
 		}

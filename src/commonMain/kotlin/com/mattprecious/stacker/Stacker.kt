@@ -37,105 +37,105 @@ class Stacker(
 	private val useFancySymbols: Boolean,
 	private val vc: VersionControl,
 ) {
-	fun cleanUpBranches() {
+	suspend fun cleanUpBranches() {
 		stackManager.untrackBranches(vc.checkBranches(stackManager.trackedBranchNames.toSet()))
 	}
 
-	fun branchBottom(): Boolean {
+	suspend fun branchBottom(): Boolean {
 		return commandExecutor.execute(BranchBottom(configManager, locker, stackManager, vc))
 	}
 
-	fun branchCheckout(branchName: String?): Boolean {
+	suspend fun branchCheckout(branchName: String?): Boolean {
 		return commandExecutor.execute(
 			BranchCheckout(branchName, configManager, locker, stackManager, useFancySymbols, vc),
 		)
 	}
 
-	fun branchCreate(branchName: String): Boolean {
+	suspend fun branchCreate(branchName: String): Boolean {
 		return commandExecutor.execute(
 			BranchCreate(branchName, configManager, locker, stackManager, vc),
 		)
 	}
 
-	fun branchDelete(branchName: String?): Boolean {
+	suspend fun branchDelete(branchName: String?): Boolean {
 		return commandExecutor.execute(
 			BranchDelete(branchName, configManager, locker, stackManager, vc),
 		)
 	}
 
-	fun branchDown(): Boolean {
+	suspend fun branchDown(): Boolean {
 		return commandExecutor.execute(BranchDown(configManager, locker, stackManager, vc))
 	}
 
-	fun branchRename(newName: String): Boolean {
+	suspend fun branchRename(newName: String): Boolean {
 		return commandExecutor.execute(BranchRename(newName, configManager, locker, stackManager, vc))
 	}
 
-	fun branchRestack(branchName: String?): Boolean {
+	suspend fun branchRestack(branchName: String?): Boolean {
 		return commandExecutor.execute(
 			BranchRestack(branchName, configManager, locker, stackManager, vc),
 		)
 	}
 
-	fun branchSubmit(): Boolean {
+	suspend fun branchSubmit(): Boolean {
 		return commandExecutor.execute(BranchSubmit(configManager, locker, remote, stackManager, vc))
 	}
 
-	fun branchTop(): Boolean {
+	suspend fun branchTop(): Boolean {
 		return commandExecutor.execute(BranchTop(configManager, locker, stackManager, vc))
 	}
 
-	fun branchTrack(branchName: String?): Boolean {
+	suspend fun branchTrack(branchName: String?): Boolean {
 		return commandExecutor.execute(
 			BranchTrack(branchName, configManager, locker, stackManager, useFancySymbols, vc),
 		)
 	}
 
-	fun branchUntrack(branchName: String?): Boolean {
+	suspend fun branchUntrack(branchName: String?): Boolean {
 		return commandExecutor.execute(
 			BranchUntrack(branchName, configManager, locker, stackManager, vc),
 		)
 	}
 
-	fun branchUp(): Boolean {
+	suspend fun branchUp(): Boolean {
 		return commandExecutor.execute(BranchUp(configManager, locker, stackManager, vc))
 	}
 
-	fun downstackEdit(): Boolean {
+	suspend fun downstackEdit(): Boolean {
 		return commandExecutor.execute(DownstackEdit(configManager, locker, stackManager, vc))
 	}
 
-	fun logShort(): Boolean {
+	suspend fun logShort(): Boolean {
 		return commandExecutor.execute(LogShort(configManager, stackManager, useFancySymbols, vc))
 	}
 
-	fun rebaseAbort(): Boolean {
+	suspend fun rebaseAbort(): Boolean {
 		return commandExecutor.execute(RebaseAbort(configManager, locker, vc))
 	}
 
-	fun rebaseContinue(): Boolean {
+	suspend fun rebaseContinue(): Boolean {
 		return commandExecutor.execute(RebaseContinue(configManager, locker, stackManager, vc))
 	}
 
-	fun repoInit(): Boolean {
+	suspend fun repoInit(): Boolean {
 		return commandExecutor.execute(RepoInit(configManager, locker, vc))
 	}
 
-	fun repoSync(): Boolean {
+	suspend fun repoSync(): Boolean {
 		return commandExecutor.execute(RepoSync(configManager, remote, stackManager, vc))
 	}
 
-	fun stackSubmit(): Boolean {
+	suspend fun stackSubmit(): Boolean {
 		return commandExecutor.execute(StackSubmit(configManager, locker, remote, stackManager, vc))
 	}
 
-	fun upstackOnto(): Boolean {
+	suspend fun upstackOnto(): Boolean {
 		return commandExecutor.execute(
 			UpstackOnto(configManager, locker, stackManager, useFancySymbols, vc),
 		)
 	}
 
-	fun upstackRestack(): Boolean {
+	suspend fun upstackRestack(): Boolean {
 		return commandExecutor.execute(UpstackRestack(configManager, locker, stackManager, vc))
 	}
 }

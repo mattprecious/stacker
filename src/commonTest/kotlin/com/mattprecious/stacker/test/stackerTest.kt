@@ -7,6 +7,7 @@ import kotlinx.cinterop.convert
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
+import kotlinx.coroutines.runBlocking
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
 import okio.Path
@@ -23,7 +24,7 @@ import kotlin.reflect.KProperty
 import kotlin.test.fail
 
 internal fun stackerTest(
-	validate: StackerTestScope.() -> Unit,
+	validate: suspend StackerTestScope.() -> Unit,
 ) {
 	val commandExecutor = TestCommandExecutor()
 	val environment = Environment()
@@ -34,13 +35,15 @@ internal fun stackerTest(
 	try {
 		fileSystem.createDirectories(tmpPath, mustCreate = true)
 
-		environment.withSnapshot {
-			environment.workingDirectory = fileSystem.canonicalize(tmpPath).toString()
-			environment.setGitNames("Stacker")
-			environment.setGitEmails("stacker@example.com")
-			environment.setGitDates("2020-01-01T12:00:00Z")
+		runBlocking {
+			environment.withSnapshot {
+				environment.workingDirectory = fileSystem.canonicalize(tmpPath).toString()
+				environment.setGitNames("Stacker")
+				environment.setGitEmails("stacker@example.com")
+				environment.setGitDates("2020-01-01T12:00:00Z")
 
-			StackerTestScope(commandExecutor, environment, fileSystem, remote).validate()
+				StackerTestScope(commandExecutor, environment, fileSystem, remote).validate()
+			}
 		}
 	} finally {
 		fileSystem.deleteRecursively(tmpPath)
@@ -59,7 +62,7 @@ class StackerTestScope(
 	val fileSystem: FileSystem,
 	val remote: FakeRemote,
 ) {
-	fun withStacker(block: (Stacker) -> Unit) {
+	suspend fun withStacker(block: suspend (Stacker) -> Unit) {
 		com.mattprecious.stacker.withStacker(
 			commandExecutor = commandExecutor,
 			fileSystem = fileSystem,
@@ -118,7 +121,7 @@ class Environment {
 	 *  Captures the existing values for all the mutable properties in [Environment] and restores them
 	 *  after [block] returns.
 	 */
-	fun withSnapshot(block: () -> Unit) {
+	suspend fun withSnapshot(block: suspend () -> Unit) {
 		val snapshot = snapshot()
 		try {
 			block()

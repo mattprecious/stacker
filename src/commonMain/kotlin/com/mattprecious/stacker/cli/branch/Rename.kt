@@ -9,5 +9,5 @@ internal class Rename(
 ) : StackerCliktCommand(shortAlias = "rn") {
 	private val newName by argument()
 
-	override fun runCommand() = stacker.branchRename(newName)
+	override suspend fun runCommand() = stacker.branchRename(newName)
 }

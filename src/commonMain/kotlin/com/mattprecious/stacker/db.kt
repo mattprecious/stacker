@@ -8,9 +8,9 @@ import com.mattprecious.stacker.db.RepoDatabase
 import com.mattprecious.stacker.db.jsonAdapter
 import okio.Path
 
-inline fun withDatabase(
+suspend inline fun withDatabase(
 	path: Path,
-	crossinline block: (db: RepoDatabase) -> Unit,
+	crossinline block: suspend (db: RepoDatabase) -> Unit,
 ) {
 	NativeSqliteDriver(
 		schema = RepoDatabase.Schema,

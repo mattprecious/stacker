@@ -10,5 +10,5 @@ internal class Untrack(
 ) : StackerCliktCommand(shortAlias = "ut") {
 	private val branchName: String? by argument().optional()
 
-	override fun runCommand() = stacker.branchUntrack(branchName)
+	override suspend fun runCommand() = stacker.branchUntrack(branchName)
 }

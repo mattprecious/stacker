@@ -6,5 +6,5 @@ import com.mattprecious.stacker.cli.StackerCliktCommand
 internal class Onto(
 	private val stacker: Stacker,
 ) : StackerCliktCommand(shortAlias = "o") {
-	override fun runCommand() = stacker.upstackOnto()
+	override suspend fun runCommand() = stacker.upstackOnto()
 }

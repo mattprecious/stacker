@@ -10,5 +10,5 @@ internal class Restack(
 ) : StackerCliktCommand(shortAlias = "r") {
 	private val branchName: String? by argument().optional()
 
-	override fun runCommand() = stacker.branchRestack(branchName)
+	override suspend fun runCommand() = stacker.branchRestack(branchName)
 }

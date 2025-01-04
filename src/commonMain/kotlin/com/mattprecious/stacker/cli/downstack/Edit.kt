@@ -6,5 +6,5 @@ import com.mattprecious.stacker.cli.StackerCliktCommand
 internal class Edit(
 	private val stacker: Stacker,
 ) : StackerCliktCommand(shortAlias = "e") {
-	override fun runCommand() = stacker.downstackEdit()
+	override suspend fun runCommand() = stacker.downstackEdit()
 }

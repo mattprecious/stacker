@@ -10,5 +10,5 @@ internal class Checkout(
 ) : StackerCliktCommand(shortAlias = "co") {
 	private val branchName: String? by argument().optional()
 
-	override fun runCommand(): Boolean = stacker.branchCheckout(branchName)
+	override suspend fun runCommand(): Boolean = stacker.branchCheckout(branchName)
 }

@@ -18,6 +18,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okio.FileSystem
@@ -28,9 +29,12 @@ import kotlin.system.exitProcess
 fun main(args: Array<String>) {
 	try {
 		val terminal = memScoped { getenv("TERM")?.toKString() ?: "" }
-		withStacker(useFancySymbols = supportsFancySymbols(terminal)) {
-			it.cleanUpBranches()
-			StackerCli(it).main(args)
+
+		runBlocking {
+			withStacker(useFancySymbols = supportsFancySymbols(terminal)) {
+				it.cleanUpBranches()
+				StackerCli(it).main(args)
+			}
 		}
 	} catch (e: RepoNotFoundException) {
 		println(e.message)
@@ -43,12 +47,12 @@ private fun supportsFancySymbols(term: String): Boolean {
 }
 
 @OptIn(ExperimentalSerializationApi::class)
-internal fun withStacker(
+internal suspend fun withStacker(
 	commandExecutor: CommandExecutor = RealCommandExecutor(),
 	fileSystem: FileSystem = FileSystem.SYSTEM,
 	remoteOverride: Remote? = null,
 	useFancySymbols: Boolean = false,
-	block: (Stacker) -> Unit,
+	block: suspend (Stacker) -> Unit,
 ) {
 	memScoped {
 		val shell = RealShell()
