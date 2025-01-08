@@ -22,7 +22,7 @@ sqldelight-dialect = { module = "app.cash.sqldelight:sqlite-3-38-dialect", versi
 
 [plugins]
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-spotless = "com.diffplug.spotless:6.25.0"
+spotless = "com.diffplug.spotless:7.0.1"
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
