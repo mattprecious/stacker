@@ -1,44 +1,44 @@
 package com.mattprecious.stacker.command
 
-import com.github.ajalt.clikt.core.Abort
-import com.github.ajalt.clikt.core.CliktCommand
-import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.ConversionResult
-import com.github.ajalt.mordant.terminal.prompt
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.remote.Remote
+import com.mattprecious.stacker.rendering.Prompt
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.stack.TreeNode
 import com.mattprecious.stacker.vc.VersionControl
 
-internal fun CliktCommand.requireAuthenticated(remote: Remote) {
+internal suspend fun StackerCommandScope.requireAuthenticated(remote: Remote) {
 	if (!remote.isAuthenticated) {
-		terminal.prompt(
-			prompt = "Please enter a GitHub access token",
-			hideInput = true,
-		) {
-			when {
-				it.isBlank() -> ConversionResult.Invalid("Cannot be blank.")
-				remote.setToken(it) -> ConversionResult.Valid(it)
-				else -> ConversionResult.Invalid("Invalid token.")
-			}
+		val token = render { onResult ->
+			Prompt(
+				message = "Please enter a GitHub access token",
+				hideInput = true,
+				onSubmit = onResult,
+			)
+		}
+
+		when {
+			token.isBlank() -> ConversionResult.Invalid("Cannot be blank.")
+			remote.setToken(token) -> ConversionResult.Valid(token)
+			else -> ConversionResult.Invalid("Invalid token.")
 		}
 	}
 
 	if (remote.repoName == null) {
-		echo("Unable to parse repository name from origin URL.", err = true)
-		throw Abort()
+		printStaticError("Unable to parse repository name from origin URL.")
+		abort()
 	}
 
 	if (!remote.hasRepoAccess) {
-		echo("Personal token does not have access to ${remote.repoName}.", err = true)
-		throw Abort()
+		printStaticError("Personal token does not have access to ${remote.repoName}.")
+		abort()
 	}
 }
 
 internal fun TreeNode<Branch>.submit(
-	command: CliktCommand,
+	commandScope: StackerCommandScope,
 	configManager: ConfigManager,
 	remote: Remote,
 	stackManager: StackManager,
@@ -67,8 +67,10 @@ internal fun TreeNode<Branch>.submit(
 	stackManager.updatePrNumber(value, result.number)
 
 	when (result) {
-		is Remote.PrResult.Created -> command.echo("Pull request created: ${result.url}")
-		is Remote.PrResult.Updated -> command.echo("Pull request updated: ${result.url}")
-		is Remote.PrResult.NoChange -> command.echo("Pull request already up-to-date: ${result.url}")
+		is Remote.PrResult.Created -> commandScope.printStatic("Pull request created: ${result.url}")
+		is Remote.PrResult.Updated -> commandScope.printStatic("Pull request updated: ${result.url}")
+		is Remote.PrResult.NoChange -> {
+			commandScope.printStatic("Pull request already up-to-date: ${result.url}")
+		}
 	}
 }

@@ -60,7 +60,7 @@ kotlin {
 				implementation(libs.ktor.client.curl)
 				implementation(libs.ktor.client.negotiation)
 				implementation(libs.ktor.serialization.json)
-				implementation(libs.mosaic)
+				implementation(libs.mosaic.runtime)
 				implementation(libs.okio)
 				implementation(libs.sqldelight.driver)
 			}
@@ -71,6 +71,7 @@ kotlin {
 				implementation(libs.assertk)
 				implementation(libs.coroutines.test)
 				implementation(libs.kotlin.test)
+				implementation(libs.mosaic.testing)
 			}
 		}
 	}

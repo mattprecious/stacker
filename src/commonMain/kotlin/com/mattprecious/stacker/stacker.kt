@@ -1,7 +1,7 @@
 package com.mattprecious.stacker
 
 import com.github.ajalt.clikt.core.main
-import com.mattprecious.stacker.command.Stacker
+import com.mattprecious.stacker.cli.StackerCli
 import com.mattprecious.stacker.config.RealConfigManager
 import com.mattprecious.stacker.lock.RealLocker
 import com.mattprecious.stacker.remote.GitHubRemote
@@ -16,6 +16,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.toKString
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okio.FileSystem
@@ -26,8 +27,11 @@ import kotlin.system.exitProcess
 fun main(args: Array<String>) {
 	try {
 		val terminal = memScoped { getenv("TERM")?.toKString() ?: "" }
-		withStacker(useFancySymbols = supportsFancySymbols(terminal)) {
-			it.main(args)
+
+		runBlocking {
+			withStacker(useFancySymbols = supportsFancySymbols(terminal)) {
+				StackerCli(it).main(args)
+			}
 		}
 	} catch (e: RepoNotFoundException) {
 		println(e.message)
@@ -40,11 +44,11 @@ private fun supportsFancySymbols(term: String): Boolean {
 }
 
 @OptIn(ExperimentalSerializationApi::class)
-internal fun withStacker(
+internal suspend fun withStacker(
 	fileSystem: FileSystem = FileSystem.SYSTEM,
 	remoteOverride: Remote? = null,
 	useFancySymbols: Boolean = false,
-	block: (Stacker) -> Unit,
+	block: suspend (StackerDeps) -> Unit,
 ) {
 	memScoped {
 		val shell = RealShell()
@@ -55,6 +59,10 @@ internal fun withStacker(
 
 			withDatabase(vc.configDirectory / "stacker.db") { db ->
 				val stackManager = RealStackManager(db)
+
+				// TODO: Do this somewhere else...
+				stackManager.untrackBranches(vc.checkBranches(stackManager.trackedBranchNames.toSet()))
+
 				val configManager = RealConfigManager(db, fileSystem, stackManager)
 				val locker = RealLocker(db, stackManager, vc)
 				val httpClient = HttpClient(Curl) {
@@ -75,14 +83,16 @@ internal fun withStacker(
 					else -> NoRemote()
 				}
 
-				Stacker(
-					configManager = configManager,
-					locker = locker,
-					remote = remote,
-					stackManager = stackManager,
-					useFancySymbols = useFancySymbols,
-					vc = vc,
-				).let(block)
+				block(
+					StackerDeps(
+						configManager = configManager,
+						locker = locker,
+						remote = remote,
+						stackManager = stackManager,
+						useFancySymbols = useFancySymbols,
+						vc = vc,
+					),
+				)
 			}
 		}
 	}

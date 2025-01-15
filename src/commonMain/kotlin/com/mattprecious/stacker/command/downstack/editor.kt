@@ -16,7 +16,7 @@
 
 package com.mattprecious.stacker.command.downstack
 
-import com.github.ajalt.clikt.core.CliktError
+import com.mattprecious.stacker.command.StackerCommandScope
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.MemScope
@@ -37,6 +37,7 @@ import platform.posix.system
 import platform.posix.tmpnam
 
 internal class Editor(
+	private val commandScope: StackerCommandScope,
 	private val editorPath: String?,
 	private val requireSave: Boolean,
 	private val extension: String,
@@ -48,18 +49,27 @@ internal class Editor(
 		}
 	}
 
-	private fun editFileWithEditor(editorCmd: String, filename: String) {
+	private suspend fun editFileWithEditor(editorCmd: String, filename: String) {
 		val exitCode = system("$editorCmd $filename")
-		if (exitCode != 0) throw CliktError("${editorCmd.takeWhile { !it.isWhitespace() }}: Editing failed!")
+		if (exitCode != 0) {
+			commandScope.printStaticError(
+				"${editorCmd.takeWhile { !it.isWhitespace() }}: Editing failed!",
+			)
+			commandScope.abort()
+		}
 	}
 
-	fun edit(text: String): String? = memScoped {
+	suspend fun edit(text: String): String? = memScoped {
 		var filename = "${
 			tmpnam(null)!!.toKString().trimEnd('.').replace("\\", "/")
 		}.${extension.trimStart('.')}"
 
-		val file =
-			fopen(filename, "w") ?: throw CliktError("Error creating temporary file (errno=$errno)")
+		val file = fopen(filename, "w")
+		if (file == null) {
+			commandScope.printStaticError("Error creating temporary file (errno=$errno)")
+			commandScope.abort()
+		}
+
 		try {
 			val editorCmd = getEditorPath()
 			fputs(normalizeEditorText(editorCmd, text), file)
@@ -73,8 +83,13 @@ internal class Editor(
 				return null
 			}
 
-			return readFileIfExists(filename)?.replace("\r\n", "\n")
-				?: throw CliktError("Could not read file")
+			val replaceResult = readFileIfExists(filename)?.replace("\r\n", "\n")
+			if (replaceResult == null) {
+				commandScope.printStaticError("Could not read file")
+				commandScope.abort()
+			}
+
+			return replaceResult
 		} finally {
 			remove(filename)
 		}
