@@ -26,8 +26,8 @@ import kotlin.random.Random
 import kotlin.reflect.KProperty
 import kotlin.test.fail
 
-internal fun stackerTest(
-	validate: suspend StackerTestScope.() -> Unit,
+internal fun withTestEnvironment(
+	validate: suspend TestEnvironment.() -> Unit,
 ) {
 	val environment = Environment()
 	val fileSystem = FileSystem.SYSTEM
@@ -44,7 +44,7 @@ internal fun stackerTest(
 				environment.setGitEmails("stacker@example.com")
 				environment.setGitDates("2020-01-01T12:00:00Z")
 
-				StackerTestScope(environment, fileSystem, remote).validate()
+				TestEnvironment(environment, fileSystem, remote).validate()
 			}
 		}
 	} finally {
@@ -58,7 +58,7 @@ private fun tmpPath(name: String): Path {
 
 private fun randomToken(length: Int) = Random.nextBytes(length).toByteString(0, length).hex()
 
-class StackerTestScope(
+class TestEnvironment(
 	val environment: Environment,
 	val fileSystem: FileSystem,
 	val remote: FakeRemote,
