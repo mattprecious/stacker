@@ -2,23 +2,23 @@ package com.mattprecious.stacker.test
 
 import okio.Path
 
-fun StackerTestScope.gitInit() {
+fun TestEnvironment.gitInit() {
 	environment.exec("git init")
 }
 
-fun StackerTestScope.gitAdd(
+fun TestEnvironment.gitAdd(
 	vararg files: Path,
 ) {
 	environment.exec("git add ${files.joinToString(" ")}")
 }
 
-fun StackerTestScope.gitCommit(
+fun TestEnvironment.gitCommit(
 	message: String,
 ) {
 	// TODO: Escaping.
 	environment.exec("git commit -m \"$message\"")
 }
 
-fun StackerTestScope.gitHeadSha(): String {
+fun TestEnvironment.gitHeadSha(): String {
 	return environment.exec("git rev-parse HEAD")
 }

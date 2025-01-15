@@ -9,7 +9,7 @@ import kotlin.test.Test
 
 class RepoTest {
 	@Test
-	fun errorsInitializingEmptyRepo() = stackerTest {
+	fun errorsInitializingEmptyRepo() = withTestEnvironment {
 		gitInit()
 
 		testCommand({ repoInit() }) {

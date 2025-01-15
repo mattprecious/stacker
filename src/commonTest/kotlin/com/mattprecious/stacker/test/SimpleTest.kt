@@ -13,7 +13,7 @@ import kotlin.test.assertFailsWith
 
 class SimpleTest {
 	@Test
-	fun throwsErrorIfNoRepositoryFound() = stackerTest {
+	fun throwsErrorIfNoRepositoryFound() = withTestEnvironment {
 		val t = assertFailsWith<RepoNotFoundException> { testInit() }
 		assertThat(t).message()
 			.isEqualTo("No repository found at ${fileSystem.canonicalize(".".toPath())}.")
@@ -22,7 +22,7 @@ class SimpleTest {
 	}
 
 	@Test
-	fun environmentSetupMakesGitShaDeterministic() = stackerTest {
+	fun environmentSetupMakesGitShaDeterministic() = withTestEnvironment {
 		gitInit()
 		environment.exec("touch hello.txt")
 		gitAdd("hello.txt".toPath())
@@ -31,7 +31,7 @@ class SimpleTest {
 	}
 
 	@Test
-	fun dbIsCreatedInGitDirectory() = stackerTest {
+	fun dbIsCreatedInGitDirectory() = withTestEnvironment {
 		gitInit()
 		assertThat(fileSystem.exists(".git/stacker.db".toPath())).isFalse()
 
