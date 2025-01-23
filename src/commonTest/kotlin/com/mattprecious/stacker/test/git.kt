@@ -16,7 +16,7 @@ fun TestEnvironment.gitCommit(
 	message: String,
 ) {
 	// TODO: Escaping.
-	environment.exec("git commit -m \"$message\"")
+	environment.exec("git commit --allow-empty -m \"$message\"")
 }
 
 fun TestEnvironment.gitHeadSha(): String {

@@ -1,4 +1,7 @@
+import assertk.assertThat
+import assertk.assertions.isEqualTo
 import com.jakewharton.mosaic.Mosaic
+import com.jakewharton.mosaic.layout.KeyEvent
 import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.TestMosaic
 import com.jakewharton.mosaic.testing.runMosaicTest
@@ -13,10 +16,9 @@ suspend fun StackerCommand.test(
 
 		// The first snapshot will always be empty since command execution is started inside a
 		// launched effect. Discard it.
-		scope.awaitOutput()
+		scope.awaitFrame("")
 
 		scope.validate()
-		scope.expectNoItems()
 	}
 }
 
@@ -24,9 +26,11 @@ class CommandTestScope internal constructor(
 	command: StackerCommand,
 	private val mosaic: TestMosaic<Mosaic>,
 ) {
-	private val statics = ArrayDeque<String>()
-	private val outputs = ArrayDeque<String>()
-	private var result: Boolean? = null
+	var result: Boolean? = null
+		private set
+
+	// So the IDE doesn't trim trailing spaces in test assertions...
+	val s = " "
 
 	init {
 		mosaic.setContent {
@@ -34,47 +38,22 @@ class CommandTestScope internal constructor(
 		}
 	}
 
-	fun expectNoItems() {
-		if (outputs.isNotEmpty()) {
-			throw AssertionError("Expected no outputs but found \"${outputs.first()}\"")
-		}
-
-		if (statics.isNotEmpty()) {
-			throw AssertionError("Expected no statics but found \"${statics.first()}\"")
-		}
-
-		if (result != null) {
-			throw AssertionError("Expected no result but found $result")
-		}
+	fun sendText(text: String) {
+		text.forEach { mosaic.sendKeyEvent(KeyEvent("$it")) }
 	}
 
-	suspend fun awaitResult(): Boolean {
-		while (result == null) {
-			awaitAndProcessSnapshot()
-		}
-
-		return result!!.also { result = null }
+	fun sendKeyEvent(keyEvent: KeyEvent) {
+		mosaic.sendKeyEvent(keyEvent)
 	}
 
-	suspend fun awaitOutput(): String {
-		while (outputs.isEmpty()) {
-			awaitAndProcessSnapshot()
-		}
-
-		return outputs.removeFirst()
-	}
-
-	suspend fun awaitStatic(): String {
-		while (statics.isEmpty()) {
-			awaitAndProcessSnapshot()
-		}
-
-		return statics.removeFirst()
-	}
-
-	private suspend fun awaitAndProcessSnapshot() {
+	suspend fun awaitFrame(
+		output: String,
+		static: String = ""
+	) {
 		val snapshot = mosaic.awaitSnapshot()
-		statics.addAll(snapshot.paintStatics().map { it.render(AnsiLevel.NONE) })
-		outputs.add(snapshot.paint().render(AnsiLevel.NONE))
+		assertThat(snapshot.paintStatics().joinToString("\n") { it.render(AnsiLevel.NONE) })
+			.isEqualTo(static)
+
+		assertThat(snapshot.paint().render(AnsiLevel.NONE)).isEqualTo(output)
 	}
 }
