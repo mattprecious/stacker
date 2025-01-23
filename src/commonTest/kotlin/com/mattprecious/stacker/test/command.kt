@@ -1,22 +1,26 @@
+
+import androidx.compose.runtime.snapshotFlow
+import assertk.assertThat
 import com.jakewharton.mosaic.Mosaic
+import com.jakewharton.mosaic.layout.KeyEvent
 import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.TestMosaic
 import com.jakewharton.mosaic.testing.runMosaicTest
-import com.jakewharton.mosaic.ui.AnsiLevel
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.command.StackerCommand.State
+import com.mattprecious.stacker.command.StackerCommand.WorkState
+import com.mattprecious.stacker.test.matches
+import com.mattprecious.stacker.test.sendText
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.seconds
 
 suspend fun StackerCommand.test(
 	validate: suspend CommandTestScope.() -> Unit,
 ) {
 	runMosaicTest(MosaicSnapshots) {
-		val scope = CommandTestScope(command = this@test, mosaic = this)
-
-		// The first snapshot will always be empty since command execution is started inside a
-		// launched effect. Discard it.
-		scope.awaitOutput()
-
-		scope.validate()
-		scope.expectNoItems()
+		CommandTestScope(command = this@test, mosaic = this).validate()
 	}
 }
 
@@ -24,57 +28,53 @@ class CommandTestScope internal constructor(
 	command: StackerCommand,
 	private val mosaic: TestMosaic<Mosaic>,
 ) {
-	private val statics = ArrayDeque<String>()
-	private val outputs = ArrayDeque<String>()
 	private var result: Boolean? = null
 
+	private val state = WorkState()
+
 	init {
-		mosaic.setContent {
-			command.Work(onFinish = { result = it })
+		val snapshot = mosaic.setContentAndSnapshot {
+			command.Work(workState = state, onFinish = { result = it })
 		}
+
+		// Because of our state machine internals, the first snapshot will always be blank.
+		assertThat(snapshot).matches("")
 	}
 
-	fun expectNoItems() {
-		if (outputs.isNotEmpty()) {
-			throw AssertionError("Expected no outputs but found \"${outputs.first()}\"")
+	fun sendText(text: String) {
+		mosaic.sendText(text)
+	}
+
+	fun sendKeyEvent(keyEvent: KeyEvent) {
+		mosaic.sendKeyEvent(keyEvent)
+	}
+
+	suspend fun awaitFrame(
+		output: String,
+		static: String = "",
+	) {
+		withTimeout(1.seconds) {
+			snapshotFlow { state.state }
+				.filter { it is State.Rendering<*> || it is State.TerminalState }
+				.first()
 		}
 
-		if (statics.isNotEmpty()) {
-			throw AssertionError("Expected no statics but found \"${statics.first()}\"")
-		}
-
-		if (result != null) {
-			throw AssertionError("Expected no result but found $result")
-		}
+		assertThat(mosaic.awaitSnapshot()).matches(output, static)
 	}
 
 	suspend fun awaitResult(): Boolean {
-		while (result == null) {
-			awaitAndProcessSnapshot()
+		result?.let { return it }
+
+		withTimeout(1.seconds) {
+			snapshotFlow { state.state }
+				.filter { it is State.TerminalState }
+				.first()
 		}
 
-		return result!!.also { result = null }
-	}
+		// The internal state machine of StackerCommand requires an extra composition in order to
+		// terminate. This composition will emit an empty frame.
+		awaitFrame("")
 
-	suspend fun awaitOutput(): String {
-		while (outputs.isEmpty()) {
-			awaitAndProcessSnapshot()
-		}
-
-		return outputs.removeFirst()
-	}
-
-	suspend fun awaitStatic(): String {
-		while (statics.isEmpty()) {
-			awaitAndProcessSnapshot()
-		}
-
-		return statics.removeFirst()
-	}
-
-	private suspend fun awaitAndProcessSnapshot() {
-		val snapshot = mosaic.awaitSnapshot()
-		statics.addAll(snapshot.paintStatics().map { it.render(AnsiLevel.NONE) })
-		outputs.add(snapshot.paint().render(AnsiLevel.NONE))
+		return result!!
 	}
 }
