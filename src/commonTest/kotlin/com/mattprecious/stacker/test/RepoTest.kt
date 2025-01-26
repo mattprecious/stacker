@@ -33,7 +33,7 @@ class RepoTest {
 				"""
 				|Select your trunk branch, which you open pull requests against:$s
 				|❯ main                                                         $s
-				""".trimMargin()
+				""".trimMargin(),
 			)
 
 			sendKeyEvent(KeyEvent("Enter"))

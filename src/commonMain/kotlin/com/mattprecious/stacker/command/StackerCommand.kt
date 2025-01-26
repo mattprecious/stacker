@@ -4,14 +4,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import com.jakewharton.mosaic.runMosaic
 import com.mattprecious.stacker.rendering.LocalPrinter
 import com.mattprecious.stacker.rendering.Printer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.withContext
 
@@ -42,20 +44,33 @@ abstract class StackerCommand {
 	}
 
 	@Composable
-	internal fun Work(onFinish: (Boolean) -> Unit) {
+	internal fun rememberWorkState(): WorkState {
+		return remember { WorkState() }
+	}
+
+	@Stable
+	internal class WorkState {
+		val state = mutableStateOf<State>(State.Working)
+	}
+
+	@Composable
+	internal fun Work(
+		onFinish: (Boolean) -> Unit,
+		state: WorkState = rememberWorkState(),
+	) {
 		val printer = remember { Printer() }
-		val state = remember { MutableStateFlow<State>(State.Working) }
 
 		// Mosaic will wait for all effects to finish before exiting. Finished and Aborted signal that
 		// we should terminate this collect in order to tear down.
 		val currentState = remember {
-			state.transformWhile {
-				// We need to emit the terminal state so that the LaunchedEffect below can be interrupted.
-				emit(it)
-				it !is State.TerminalState
-			}
+			snapshotFlow { state.state.value }
+				.transformWhile {
+					// We need to emit the terminal state so that the LaunchedEffect below can be interrupted.
+					emit(it)
+					it !is State.TerminalState
+				}
 		}
-			.collectAsState(state.value)
+			.collectAsState(state.state.value)
 			.value
 
 		printer.Messages()
@@ -67,14 +82,14 @@ abstract class StackerCommand {
 				// Don't block the render thread.
 				withContext(Dispatchers.IO) {
 					StackerCommandScope(printer, state).work()
-					state.value = State.Finished
+					state.state.value = State.Finished
 				}
 			}
 		}
 
 		if (currentState is State.Rendering<*>) {
 			CompositionLocalProvider(LocalPrinter provides printer) {
-				currentState.content { state.value = State.DeliveringRenderResult(it) }
+				currentState.content { state.state.value = State.DeliveringRenderResult(it) }
 			}
 		}
 	}
