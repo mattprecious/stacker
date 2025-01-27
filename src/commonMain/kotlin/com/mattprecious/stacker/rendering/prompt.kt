@@ -25,7 +25,7 @@ fun Prompt(
 	onSubmit: (String) -> Unit,
 ) {
 	Prompt(
-		message = buildAnnotatedString { append(message) },
+		message = remember(message) { buildAnnotatedString { append(message) } },
 		hideInput = hideInput,
 		onSubmit = onSubmit,
 	)
@@ -40,7 +40,7 @@ fun Prompt(
 	val printer = LocalPrinter.current
 	var input by remember { mutableStateOf("") }
 
-	val prompt = remember {
+	val prompt = remember(message) {
 		buildAnnotatedString {
 			append(message)
 			append(": ")
@@ -76,7 +76,7 @@ fun YesNoPrompt(
 	onSubmit: (Boolean) -> Unit,
 ) {
 	YesNoPrompt(
-		message = buildAnnotatedString { append(message) },
+		message = remember(message) { buildAnnotatedString { append(message) } },
 		default = default,
 		onSubmit = onSubmit,
 	)
@@ -91,7 +91,7 @@ fun YesNoPrompt(
 	val printer = LocalPrinter.current
 	var input by remember { mutableStateOf("") }
 
-	val prompt = remember {
+	val prompt = remember(message, default) {
 		buildAnnotatedString {
 			append(message)
 			append(" ")
@@ -218,7 +218,7 @@ fun <T> InteractivePrompt(
 	onSelected: (T) -> Unit,
 ) {
 	InteractivePrompt(
-		message = buildAnnotatedString { append(message) },
+		message = remember(message) { buildAnnotatedString { append(message) } },
 		state = state,
 		filteringEnabled = filteringEnabled,
 		onSelected = onSelected,
