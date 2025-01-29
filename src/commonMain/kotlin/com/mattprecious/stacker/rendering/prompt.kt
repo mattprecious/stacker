@@ -58,7 +58,7 @@ fun Prompt(
 					}
 
 					it.key == "Backspace" -> input = input.dropLast(1)
-					it.key.singleOrNull()?.code in 32..126 -> input += it.key.single()
+					!it.ctrl && it.key.singleOrNull()?.code in 32..126 -> input += it.key.single()
 					else -> return@onKeyEvent false
 				}
 
@@ -132,7 +132,7 @@ fun YesNoPrompt(
 					}
 
 					it.key == "Backspace" -> input = input.dropLast(1)
-					it.key.singleOrNull()?.code in 32..126 -> input += it.key.single()
+					!it.ctrl && it.key.singleOrNull()?.code in 32..126 -> input += it.key.single()
 					else -> return@onKeyEvent false
 				}
 
