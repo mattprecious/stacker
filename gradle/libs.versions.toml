@@ -7,7 +7,7 @@ sqldelight = "2.0.2"
 
 [libraries]
 assertk = "com.willowtreeapps.assertk:assertk:0.28.1"
-clikt = "com.github.ajalt.clikt:clikt:5.0.2"
+clikt = "com.github.ajalt.clikt:clikt:5.0.3"
 coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
 kotlin-serialization-json = "org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0"
