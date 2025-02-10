@@ -105,6 +105,11 @@ internal class RepoInit(
 			}
 		}
 
-		configManager.initializeRepo(trunk = trunk, trunkSha = trunkSha, trailingTrunk = trailingTrunk)
+		configManager.initializeRepo(
+			scope = this,
+			trunk = trunk,
+			trunkSha = trunkSha,
+			trailingTrunk = trailingTrunk,
+		)
 	}
 }
