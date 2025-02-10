@@ -33,9 +33,9 @@ class SimpleTest {
 	@Test
 	fun dbIsCreatedInGitDirectory() = withTestEnvironment {
 		gitInit()
-		assertThat(fileSystem.exists(".git/stacker.db".toPath())).isFalse()
+		assertThat(fileSystem.exists(defaultDbPath)).isFalse()
 
 		testInit()
-		assertThat(fileSystem.exists(".git/stacker.db".toPath())).isTrue()
+		assertThat(fileSystem.exists(defaultDbPath)).isTrue()
 	}
 }

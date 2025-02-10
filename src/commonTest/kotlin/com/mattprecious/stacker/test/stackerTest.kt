@@ -3,6 +3,7 @@ package com.mattprecious.stacker.test
 import CommandTestScope
 import com.mattprecious.stacker.StackerDeps
 import com.mattprecious.stacker.command.StackerCommand
+import com.mattprecious.stacker.db.RepoDatabase
 import com.mattprecious.stacker.remote.FakeRemote
 import com.mattprecious.stacker.withStacker
 import kotlinx.cinterop.convert
@@ -13,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import okio.ByteString.Companion.toByteString
 import okio.FileSystem
 import okio.Path
+import okio.Path.Companion.toPath
 import platform.posix.chdir
 import platform.posix.fgets
 import platform.posix.getcwd
@@ -63,8 +65,22 @@ class TestEnvironment(
 	val fileSystem: FileSystem,
 	val remote: FakeRemote,
 ) {
+	val defaultDbPath = ".git/stacker.db".toPath()
+
 	suspend fun testInit() {
 		withStacker { }
+	}
+
+	suspend fun withDatabase(
+		path: Path = defaultDbPath,
+		requireExists: Boolean = true,
+		block: (RepoDatabase) -> Unit,
+	) {
+		if (requireExists) {
+			require(fileSystem.exists(path))
+		}
+
+		com.mattprecious.stacker.withDatabase(path, block)
 	}
 
 	suspend fun testCommand(
