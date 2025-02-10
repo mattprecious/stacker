@@ -7,7 +7,7 @@ import assertk.assertions.isFalse
 import com.mattprecious.stacker.command.repo.repoInit
 import kotlin.test.Test
 
-class RepoTest {
+class RepoInitTest {
 	@Test
 	fun errorsInitializingEmptyRepo() = withTestEnvironment {
 		gitInit()
