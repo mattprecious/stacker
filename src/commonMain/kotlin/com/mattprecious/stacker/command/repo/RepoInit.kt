@@ -74,19 +74,21 @@ internal class RepoInit(
 
 		val trunkSha = vc.getSha(trunk)
 
-		val useTrailing = render { onResult ->
-			YesNoPrompt(
-				message = "Do you use a trailing-trunk workflow?",
-				default = currentTrailingTrunk != null,
-				onSubmit = { onResult(it) },
-			)
+		val useTrailing = if (branches.size == 1) {
+			false
+		} else {
+			render { onResult ->
+				YesNoPrompt(
+					message = "Do you use a trailing-trunk workflow?",
+					default = currentTrailingTrunk != null,
+					onSubmit = { onResult(it) },
+				)
+			}
 		}
 
 		val trailingTrunk: String? = if (!useTrailing) {
 			null
 		} else {
-			// TODO: This assumes that the trailing trunk branch already exists. It will fail if there's
-			//  only one branch in the repo.
 			render { onResult ->
 				InteractivePrompt(
 					message = "Select your trailing trunk branch, which you branch from",
