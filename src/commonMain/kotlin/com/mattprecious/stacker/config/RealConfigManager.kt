@@ -1,9 +1,13 @@
 package com.mattprecious.stacker.config
 
+import com.jakewharton.mosaic.text.buildAnnotatedString
+import com.mattprecious.stacker.command.StackerCommandScope
+import com.mattprecious.stacker.command.name
 import com.mattprecious.stacker.db.RepoConfig
 import com.mattprecious.stacker.db.RepoDatabase
 import com.mattprecious.stacker.delegates.Permissions
 import com.mattprecious.stacker.delegates.jsonFile
+import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.stack.StackManager
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.toKString
@@ -53,7 +57,8 @@ class RealConfigManager(
 			userConfig = userConfig.copy(githubToken = value)
 		}
 
-	override fun initializeRepo(
+	override suspend fun initializeRepo(
+		scope: StackerCommandScope,
 		trunk: String,
 		trunkSha: String,
 		trailingTrunk: String?,
@@ -70,7 +75,29 @@ class RealConfigManager(
 
 		val trailingChangingWithChildren = trailingTrunkChanging && currentTrailingTrunkBranch?.children?.isNotEmpty() == true
 		val trunkChangingWithChildren = trunkChanging && currentTrunkBranch?.children?.any { it != currentTrailingTrunkBranch } == true
-		require(!trunkChangingWithChildren && !trailingChangingWithChildren)
+		if (trunkChangingWithChildren) {
+			scope.printStaticError(
+				buildAnnotatedString {
+					append("Cannot change trunk. Current trunk branch ")
+					branch { append(currentTrunkBranch.name) }
+					append(" has children.")
+				},
+			)
+
+			scope.abort()
+		}
+
+		if (trailingChangingWithChildren) {
+			scope.printStaticError(
+				buildAnnotatedString {
+					append("Cannot change trailing trunk. Current trailing trunk branch ")
+					branch { append(currentTrailingTrunkBranch.name) }
+					append(" has children.")
+				},
+			)
+
+			scope.abort()
+		}
 
 		if (trailingTrunkChanging) {
 			currentTrailingTrunkBranch?.value?.let(stackManager::untrackBranch)

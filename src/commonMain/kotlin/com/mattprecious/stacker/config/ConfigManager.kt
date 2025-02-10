@@ -1,5 +1,6 @@
 package com.mattprecious.stacker.config
 
+import com.mattprecious.stacker.command.StackerCommandScope
 import com.mattprecious.stacker.db.RepoConfig
 
 interface ConfigManager {
@@ -10,7 +11,8 @@ interface ConfigManager {
 
 	var githubToken: String?
 
-	fun initializeRepo(
+	suspend fun initializeRepo(
+		scope: StackerCommandScope,
 		trunk: String,
 		trunkSha: String,
 		trailingTrunk: String?,
