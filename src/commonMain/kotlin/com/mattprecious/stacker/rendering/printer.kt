@@ -8,7 +8,7 @@ import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.ui.Static
 import com.jakewharton.mosaic.ui.Text
 
-val LocalPrinter = staticCompositionLocalOf { Printer() }
+val LocalPrinter = staticCompositionLocalOf<Printer> { throw AssertionError() }
 
 class Printer {
 	private val messages = SnapshotStateList<AnnotatedString>()
