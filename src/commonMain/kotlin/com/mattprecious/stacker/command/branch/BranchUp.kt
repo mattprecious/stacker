@@ -11,6 +11,7 @@ import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
+import kotlinx.collections.immutable.toPersistentList
 
 fun StackerDeps.branchUp(): StackerCommand {
 	return BranchUp(
@@ -41,7 +42,7 @@ internal class BranchUp(
 					message = "Move up to",
 					state = remember {
 						PromptState(
-							options = options,
+							options.toPersistentList(),
 							default = options.find { it.name == vc.currentBranchName },
 							displayTransform = { it.name },
 							valueTransform = { it.name },

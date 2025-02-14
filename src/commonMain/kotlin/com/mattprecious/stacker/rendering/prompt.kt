@@ -17,6 +17,7 @@ import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun Prompt(
@@ -145,7 +146,7 @@ fun YesNoPrompt(
 
 @Stable
 class PromptState<T>(
-	options: List<T>,
+	options: ImmutableList<T>,
 	default: T?,
 	private val displayTransform: (T) -> String,
 	private val valueTransform: (T) -> String,
