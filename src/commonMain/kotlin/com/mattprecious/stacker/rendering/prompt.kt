@@ -5,6 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -17,6 +18,7 @@ import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
+import com.mattprecious.stacker.radiateFrom
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -146,33 +148,38 @@ fun YesNoPrompt(
 
 @Stable
 class PromptState<T>(
-	options: ImmutableList<T>,
+	private val options: ImmutableList<T>,
 	default: T?,
 	private val displayTransform: (T) -> String,
 	private val valueTransform: (T) -> String,
+	private val optionKey: (T) -> Any? = { it },
 ) {
 	@Immutable
 	internal inner class Option(
 		val option: T,
-		val highlighted: Boolean,
 	) {
 		val display: String get() = displayTransform(option)
 		val value: String get() = valueTransform(option)
 	}
 
-	private var highlighted by mutableStateOf(default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0)
+	// Highlighting logic when filtering or unfiltering is:
+	// - When appending to the filter, maintain the currently highlighted option if it remains in the
+	//   newly filtered list.
+	// - If it is no longer visible, move highlight to the closest remaining option.
+	//   - In the case of a tie, prefer the earlier (left/top) option.
+	// - When popping from the filter, restore the highlight to what it was for this filter
+	//   previously, unless an arrow key was pressed at any point since the filter was appended.
+	var highlighted by mutableStateOf(default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0)
+		private set
 
-	private var _filter by mutableStateOf("")
-	internal val filter: String get() = _filter
+	private val highlightedStack = mutableStateListOf<Int>()
+
+	internal var filter by mutableStateOf("")
+		private set
 
 	internal val filteredOptions by derivedStateOf {
 		options
-			.mapIndexed { index, option ->
-				Option(
-					option = option,
-					highlighted = index == highlighted,
-				)
-			}
+			.map(::Option)
 			.filter { it.value.contains(filter) }
 	}
 
@@ -181,19 +188,49 @@ class PromptState<T>(
 	}
 
 	internal fun moveUp() {
+		if (filteredOptions.isEmpty()) return
 		highlighted = (highlighted - 1).coerceAtLeast(0)
+		highlightedStack.clear()
 	}
 
 	internal fun moveDown() {
+		if (filteredOptions.isEmpty()) return
 		highlighted = (highlighted + 1).coerceAtMost(filteredOptions.size - 1)
+		highlightedStack.clear()
 	}
 
 	internal fun filterAppend(char: Char) {
-		updateFilter(_filter + char)
+		val prioritizedNextHighlight = if (filteredOptions.isEmpty()) {
+			null
+		} else {
+			filteredOptions.radiateFrom(highlighted)
+		}
+
+		highlightedStack.add(highlighted)
+		filter += char
+
+		highlighted = prioritizedNextHighlight?.firstNotNullOfOrNull { nextPrioritized ->
+			filteredOptions
+				.indexOfFirst { optionKey(it.option) == optionKey(nextPrioritized.option) }
+				.takeIf { it != -1 }
+		} ?: 0
 	}
 
 	internal fun filterDrop() {
-		updateFilter(_filter.dropLast(1))
+		val lastHighlighted = filteredOptions.getOrNull(highlighted)?.option
+		filter = filter.dropLast(1)
+
+		highlighted = when {
+			highlightedStack.isNotEmpty() -> highlightedStack.removeLast()
+			lastHighlighted != null -> {
+				val key = optionKey(lastHighlighted)
+				filteredOptions
+					.indexOfFirst { optionKey(it.option) == key }
+					.coerceAtLeast(0)
+			}
+
+			else -> 0
+		}
 	}
 
 	internal fun select(): Option? {
@@ -202,12 +239,6 @@ class PromptState<T>(
 		} else {
 			null
 		}
-	}
-
-	private fun updateFilter(newFilter: String) {
-		if (newFilter == _filter) return
-		_filter = newFilter
-		highlighted = highlighted.coerceIn(0, (filteredOptions.size - 1).coerceAtLeast(0))
 	}
 }
 
@@ -277,9 +308,9 @@ fun <T> InteractivePrompt(
 	) {
 		Text("$prompt ${state.filter}")
 
-		state.filteredOptions.forEach { option ->
+		state.filteredOptions.forEachIndexed { index, option ->
 			val text = buildAnnotatedString {
-				val styleIndex = if (option.highlighted) {
+				val styleIndex = if (index == state.highlighted) {
 					append("❯ ")
 					pushStyle(SpanStyle(textStyle = TextStyle.Underline))
 				} else {
