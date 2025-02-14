@@ -14,6 +14,7 @@ import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
+import kotlinx.collections.immutable.toPersistentList
 
 fun StackerDeps.branchTrack(
 	branchName: String?,
@@ -72,7 +73,7 @@ internal class BranchTrack(
 					message = "Checkout a branch",
 					state = remember {
 						PromptState(
-							options = options,
+							options.toPersistentList(),
 							default = options.find { it.branch.name == defaultName },
 							displayTransform = { it.pretty },
 							valueTransform = { it.branch.name },

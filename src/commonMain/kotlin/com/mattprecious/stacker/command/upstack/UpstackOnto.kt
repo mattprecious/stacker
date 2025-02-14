@@ -17,6 +17,7 @@ import com.mattprecious.stacker.rendering.code
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.stack.all
 import com.mattprecious.stacker.vc.VersionControl
+import kotlinx.collections.immutable.toPersistentList
 
 fun StackerDeps.upstackOnto(): StackerCommand {
 	return UpstackOnto(
@@ -71,7 +72,7 @@ internal class UpstackOnto(
 				},
 				state = remember {
 					PromptState(
-						options = options,
+						options.toPersistentList(),
 						default = options.find { it.branch.name == currentBranch.parent!!.name },
 						displayTransform = { it.pretty },
 						valueTransform = { it.branch.name },

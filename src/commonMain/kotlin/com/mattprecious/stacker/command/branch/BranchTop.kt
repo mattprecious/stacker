@@ -13,6 +13,7 @@ import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.stack.TreeNode
 import com.mattprecious.stacker.vc.VersionControl
+import kotlinx.collections.immutable.toPersistentList
 
 fun StackerDeps.branchTop(): StackerCommand {
 	return BranchTop(
@@ -42,7 +43,7 @@ internal class BranchTop(
 					message = "Choose which top",
 					state = remember {
 						PromptState(
-							options = options,
+							options.toPersistentList(),
 							default = null,
 							displayTransform = { it.name },
 							valueTransform = { it.name },

@@ -55,6 +55,7 @@ kotlin {
 			dependencies {
 				implementation(libs.clikt)
 				implementation(libs.coroutines.core)
+				implementation(libs.kotlin.collections.immutable)
 				implementation(libs.kotlin.serialization.json)
 				implementation(libs.ktor.client.core)
 				implementation(libs.ktor.client.curl)

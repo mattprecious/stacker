@@ -16,6 +16,7 @@ import com.mattprecious.stacker.rendering.code
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.stack.ancestors
 import com.mattprecious.stacker.vc.VersionControl
+import kotlinx.collections.immutable.toPersistentList
 
 fun StackerDeps.downstackEdit(): StackerCommand {
 	return DownstackEdit(
@@ -87,8 +88,7 @@ internal class DownstackEdit(
 					filteringEnabled = false,
 					state = remember {
 						PromptState(
-							options = RemovedOption.entries,
-							default = null,
+							RemovedOption.entries.toPersistentList(), default = null,
 							displayTransform = { it.render(downstackTrunk) },
 							valueTransform = { it.render(downstackTrunk) },
 						)
