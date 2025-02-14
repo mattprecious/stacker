@@ -3,8 +3,8 @@ package com.mattprecious.stacker.test
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import assertk.Assert
-import assertk.assertions.support.expected
-import assertk.assertions.support.show
+import assertk.assertions.isEqualTo
+import assertk.assertions.prop
 import com.jakewharton.mosaic.Mosaic
 import com.jakewharton.mosaic.layout.KeyEvent
 import com.jakewharton.mosaic.testing.TestMosaic
@@ -36,18 +36,13 @@ fun Assert<Mosaic>.matches(
 	output?.let(::hasOutputEqualTo)
 }
 
-fun Assert<Mosaic>.hasOutputEqualTo(expected: String) = given { actual ->
-	val renderedOutput = actual.paint().render(AnsiLevel.NONE)
-	if (renderedOutput != expected) {
-		expected("output:${show(expected)} but was output:${show(renderedOutput)}")
-	}
+fun Assert<Mosaic>.hasOutputEqualTo(expected: String) {
+	prop("output") { it.paint().render(AnsiLevel.NONE) }.isEqualTo(expected)
 }
 
-fun Assert<Mosaic>.hasStaticsEqualTo(expected: String) = given { actual ->
-	val renderedStatics = actual.paintStatics().joinToString("\n") { it.render(AnsiLevel.NONE) }
-	if (renderedStatics != expected) {
-		expected("static:${show(expected)} but was static:${show(renderedStatics)}")
-	}
+fun Assert<Mosaic>.hasStaticsEqualTo(expected: String) {
+	prop("statics") { it.paintStatics().joinToString("\n") { it.render(AnsiLevel.NONE) } }
+		.isEqualTo(expected)
 }
 
 fun TestMosaic<*>.sendText(text: String) {
