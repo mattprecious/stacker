@@ -52,7 +52,7 @@ jobs:
 
       - uses: dorny/test-reporter@v1
         # Doesn't work with forks.
-        if: github.event.pull_request == null || github.event.pull_request.head.repo.full_name ==  github.event.pull_request.base.repo.full_name
+        if: (success() || failure()) && (github.event.pull_request == null || github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
         with:
           name: ${{ matrix.os }} Tests
           path: '**/build/test-results/**/TEST-*.xml'
