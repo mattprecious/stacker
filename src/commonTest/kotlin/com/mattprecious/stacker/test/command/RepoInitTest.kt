@@ -1,4 +1,4 @@
-package com.mattprecious.stacker.test
+package com.mattprecious.stacker.test.command
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -11,6 +11,12 @@ import assertk.assertions.isTrue
 import com.jakewharton.mosaic.layout.KeyEvent
 import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.db.Branch
+import com.mattprecious.stacker.test.util.gitCommit
+import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
+import com.mattprecious.stacker.test.util.gitInit
+import com.mattprecious.stacker.test.util.gitSetDefaultBranch
+import com.mattprecious.stacker.test.util.s
+import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class RepoInitTest {

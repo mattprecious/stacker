@@ -2,6 +2,7 @@ package com.mattprecious.stacker.command.repo
 
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.mattprecious.stacker.StackerDeps
+import com.mattprecious.stacker.collections.TreeNode
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.StackerCommandScope
 import com.mattprecious.stacker.command.name
@@ -11,7 +12,6 @@ import com.mattprecious.stacker.remote.Remote
 import com.mattprecious.stacker.rendering.YesNoPrompt
 import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.stack.StackManager
-import com.mattprecious.stacker.stack.TreeNode
 import com.mattprecious.stacker.vc.VersionControl
 
 fun StackerDeps.repoSync(): StackerCommand {

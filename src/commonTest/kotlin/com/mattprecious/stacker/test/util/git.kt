@@ -1,4 +1,4 @@
-package com.mattprecious.stacker.test
+package com.mattprecious.stacker.test.util
 
 import okio.Path
 

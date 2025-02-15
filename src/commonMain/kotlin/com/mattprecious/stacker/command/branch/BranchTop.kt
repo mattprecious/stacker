@@ -2,6 +2,7 @@ package com.mattprecious.stacker.command.branch
 
 import androidx.compose.runtime.remember
 import com.mattprecious.stacker.StackerDeps
+import com.mattprecious.stacker.collections.TreeNode
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.StackerCommandScope
 import com.mattprecious.stacker.command.name
@@ -11,7 +12,6 @@ import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.stack.StackManager
-import com.mattprecious.stacker.stack.TreeNode
 import com.mattprecious.stacker.vc.VersionControl
 import kotlinx.collections.immutable.toPersistentList
 

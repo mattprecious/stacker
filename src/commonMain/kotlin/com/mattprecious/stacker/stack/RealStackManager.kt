@@ -1,5 +1,8 @@
 package com.mattprecious.stacker.stack
 
+import com.mattprecious.stacker.collections.TreeNode
+import com.mattprecious.stacker.collections.all
+import com.mattprecious.stacker.collections.treeOf
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.db.RepoDatabase
 

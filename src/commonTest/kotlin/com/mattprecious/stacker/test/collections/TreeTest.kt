@@ -1,4 +1,4 @@
-package com.mattprecious.stacker.test.stack
+package com.mattprecious.stacker.test.collections
 
 import assertk.assertFailure
 import assertk.assertThat
@@ -8,11 +8,11 @@ import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNull
 import assertk.assertions.isSameInstanceAs
-import com.mattprecious.stacker.stack.TreeNode
-import com.mattprecious.stacker.stack.all
-import com.mattprecious.stacker.stack.ancestors
-import com.mattprecious.stacker.stack.descendants
-import com.mattprecious.stacker.stack.treeOf
+import com.mattprecious.stacker.collections.TreeNode
+import com.mattprecious.stacker.collections.all
+import com.mattprecious.stacker.collections.ancestors
+import com.mattprecious.stacker.collections.descendants
+import com.mattprecious.stacker.collections.treeOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 

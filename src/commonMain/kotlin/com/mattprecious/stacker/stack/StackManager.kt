@@ -1,5 +1,6 @@
 package com.mattprecious.stacker.stack
 
+import com.mattprecious.stacker.collections.TreeNode
 import com.mattprecious.stacker.db.Branch
 
 interface StackManager {

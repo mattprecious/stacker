@@ -1,4 +1,4 @@
-package com.mattprecious.stacker.test
+package com.mattprecious.stacker.test.util
 
 import assertk.assertThat
 import assertk.assertions.isEmpty
@@ -11,7 +11,7 @@ import okio.Path.Companion.toPath
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
-class SimpleTest {
+class EnvironmentTest {
 	@Test
 	fun throwsErrorIfNoRepositoryFound() = withTestEnvironment {
 		val t = assertFailsWith<RepoNotFoundException> { testInit() }

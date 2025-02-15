@@ -1,4 +1,4 @@
-package com.mattprecious.stacker.test
+package com.mattprecious.stacker.test.rendering
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +13,11 @@ import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.runMosaicTest
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.test.util.hasStaticsEqualTo
+import com.mattprecious.stacker.test.util.matches
+import com.mattprecious.stacker.test.util.s
+import com.mattprecious.stacker.test.util.sendText
+import com.mattprecious.stacker.test.util.setContentWithStatics
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test

@@ -1,8 +1,8 @@
-package com.mattprecious.stacker.test
+package com.mattprecious.stacker.test.collections
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
-import com.mattprecious.stacker.radiateFrom
+import com.mattprecious.stacker.collections.radiateFrom
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
