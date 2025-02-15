@@ -18,7 +18,7 @@ import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
-import com.mattprecious.stacker.radiateFrom
+import com.mattprecious.stacker.collections.radiateFrom
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable

@@ -9,8 +9,8 @@ import com.jakewharton.mosaic.testing.runMosaicTest
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.StackerCommand.State
 import com.mattprecious.stacker.command.StackerCommand.WorkState
-import com.mattprecious.stacker.test.matches
-import com.mattprecious.stacker.test.sendText
+import com.mattprecious.stacker.test.util.matches
+import com.mattprecious.stacker.test.util.sendText
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout

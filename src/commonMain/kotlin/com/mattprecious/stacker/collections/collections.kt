@@ -1,6 +1,17 @@
-package com.mattprecious.stacker.stack
+package com.mattprecious.stacker.collections
 
 import androidx.compose.runtime.Stable
+
+fun <T> List<T>.radiateFrom(index: Int) = sequence {
+	yield(get(index))
+
+	var left = index - 1
+	var right = index + 1
+	while (left >= 0 || right < size) {
+		if (left >= 0) yield(get(left--))
+		if (right < size) yield(get(right++))
+	}
+}
 
 fun <K : Any, T : Any> treeOf(
 	elements: Collection<T>,

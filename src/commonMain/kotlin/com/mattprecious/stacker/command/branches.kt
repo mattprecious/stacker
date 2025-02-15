@@ -1,7 +1,7 @@
 package com.mattprecious.stacker.command
 
+import com.mattprecious.stacker.collections.TreeNode
 import com.mattprecious.stacker.db.Branch
-import com.mattprecious.stacker.stack.TreeNode
 
 val TreeNode<Branch>.name: String
 	get() = value.name
