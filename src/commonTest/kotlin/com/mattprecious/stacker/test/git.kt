@@ -3,7 +3,7 @@ package com.mattprecious.stacker.test
 import okio.Path
 
 fun TestEnvironment.gitInit() {
-	environment.exec("git init")
+	environment.exec("git init --initial-branch='main'")
 	gitSetDefaultBranch("main")
 }
 
