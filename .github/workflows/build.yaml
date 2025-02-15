@@ -64,3 +64,17 @@ jobs:
           name: stacker-${{ matrix.target }}
           path: build/bin/${{ matrix.target }}/releaseExecutable/stacker.kexe
           if-no-files-found: error
+
+  final-status:
+    if: always()
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - name: Check
+        run: |
+          results=$(tr -d '\n' <<< '${{ toJSON(needs.*.result) }}')
+          if ! grep -q -v -E '(failure|cancelled)' <<< "$results"; then
+            echo "One or more required jobs failed"
+            exit 1
+          fi
