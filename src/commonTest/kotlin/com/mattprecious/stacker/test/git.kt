@@ -4,6 +4,7 @@ import okio.Path
 
 fun TestEnvironment.gitInit() {
 	environment.exec("git init")
+	gitSetDefaultBranch("main")
 }
 
 fun TestEnvironment.gitAdd(
