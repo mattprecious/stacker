@@ -88,7 +88,8 @@ internal class DownstackEdit(
 					filteringEnabled = false,
 					state = remember {
 						PromptState(
-							RemovedOption.entries.toPersistentList(), default = null,
+							RemovedOption.entries.toPersistentList(),
+							default = null,
 							displayTransform = { it.render(downstackTrunk) },
 							valueTransform = { it.render(downstackTrunk) },
 						)
