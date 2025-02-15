@@ -10,6 +10,7 @@ import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.rendering.YesNoPrompt
 import com.mattprecious.stacker.vc.VersionControl
+import kotlinx.collections.immutable.toPersistentList
 
 fun StackerDeps.repoInit(): StackerCommand {
 	return RepoInit(
@@ -62,7 +63,7 @@ internal class RepoInit(
 				message = "Select your trunk branch, which you open pull requests against",
 				state = remember {
 					PromptState(
-						options = branches,
+						branches.toPersistentList(),
 						default = defaultTrunk,
 						displayTransform = { it },
 						valueTransform = { it },
@@ -94,7 +95,7 @@ internal class RepoInit(
 					message = "Select your trailing trunk branch, which you branch from",
 					state = remember {
 						PromptState(
-							options = branches.filterNot { it == trunk },
+							branches.filterNot { it == trunk }.toPersistentList(),
 							default = currentTrailingTrunk,
 							displayTransform = { it },
 							valueTransform = { it },
