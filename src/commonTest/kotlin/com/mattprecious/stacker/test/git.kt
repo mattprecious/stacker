@@ -4,6 +4,7 @@ import okio.Path
 
 fun TestEnvironment.gitInit() {
 	environment.exec("git init")
+	gitSetDefaultBranch("main")
 }
 
 fun TestEnvironment.gitAdd(
@@ -17,6 +18,12 @@ fun TestEnvironment.gitCommit(
 ) {
 	// TODO: Escaping.
 	environment.exec("git commit -m \"$message\"")
+}
+
+fun TestEnvironment.gitSetDefaultBranch(
+	name: String,
+) {
+	environment.exec("git config set init.defaultBranch '$name'")
 }
 
 fun TestEnvironment.gitHeadSha(): String {
