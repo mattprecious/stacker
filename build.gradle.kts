@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.CInteropProcess
 
 plugins {
+	alias(libs.plugins.burst)
 	alias(libs.plugins.compose.compiler)
 	alias(libs.plugins.spotless)
 	alias(libs.plugins.sqldelight)

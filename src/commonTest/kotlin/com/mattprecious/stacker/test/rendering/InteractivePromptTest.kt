@@ -22,7 +22,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
-class PromptTest {
+class InteractivePromptTest {
 	@Test
 	fun firstOptionIsHighlighted() = runTest {
 		var result: String? = null
