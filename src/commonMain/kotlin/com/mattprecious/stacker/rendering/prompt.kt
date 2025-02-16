@@ -56,7 +56,13 @@ fun Prompt(
 			modifier = Modifier.onKeyEvent {
 				when {
 					it.key == "Enter" -> {
-						printer.printStatic(prompt + buildAnnotatedString { append(input) })
+						val staticMessage = if (hideInput) {
+							prompt
+						} else {
+							prompt + buildAnnotatedString { append(input) }
+						}
+
+						printer.printStatic(staticMessage)
 						onSubmit(input)
 					}
 
