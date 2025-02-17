@@ -2,6 +2,7 @@ package com.mattprecious.stacker.rendering
 
 import com.jakewharton.mosaic.text.AnnotatedString
 import com.jakewharton.mosaic.text.SpanStyle
+import com.jakewharton.mosaic.text.withStyle
 import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.TextStyle.Companion.Italic
 
@@ -20,13 +21,4 @@ fun AnnotatedString.Builder.branch(content: AnnotatedString.Builder.() -> Unit) 
 
 fun AnnotatedString.Builder.code(content: AnnotatedString.Builder.() -> Unit) {
 	withStyle(codeStyle, content)
-}
-
-private fun AnnotatedString.Builder.withStyle(
-	style: SpanStyle,
-	content: AnnotatedString.Builder.() -> Unit,
-) {
-	pushStyle(style)
-	content()
-	pop()
 }
