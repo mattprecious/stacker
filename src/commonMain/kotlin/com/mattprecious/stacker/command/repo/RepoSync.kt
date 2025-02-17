@@ -14,8 +14,11 @@ import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
-fun StackerDeps.repoSync(): StackerCommand {
+fun StackerDeps.repoSync(
+	forceAskToDelete: Boolean,
+): StackerCommand {
 	return RepoSync(
+		forceAskToDelete = forceAskToDelete,
 		configManager = configManager,
 		remote = remote,
 		stackManager = stackManager,
@@ -24,6 +27,7 @@ fun StackerDeps.repoSync(): StackerCommand {
 }
 
 internal class RepoSync(
+	private val forceAskToDelete: Boolean,
 	private val configManager: ConfigManager,
 	private val remote: Remote,
 	private val stackManager: StackManager,
@@ -36,14 +40,16 @@ internal class RepoSync(
 		vc.pull(trunk)
 		trailingTrunk?.let(vc::pull)
 
-		stackManager.getBase()!!.offerBranchDeletion(this) { it.name != trunk && it.name != trailingTrunk }
+		stackManager.getBase()!!.offerBranchDeletion(this) {
+			it.name != trunk &&
+				it.name != trailingTrunk &&
+				(forceAskToDelete || !it.value.hasAskedToDelete)
+		}
 	}
 
 	/**
-	 * Recursively checks the status of any remote PRs associated with this branch and offers to delete the branch locally
-	 * if PR is in a terminal state.
-	 *
-	 * Does not remember your selection if you say "no", and will ask again on subsequent calls.
+	 * Recursively checks the status of any remote PRs associated with this branch and offers to
+	 * delete the branch locally if PR is in a terminal state.
 	 */
 	private suspend fun TreeNode<Branch>.offerBranchDeletion(
 		commandScope: StackerCommandScope,
@@ -78,6 +84,8 @@ internal class RepoSync(
 
 				stackManager.untrackBranch(value)
 				vc.delete(name)
+			} else {
+				stackManager.setHasAskedToDelete(value)
 			}
 		}
 
