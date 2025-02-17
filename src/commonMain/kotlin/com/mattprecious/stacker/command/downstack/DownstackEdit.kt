@@ -121,9 +121,12 @@ internal class DownstackEdit(
 		}
 
 		newStack.windowed(size = 2, step = 1, partialWindows = true).forEach {
-			val branch = stackManager.getBranch(it.first())!!
-			val parent = stackManager.getBranch(it.getOrNull(1) ?: downstackTrunk)!!
-			stackManager.updateParent(branch = branch.value, parent = parent.value)
+			// We temporarily make branches inaccessible while changing parents one-by-one, so pass
+			// strings rather than Branch references.
+			stackManager.updateParent(
+				branch = it.first(),
+				parent = it.getOrNull(1) ?: downstackTrunk,
+			)
 		}
 
 		val operation = Locker.Operation.Restack(

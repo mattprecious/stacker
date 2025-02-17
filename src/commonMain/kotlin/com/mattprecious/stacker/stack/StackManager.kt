@@ -31,6 +31,11 @@ interface StackManager {
 	fun updateParent(
 		branch: Branch,
 		parent: Branch,
+	) = updateParent(branch.name, parent.name)
+
+	fun updateParent(
+		branch: String,
+		parent: String,
 	)
 
 	fun updateParentSha(
