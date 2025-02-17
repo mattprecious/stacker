@@ -27,6 +27,13 @@ fun TestEnvironment.gitCheckoutBranch(
 	environment.exec("git checkout $name")
 }
 
+fun TestEnvironment.gitCreateBranch(
+	name: String,
+	startPoint: String = "HEAD",
+) {
+	environment.exec("git branch $name $startPoint")
+}
+
 fun TestEnvironment.gitCreateAndCheckoutBranch(
 	name: String,
 ) {
