@@ -8,7 +8,6 @@ interface VersionControl : AutoCloseable {
 	val currentBranchName: String
 	val originUrl: String?
 	val branches: List<String>
-	val editor: String?
 
 	/** The default branch name from git config. Not necessarily the trunk branch in this repo. */
 	val defaultBranch: String?

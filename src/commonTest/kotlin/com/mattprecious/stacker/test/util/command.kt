@@ -2,10 +2,12 @@
 import androidx.compose.runtime.snapshotFlow
 import assertk.assertThat
 import com.jakewharton.mosaic.Mosaic
+import com.jakewharton.mosaic.Terminal
 import com.jakewharton.mosaic.layout.KeyEvent
 import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.TestMosaic
 import com.jakewharton.mosaic.testing.runMosaicTest
+import com.jakewharton.mosaic.ui.unit.IntSize
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.StackerCommand.State
 import com.mattprecious.stacker.command.StackerCommand.WorkState
@@ -47,6 +49,10 @@ class CommandTestScope internal constructor(
 
 	fun sendKeyEvent(keyEvent: KeyEvent) {
 		mosaic.sendKeyEvent(keyEvent)
+	}
+
+	fun setSize(size: IntSize) {
+		mosaic.terminalState.value = Terminal(size)
 	}
 
 	suspend fun awaitFrame(
