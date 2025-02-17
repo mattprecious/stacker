@@ -73,7 +73,8 @@ internal class RepoSync(
 
 			if (delete == true) {
 				if (vc.currentBranchName == name) {
-					vc.checkout(parent!!.name)
+					// Our original parent might have been deleted, so we need to re-query the stack.
+					vc.checkout(stackManager.getBranch(name)!!.parent!!.name)
 				}
 
 				stackManager.untrackBranch(value)
