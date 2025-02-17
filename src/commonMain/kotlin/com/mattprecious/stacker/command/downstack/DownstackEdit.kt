@@ -14,6 +14,7 @@ import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.rendering.code
+import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 import kotlinx.collections.immutable.toPersistentList
@@ -90,8 +91,8 @@ internal class DownstackEdit(
 						PromptState(
 							RemovedOption.entries.toPersistentList(),
 							default = null,
-							displayTransform = { it.render(downstackTrunk) },
-							valueTransform = { it.render(downstackTrunk) },
+							displayTransform = { it.render(downstackTrunk).toAnnotatedString() },
+							valueTransform = { it.render(downstackTrunk).toAnnotatedString() },
 						)
 					},
 					onSelected = { onResult(it) },

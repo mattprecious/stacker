@@ -13,6 +13,7 @@ import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.runMosaicTest
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.test.util.hasStaticsEqualTo
 import com.mattprecious.stacker.test.util.matches
 import com.mattprecious.stacker.test.util.s
@@ -195,8 +196,8 @@ class InteractivePromptTest {
 						PromptState(
 							options = animals,
 							default = null,
-							displayTransform = { "${it.adjective} ${it.name}" },
-							valueTransform = { it.name },
+							displayTransform = { "${it.adjective} ${it.name}".toAnnotatedString() },
+							valueTransform = { it.name.toAnnotatedString() },
 						)
 					},
 					filteringEnabled = false,
@@ -539,8 +540,8 @@ class InteractivePromptTest {
 								"Jaguar",
 							),
 							default = "Fox",
-							displayTransform = { it },
-							valueTransform = { it },
+							displayTransform = { it.toAnnotatedString() },
+							valueTransform = { it.toAnnotatedString() },
 						)
 					},
 					filteringEnabled = true,
@@ -651,8 +652,8 @@ class InteractivePromptTest {
 					"Bear",
 				),
 				default = default,
-				displayTransform = { it },
-				valueTransform = { it },
+				displayTransform = { it.toAnnotatedString() },
+				valueTransform = { it.toAnnotatedString() },
 			)
 		}
 	}

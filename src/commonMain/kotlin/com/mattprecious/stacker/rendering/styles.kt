@@ -2,6 +2,7 @@ package com.mattprecious.stacker.rendering
 
 import com.jakewharton.mosaic.text.AnnotatedString
 import com.jakewharton.mosaic.text.SpanStyle
+import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.text.withStyle
 import com.jakewharton.mosaic.ui.Color
 import com.jakewharton.mosaic.ui.TextStyle
@@ -36,3 +37,4 @@ fun AnnotatedString.Builder.promptItem(
 		content()
 	}
 }
+fun String.toAnnotatedString() = buildAnnotatedString { append(this@toAnnotatedString) }
