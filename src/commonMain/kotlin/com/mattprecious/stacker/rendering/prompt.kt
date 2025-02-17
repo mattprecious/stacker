@@ -12,12 +12,10 @@ import androidx.compose.runtime.setValue
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.AnnotatedString
-import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
-import com.jakewharton.mosaic.ui.TextStyle
 import com.mattprecious.stacker.collections.radiateFrom
 import kotlinx.collections.immutable.ImmutableList
 
@@ -316,16 +314,9 @@ fun <T> InteractivePrompt(
 
 		state.filteredOptions.forEachIndexed { index, option ->
 			val text = buildAnnotatedString {
-				val styleIndex = if (index == state.highlighted) {
-					append("❯ ")
-					pushStyle(SpanStyle(textStyle = TextStyle.Underline))
-				} else {
-					append("  ")
-					null
+				promptItem(index == state.highlighted) {
+					append(option.display)
 				}
-
-				append(option.display)
-				styleIndex?.let(::pop)
 			}
 
 			Text(text)
