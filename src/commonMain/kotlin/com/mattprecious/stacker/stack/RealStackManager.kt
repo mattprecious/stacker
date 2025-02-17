@@ -57,10 +57,10 @@ class RealStackManager(
 		)
 	}
 
-	override fun updateParent(branch: Branch, parent: Branch) {
+	override fun updateParent(branch: String, parent: String) {
 		branchQueries.updateParent(
-			branch = branch.name,
-			parent = parent.name,
+			branch = branch,
+			parent = parent,
 		)
 	}
 
