@@ -47,4 +47,6 @@ interface StackManager {
 		branch: Branch,
 		prNumber: Long,
 	)
+
+	fun setHasAskedToDelete(branch: Branch)
 }

@@ -81,6 +81,10 @@ class RealStackManager(
 		)
 	}
 
+	override fun setHasAskedToDelete(branch: Branch) {
+		branchQueries.setHasAskedToDelete(branch.name)
+	}
+
 	private fun getTree(): TreeNode<Branch>? {
 		val elements = branchQueries.selectAll().executeAsList()
 		return if (elements.isEmpty()) {

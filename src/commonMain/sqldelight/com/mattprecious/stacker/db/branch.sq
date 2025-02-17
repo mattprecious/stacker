@@ -1,16 +1,17 @@
-import kotlin.Int;
+import kotlin.Boolean;
 
 CREATE TABLE branch (
 	name TEXT NOT NULL PRIMARY KEY,
 	parent TEXT,
 	parentSha TEXT,
 	prNumber INTEGER,
+	hasAskedToDelete INTEGER AS Boolean NOT NULL DEFAULT 0,
 	FOREIGN KEY(parent) REFERENCES branch(name) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 insert:
 INSERT INTO branch
-VALUES (?, ?, ?, ?);
+VALUES (?, ?, ?, ?, 0);
 
 remove:
 DELETE FROM branch
@@ -52,6 +53,11 @@ FROM branch;
 select:
 SELECT *
 FROM branch
+WHERE name = ?;
+
+setHasAskedToDelete:
+UPDATE branch
+SET hasAskedToDelete = 1
 WHERE name = ?;
 
 names:

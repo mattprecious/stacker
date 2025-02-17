@@ -78,6 +78,7 @@ class RepoInitTest {
 					parent = null,
 					parentSha = null,
 					prNumber = null,
+					hasAskedToDelete = false,
 				),
 			)
 		}
@@ -157,6 +158,7 @@ class RepoInitTest {
 					parent = null,
 					parentSha = null,
 					prNumber = null,
+					hasAskedToDelete = false,
 				),
 			)
 		}
@@ -233,6 +235,7 @@ class RepoInitTest {
 					parent = null,
 					parentSha = null,
 					prNumber = null,
+					hasAskedToDelete = false,
 				),
 			)
 		}
@@ -298,12 +301,14 @@ class RepoInitTest {
 					parent = null,
 					parentSha = null,
 					prNumber = null,
+					hasAskedToDelete = false,
 				),
 				Branch(
 					name = "green-main",
 					parent = "main",
 					parentSha = sha,
 					prNumber = null,
+					hasAskedToDelete = false,
 				),
 			)
 		}
