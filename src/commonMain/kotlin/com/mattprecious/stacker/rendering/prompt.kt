@@ -26,7 +26,7 @@ fun Prompt(
 	onSubmit: (String) -> Unit,
 ) {
 	Prompt(
-		message = remember(message) { buildAnnotatedString { append(message) } },
+		message = remember(message) { message.toAnnotatedString() },
 		hideInput = hideInput,
 		onSubmit = onSubmit,
 	)
@@ -57,7 +57,10 @@ fun Prompt(
 						val staticMessage = if (hideInput) {
 							prompt
 						} else {
-							prompt + buildAnnotatedString { append(input) }
+							buildAnnotatedString {
+								append(prompt)
+								append(input)
+							}
 						}
 
 						printer.printStatic(staticMessage)
@@ -83,7 +86,7 @@ fun YesNoPrompt(
 	onSubmit: (Boolean) -> Unit,
 ) {
 	YesNoPrompt(
-		message = remember(message) { buildAnnotatedString { append(message) } },
+		message = remember(message) { message.toAnnotatedString() },
 		default = default,
 		onSubmit = onSubmit,
 	)
@@ -117,7 +120,10 @@ fun YesNoPrompt(
 		val staticMessage = if (input == "") {
 			prompt
 		} else {
-			prompt + buildAnnotatedString { append(input) }
+			buildAnnotatedString {
+				append(prompt)
+				append(input)
+			}
 		}
 
 		printer.printStatic(staticMessage)
@@ -154,16 +160,16 @@ fun YesNoPrompt(
 class PromptState<T>(
 	private val options: ImmutableList<T>,
 	default: T?,
-	private val displayTransform: (T) -> String,
-	private val valueTransform: (T) -> String,
+	private val displayTransform: (T) -> AnnotatedString,
+	private val valueTransform: (T) -> AnnotatedString,
 	private val optionKey: (T) -> Any? = { it },
 ) {
 	@Immutable
 	internal inner class Option(
 		val option: T,
 	) {
-		val display: String get() = displayTransform(option)
-		val value: String get() = valueTransform(option)
+		val display: AnnotatedString get() = displayTransform(option)
+		val value: AnnotatedString get() = valueTransform(option)
 	}
 
 	// Highlighting logic when filtering or unfiltering is:
@@ -254,7 +260,7 @@ fun <T> InteractivePrompt(
 	onSelected: (T) -> Unit,
 ) {
 	InteractivePrompt(
-		message = remember(message) { buildAnnotatedString { append(message) } },
+		message = remember(message) { message.toAnnotatedString() },
 		state = state,
 		filteringEnabled = filteringEnabled,
 		onSelected = onSelected,

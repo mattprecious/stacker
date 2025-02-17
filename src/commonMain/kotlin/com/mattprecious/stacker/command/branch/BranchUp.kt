@@ -9,6 +9,7 @@ import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 import kotlinx.collections.immutable.toPersistentList
@@ -44,8 +45,8 @@ internal class BranchUp(
 						PromptState(
 							options.toPersistentList(),
 							default = options.find { it.name == vc.currentBranchName },
-							displayTransform = { it.name },
-							valueTransform = { it.name },
+							displayTransform = { it.name.toAnnotatedString() },
+							valueTransform = { it.name.toAnnotatedString() },
 						)
 					},
 					onSelected = { onResult(it.name) },

@@ -9,6 +9,7 @@ import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.rendering.YesNoPrompt
+import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.vc.VersionControl
 import kotlinx.collections.immutable.toPersistentList
 
@@ -65,8 +66,8 @@ internal class RepoInit(
 					PromptState(
 						branches.toPersistentList(),
 						default = defaultTrunk,
-						displayTransform = { it },
-						valueTransform = { it },
+						displayTransform = { it.toAnnotatedString() },
+						valueTransform = { it.toAnnotatedString() },
 					)
 				},
 				onSelected = { onResult(it) },
@@ -97,8 +98,8 @@ internal class RepoInit(
 						PromptState(
 							branches.filterNot { it == trunk }.toPersistentList(),
 							default = currentTrailingTrunk,
-							displayTransform = { it },
-							valueTransform = { it },
+							displayTransform = { it.toAnnotatedString() },
+							valueTransform = { it.toAnnotatedString() },
 						)
 					},
 					onSelected = { onResult(it) },

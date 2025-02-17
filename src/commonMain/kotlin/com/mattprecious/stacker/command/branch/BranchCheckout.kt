@@ -10,6 +10,7 @@ import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 import kotlinx.collections.immutable.toPersistentList
@@ -51,8 +52,8 @@ internal class BranchCheckout(
 							PromptState(
 								options = options.toPersistentList(),
 								default = options.find { it.branch.name == vc.currentBranchName },
-								displayTransform = { it.pretty },
-								valueTransform = { it.branch.name },
+								displayTransform = { it.pretty.toAnnotatedString() },
+								valueTransform = { it.branch.name.toAnnotatedString() },
 							)
 						},
 						onSelected = { onResult(it.branch.name) },
