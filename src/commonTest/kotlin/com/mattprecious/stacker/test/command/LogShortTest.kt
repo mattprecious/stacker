@@ -1,10 +1,13 @@
 package com.mattprecious.stacker.test.command
 
 import app.cash.burst.Burst
+import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.log.logShort
+import com.mattprecious.stacker.command.repo.repoInit
+import com.mattprecious.stacker.delegates.Optional
+import com.mattprecious.stacker.delegates.Optional.Some
 import com.mattprecious.stacker.test.util.gitCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCommit
-import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCreateBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.s
@@ -131,30 +134,18 @@ class LogShortTest {
 		case: NoRestackCase,
 	) = withTestEnvironment {
 		gitInit()
-		val sha = gitCommit("Empty")
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+
 		case.branches.forEach {
-			if (it.first != "main") {
-				gitCreateBranch(it.first)
+			val parent = it.second
+			if (parent != null) {
+				gitCheckoutBranch(parent)
+				testCommand({ branchCreate(it.first) })
 			}
 		}
 
 		gitCheckoutBranch(case.headBranch)
-
-		withDatabase(requireExists = false) { db ->
-			db.repoConfigQueries.insert(
-				trunk = "main",
-				trailingTrunk = null,
-			)
-
-			case.branches.forEach {
-				db.branchQueries.insert(
-					name = it.first,
-					parent = it.second,
-					parentSha = sha,
-					prNumber = null,
-				)
-			}
-		}
 
 		testCommand({ logShort() }) {
 			awaitFrame(
@@ -167,30 +158,11 @@ class LogShortTest {
 	@Test
 	fun oneChildNeedsRestack() = withTestEnvironment {
 		gitInit()
-		val sha = gitCommit("Empty")
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+		testCommand({ branchCreate("a") })
+		gitCheckoutBranch("main")
 		gitCommit("Second")
-		gitCreateBranch("a", sha)
-
-		withDatabase(requireExists = false) { db ->
-			db.repoConfigQueries.insert(
-				trunk = "main",
-				trailingTrunk = null,
-			)
-
-			db.branchQueries.insert(
-				name = "main",
-				parent = null,
-				parentSha = null,
-				prNumber = null,
-			)
-
-			db.branchQueries.insert(
-				name = "a",
-				parent = "main",
-				parentSha = sha,
-				prNumber = null,
-			)
-		}
 
 		testCommand({ logShort() }) {
 			awaitFrame(
@@ -206,41 +178,14 @@ class LogShortTest {
 	@Test
 	fun restackRequiredDoesNotPropagateUpwards() = withTestEnvironment {
 		gitInit()
-		val sha1 = gitCommit("Empty")
-		gitCreateAndCheckoutBranch("a")
-		val sha2 = gitCommit("Second")
-		gitCreateAndCheckoutBranch("b")
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+		testCommand({ branchCreate("a") })
+		gitCommit("Second")
+		testCommand({ branchCreate("b") })
 		gitCommit("Third")
 		gitCheckoutBranch("main")
 		gitCommit("Fourth")
-
-		withDatabase(requireExists = false) { db ->
-			db.repoConfigQueries.insert(
-				trunk = "main",
-				trailingTrunk = null,
-			)
-
-			db.branchQueries.insert(
-				name = "main",
-				parent = null,
-				parentSha = null,
-				prNumber = null,
-			)
-
-			db.branchQueries.insert(
-				name = "a",
-				parent = "main",
-				parentSha = sha1,
-				prNumber = null,
-			)
-
-			db.branchQueries.insert(
-				name = "b",
-				parent = "a",
-				parentSha = sha2,
-				prNumber = null,
-			)
-		}
 
 		testCommand({ logShort() }) {
 			awaitFrame(
@@ -257,30 +202,10 @@ class LogShortTest {
 	@Test
 	fun trunkBranchesNeverNeedRestack() = withTestEnvironment {
 		gitInit()
-		val sha = gitCommit("Empty")
+		gitCommit("Empty")
+		gitCreateBranch("green-main")
+		testCommand({ repoInit("main", Some("green-main")) })
 		gitCommit("Second")
-		gitCreateBranch("green-main", sha)
-
-		withDatabase(requireExists = false) { db ->
-			db.repoConfigQueries.insert(
-				trunk = "main",
-				trailingTrunk = "green-main",
-			)
-
-			db.branchQueries.insert(
-				name = "main",
-				parent = null,
-				parentSha = null,
-				prNumber = null,
-			)
-
-			db.branchQueries.insert(
-				name = "green-main",
-				parent = "main",
-				parentSha = sha,
-				prNumber = null,
-			)
-		}
 
 		testCommand({ logShort() }) {
 			awaitFrame(

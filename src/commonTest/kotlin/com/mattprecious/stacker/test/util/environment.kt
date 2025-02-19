@@ -73,19 +73,15 @@ class TestEnvironment(
 
 	suspend fun withDatabase(
 		path: Path = defaultDbPath,
-		requireExists: Boolean = true,
 		block: (RepoDatabase) -> Unit,
 	) {
-		if (requireExists) {
-			require(fileSystem.exists(path))
-		}
-
+		require(fileSystem.exists(path))
 		com.mattprecious.stacker.withDatabase(path, block)
 	}
 
 	suspend fun testCommand(
 		commandBuilder: StackerDeps.() -> StackerCommand,
-		validate: suspend CommandTestScope.() -> Unit,
+		validate: suspend CommandTestScope.() -> Unit = { awaitResult() },
 	) {
 		withStacker {
 			it.commandBuilder().test(validate)
