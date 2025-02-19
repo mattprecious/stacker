@@ -276,7 +276,14 @@ fun <T> InteractivePrompt(
 ) {
 	val printer = LocalPrinter.current
 	val prompt = remember(message) {
-		"$message${if (message.last().isLetterOrDigit()) ":" else ""}"
+		if (message.last().isLetterOrDigit()) {
+			buildAnnotatedString {
+				append(message)
+				append(':')
+			}
+		} else {
+			message
+		}
 	}
 
 	Column(
@@ -285,7 +292,14 @@ fun <T> InteractivePrompt(
 				when {
 					it.key == "Enter" -> {
 						state.select()?.let { selected ->
-							printer.printStatic("$prompt ${selected.value}")
+							printer.printStatic(
+								buildAnnotatedString {
+									append(prompt)
+									append(' ')
+									append(selected.value)
+								},
+							)
+
 							onSelected(selected.option)
 						}
 
@@ -316,7 +330,13 @@ fun <T> InteractivePrompt(
 				}
 			},
 	) {
-		Text("$prompt ${state.filter}")
+		Text(
+			buildAnnotatedString {
+				append(prompt)
+				append(' ')
+				append(state.filter)
+			},
+		)
 
 		state.filteredOptions.forEachIndexed { index, option ->
 			val text = buildAnnotatedString {
