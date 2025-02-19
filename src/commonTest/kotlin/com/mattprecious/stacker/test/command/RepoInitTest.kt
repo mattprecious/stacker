@@ -9,10 +9,14 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
 import com.jakewharton.mosaic.layout.KeyEvent
+import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.db.Branch
+import com.mattprecious.stacker.delegates.Optional
+import com.mattprecious.stacker.delegates.Optional.Some
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
+import com.mattprecious.stacker.test.util.gitCreateBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.gitSetDefaultBranch
 import com.mattprecious.stacker.test.util.s
@@ -317,31 +321,11 @@ class RepoInitTest {
 	@Test
 	fun existingSettingsArePreselected() = withTestEnvironment {
 		gitInit()
-		val sha = gitCommit("Empty")
+		gitCommit("Empty")
 		gitCreateAndCheckoutBranch("alpha")
 		gitCreateAndCheckoutBranch("trunk")
 		gitCreateAndCheckoutBranch("green-trunk")
-
-		withDatabase(requireExists = false) {
-			it.repoConfigQueries.insert(
-				trunk = "trunk",
-				trailingTrunk = "green-trunk",
-			)
-
-			it.branchQueries.insert(
-				name = "trunk",
-				parent = null,
-				parentSha = null,
-				prNumber = null,
-			)
-
-			it.branchQueries.insert(
-				name = "green-trunk",
-				parent = "trunk",
-				parentSha = sha,
-				prNumber = null,
-			)
-		}
+		testCommand({ repoInit("trunk", Some("green-trunk")) })
 
 		testCommand({ repoInit() }) {
 			awaitFrame(
@@ -378,30 +362,10 @@ class RepoInitTest {
 	@Test
 	fun changingTrunkFailsIfChildren() = withTestEnvironment {
 		gitInit()
-		val sha = gitCommit("Empty")
-		gitCreateAndCheckoutBranch("trunk")
-		gitCreateAndCheckoutBranch("feature")
-
-		withDatabase(requireExists = false) {
-			it.repoConfigQueries.insert(
-				trunk = "main",
-				trailingTrunk = null,
-			)
-
-			it.branchQueries.insert(
-				name = "main",
-				parent = null,
-				parentSha = null,
-				prNumber = null,
-			)
-
-			it.branchQueries.insert(
-				name = "feature",
-				parent = "main",
-				parentSha = sha,
-				prNumber = null,
-			)
-		}
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+		testCommand({ branchCreate("feature") })
+		gitCreateBranch("trunk")
 
 		testCommand({ repoInit() }) {
 			awaitFrame(
@@ -438,38 +402,11 @@ class RepoInitTest {
 	@Test
 	fun changingTrailingTrunkFailsIfChildren() = withTestEnvironment {
 		gitInit()
-		val sha = gitCommit("Empty")
+		gitCommit("Empty")
 		gitCreateAndCheckoutBranch("green-main")
-		gitCreateAndCheckoutBranch("green-trunk")
-		gitCreateAndCheckoutBranch("feature")
-
-		withDatabase(requireExists = false) {
-			it.repoConfigQueries.insert(
-				trunk = "main",
-				trailingTrunk = "green-main",
-			)
-
-			it.branchQueries.insert(
-				name = "main",
-				parent = null,
-				parentSha = null,
-				prNumber = null,
-			)
-
-			it.branchQueries.insert(
-				name = "green-main",
-				parent = "main",
-				parentSha = sha,
-				prNumber = null,
-			)
-
-			it.branchQueries.insert(
-				name = "feature",
-				parent = "green-main",
-				parentSha = sha,
-				prNumber = null,
-			)
-		}
+		gitCreateBranch("green-trunk")
+		testCommand({ repoInit("main", Some("green-main")) })
+		testCommand({ branchCreate("feature") })
 
 		testCommand({ repoInit() }) {
 			awaitFrame(
