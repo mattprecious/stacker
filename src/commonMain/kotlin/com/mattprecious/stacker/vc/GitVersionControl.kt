@@ -278,11 +278,6 @@ class GitVersionControl(
 	}
 
 	override fun pushBranches(branchNames: List<String>): Unit = memScoped {
-		// Libgit2 auth doesn't work on enterprise repos for some reason. Fall back to shell command for now.
-		shell.exec("git", "push", "-f", "--atomic", "origin", *branchNames.toTypedArray())
-	}
-
-	private fun pushBranchesLibGit(branchNames: List<String>): Unit = memScoped {
 		val refs = withAlloc<git_strarray> {
 			it.count = branchNames.size.toULong()
 			it.strings = branchNames.map { it.asBranchRevSpec() }.map { "+$it:$it" }.toCStringArray(this)
@@ -299,15 +294,7 @@ class GitVersionControl(
 		git_remote_free(origin.ptr)
 	}
 
-	override fun pull(branchName: String) {
-		// Libgit2 auth doesn't work on enterprise repos for some reason. Fall back to shell command for now.
-		val currentBranch = currentBranchName
-		checkout(branchName)
-		shell.exec("git", "pull", "origin", branchName)
-		checkout(currentBranch)
-	}
-
-	private fun pullLibGit(branchName: String): Unit = memScoped {
+	override fun pull(branchName: String): Unit = memScoped {
 		val refs = alloc<git_strarray>()
 		refs.count = 1.toULong()
 		refs.strings = listOf(branchName).toCStringArray(this)
