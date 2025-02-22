@@ -93,7 +93,7 @@ import com.github.git2.git_repository_path
 import com.github.git2.git_repository_set_head
 import com.github.git2.git_revparse_single
 import com.github.git2.git_signature
-import com.github.git2.git_signature_default
+import com.github.git2.git_signature_default_from_env
 import com.github.git2.git_signature_free
 import com.github.git2.git_strarray
 import com.mattprecious.stacker.shell.Shell
@@ -496,7 +496,7 @@ class GitVersionControl(
 		rebase: git_rebase,
 		branchName: String,
 	): Boolean {
-		val signature = withAllocPointerTo { checkError(git_signature_default(it.ptr, repo)) }
+		val signature = withAllocPointerTo { checkError(git_signature_default_from_env(null, it.ptr, repo)) }
 
 		forEachRebaseOperation(rebase) {
 			if (!performRebaseOperation(rebase = rebase, operation = it.pointed, committer = signature.pointed!!)) {
