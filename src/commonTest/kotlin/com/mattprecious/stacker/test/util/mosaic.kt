@@ -15,6 +15,9 @@ import com.mattprecious.stacker.rendering.Printer
 // So the IDE doesn't trim trailing spaces in test assertions...
 val s = " "
 
+// Workaround for mosaic bug that is fixed in 0.17.
+val reset = "\u001B[0m"
+
 fun TestMosaic<Mosaic>.setContentWithStatics(
 	content: @Composable () -> Unit,
 ): Mosaic {

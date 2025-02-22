@@ -190,7 +190,7 @@ class PromptState<T>(
 	internal val filteredOptions by derivedStateOf {
 		options
 			.map(::Option)
-			.filter { it.value.contains(filter) }
+			.filter { filter.isEmpty() || it.value.contains(filter) }
 	}
 
 	init {
@@ -254,29 +254,51 @@ class PromptState<T>(
 
 @Composable
 fun <T> InteractivePrompt(
-	message: String,
 	state: PromptState<T>,
 	filteringEnabled: Boolean = true,
+	staticPrintResult: Boolean = true,
 	onSelected: (T) -> Unit,
 ) {
 	InteractivePrompt(
-		message = remember(message) { message.toAnnotatedString() },
+		message = null as AnnotatedString?,
 		state = state,
 		filteringEnabled = filteringEnabled,
+		staticPrintResult = staticPrintResult,
 		onSelected = onSelected,
 	)
 }
 
 @Composable
 fun <T> InteractivePrompt(
-	message: AnnotatedString,
+	message: String,
 	state: PromptState<T>,
 	filteringEnabled: Boolean = true,
+	staticPrintResult: Boolean = true,
 	onSelected: (T) -> Unit,
+) {
+	InteractivePrompt(
+		message = remember(message) { message.toAnnotatedString() },
+		state = state,
+		filteringEnabled = filteringEnabled,
+		staticPrintResult = staticPrintResult,
+		onSelected = onSelected,
+	)
+}
+
+@Composable
+fun <T> InteractivePrompt(
+	message: AnnotatedString?,
+	state: PromptState<T>,
+	onSelected: (T) -> Unit,
+	modifier: Modifier = Modifier,
+	filteringEnabled: Boolean = true,
+	staticPrintResult: Boolean = true,
 ) {
 	val printer = LocalPrinter.current
 	val prompt = remember(message) {
-		if (message.last().isLetterOrDigit()) {
+		if (message == null) {
+			null
+		} else if (message.last().isLetterOrDigit()) {
 			buildAnnotatedString {
 				append(message)
 				append(':')
@@ -287,18 +309,20 @@ fun <T> InteractivePrompt(
 	}
 
 	Column(
-		modifier = Modifier
+		modifier = modifier
 			.onKeyEvent {
 				when {
 					it.key == "Enter" -> {
 						state.select()?.let { selected ->
-							printer.printStatic(
-								buildAnnotatedString {
-									append(prompt)
-									append(' ')
-									append(selected.value)
-								},
-							)
+							if (staticPrintResult && prompt != null) {
+								printer.printStatic(
+									buildAnnotatedString {
+										append(prompt)
+										append(' ')
+										append(selected.value)
+									},
+								)
+							}
 
 							onSelected(selected.option)
 						}
@@ -330,13 +354,19 @@ fun <T> InteractivePrompt(
 				}
 			},
 	) {
-		Text(
-			buildAnnotatedString {
-				append(prompt)
-				append(' ')
-				append(state.filter)
-			},
-		)
+		when {
+			prompt != null && !filteringEnabled -> Text(prompt)
+			prompt != null -> Text(
+				buildAnnotatedString {
+					append(prompt)
+					append(' ')
+					append(state.filter)
+				},
+			)
+
+			// This is weird. Probably shouldn't allow filtering + no message.
+			filteringEnabled -> Text(state.filter)
+		}
 
 		state.filteredOptions.forEachIndexed { index, option ->
 			val text = buildAnnotatedString {

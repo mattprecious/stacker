@@ -16,6 +16,7 @@ import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.test.util.hasStaticsEqualTo
 import com.mattprecious.stacker.test.util.matches
+import com.mattprecious.stacker.test.util.reset
 import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.sendText
 import com.mattprecious.stacker.test.util.setContentWithStatics
@@ -40,10 +41,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion          $s
+				|  Tiger         $s
+				|  Bear          $s
 				""".trimMargin(),
 			)
 
@@ -71,10 +72,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|  Lion           $s
-				|❯ Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|  Lion          $s
+				|❯ Tiger         $s
+				|  Bear          $s
 				""".trimMargin(),
 			)
 
@@ -100,10 +101,33 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion          $s
+				|  Tiger         $s
+				|  Bear          $s
+				""".trimMargin(),
+			)
+		}
+	}
+
+	@Test
+	fun nullMessage() = runTest {
+		var result: String? = null
+
+		runMosaicTest(MosaicSnapshots) {
+			val first = setContentWithStatics {
+				InteractivePrompt(
+					state = rememberTestStateAnimals(),
+					filteringEnabled = false,
+					onSelected = { result = it },
+				)
+			}
+
+			assertThat(first).matches(
+				"""
+				|❯ Lion$s
+				|  Tiger
+				|  Bear$s
 				""".trimMargin(),
 			)
 		}
@@ -125,10 +149,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion          $s
+				|  Tiger         $s
+				|  Bear          $s
 				""".trimMargin(),
 			)
 
@@ -136,10 +160,10 @@ class InteractivePromptTest {
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|  Lion           $s
-				|❯ Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|  Lion          $s
+				|❯ Tiger         $s
+				|  Bear          $s
 				""".trimMargin(),
 			)
 
@@ -147,10 +171,10 @@ class InteractivePromptTest {
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|  Lion           $s
-				|  Tiger          $s
-				|❯ Bear           $s
+				|Select an animal:
+				|  Lion          $s
+				|  Tiger         $s
+				|❯ Bear          $s
 				""".trimMargin(),
 			)
 
@@ -158,10 +182,10 @@ class InteractivePromptTest {
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|  Lion           $s
-				|❯ Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|  Lion          $s
+				|❯ Tiger         $s
+				|  Bear          $s
 				""".trimMargin(),
 			)
 
@@ -207,10 +231,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lazy Lion      $s
-				|  Timid Tiger    $s
-				|  Brave Bear     $s
+				|Select an animal:
+				|❯ Lazy Lion     $s
+				|  Timid Tiger   $s
+				|  Brave Bear    $s
 				""".trimMargin(),
 			)
 
@@ -238,10 +262,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion          $s
+				|  Tiger         $s
+				|  Bear          $s
 				""".trimMargin(),
 			)
 
@@ -250,10 +274,10 @@ class InteractivePromptTest {
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion          $s
+				|  Tiger         $s
+				|  Bear          $s
 				""".trimMargin(),
 			)
 		}
@@ -304,6 +328,83 @@ class InteractivePromptTest {
 			sendKeyEvent(KeyEvent("Enter"))
 
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("Select an animal: Lion")
+		}
+
+		assertThat(result).isEqualTo("Lion")
+	}
+
+	@Test
+	fun filteringWithNullMessage() = runTest {
+		var result: String? = null
+
+		runMosaicTest(MosaicSnapshots) {
+			var forceRecompose by mutableIntStateOf(0)
+			val first = setContentWithStatics {
+				LaunchedEffect(forceRecompose) {}
+				InteractivePrompt(
+					state = rememberTestStateAnimals(),
+					filteringEnabled = true,
+					onSelected = { result = it },
+				)
+			}
+
+			assertThat(first).matches(
+				"""
+				|      $s
+				|❯ Lion$s
+				|  Tiger
+				|  Bear$s
+				""".trimMargin(),
+			)
+
+			sendText("io")
+
+			assertThat(awaitSnapshot()).matches(
+				"""
+				|io   $s
+				|❯ Lion$reset
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Enter"))
+
+			forceRecompose++
+			assertThat(awaitSnapshot()).hasStaticsEqualTo("")
+		}
+
+		assertThat(result).isEqualTo("Lion")
+	}
+
+	@Test
+	fun resultNotPrinted() = runTest {
+		var result: String? = null
+
+		runMosaicTest(MosaicSnapshots) {
+			var forceRecompose by mutableIntStateOf(0)
+			val first = setContentWithStatics {
+				LaunchedEffect(forceRecompose) {}
+				InteractivePrompt(
+					message = "Select an animal",
+					state = rememberTestStateAnimals(),
+					filteringEnabled = true,
+					staticPrintResult = false,
+					onSelected = { result = it },
+				)
+			}
+
+			assertThat(first).matches(
+				"""
+				|Select an animal:$s
+				|❯ Lion           $s
+				|  Tiger          $s
+				|  Bear           $s
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Enter"))
+
+			forceRecompose++
+			assertThat(awaitSnapshot()).hasStaticsEqualTo("")
 		}
 
 		assertThat(result).isEqualTo("Lion")
