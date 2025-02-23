@@ -151,9 +151,6 @@ class GitVersionControl(
 			list
 		}
 
-	override val editor: String?
-		get() = memScoped { getConfigString("core.editor") }
-
 	override val defaultBranch: String?
 		get() = memScoped { getConfigString("init.defaultBranch") }
 

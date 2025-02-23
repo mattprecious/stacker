@@ -27,7 +27,7 @@ class EnvironmentTest {
 		environment.exec("touch hello.txt")
 		gitAdd("hello.txt".toPath())
 		gitCommit("Testing")
-		assertThat(gitHeadSha()).isEqualTo("f8cdffa9a5c120b21a0042138806a930e72af88f")
+		assertThat(gitSha().long).isEqualTo("f8cdffa9a5c120b21a0042138806a930e72af88f")
 	}
 
 	@Test

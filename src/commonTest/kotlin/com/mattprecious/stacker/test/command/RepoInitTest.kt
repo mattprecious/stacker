@@ -310,7 +310,7 @@ class RepoInitTest {
 				Branch(
 					name = "green-main",
 					parent = "main",
-					parentSha = sha,
+					parentSha = sha.long,
 					prNumber = null,
 					hasAskedToDelete = false,
 				),
