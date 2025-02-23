@@ -275,6 +275,12 @@ class GitVersionControl(
 	}
 
 	override fun pushBranches(branchNames: List<String>): Unit = memScoped {
+		// The process is dying somewhere inside git_remote_push without an exception thrown or error
+		// code returned. Shell out for now.
+		shell.exec("git", "push", "-f", "--atomic", "origin", *branchNames.toTypedArray())
+	}
+
+	private fun pushBranchesLibGit(branchNames: List<String>): Unit = memScoped {
 		val refs = withAlloc<git_strarray> {
 			it.count = branchNames.size.toULong()
 			it.strings = branchNames.map { it.asBranchRevSpec() }.map { "+$it:$it" }.toCStringArray(this)
