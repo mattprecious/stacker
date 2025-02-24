@@ -2,7 +2,6 @@ package com.mattprecious.stacker.command.downstack
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -10,12 +9,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import com.jakewharton.mosaic.LocalTerminal
 import com.jakewharton.mosaic.layout.onKeyEvent
+import com.jakewharton.mosaic.layout.widthIn
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.ui.Arrangement.Absolute.spacedBy
 import com.jakewharton.mosaic.ui.Column
-import com.jakewharton.mosaic.ui.Row
+import com.jakewharton.mosaic.ui.Layout
 import com.jakewharton.mosaic.ui.Text
 import com.jakewharton.mosaic.ui.TextStyle
 import com.mattprecious.stacker.StackerDeps
@@ -151,50 +151,41 @@ private fun Edit(
 	val state = remember(stack) { EditState(stack) }
 	var deletingItem by remember { mutableStateOf<EditState.Item?>(null) }
 
-	val mainList = remember {
-		movableContentOf {
-			MainList(
-				state = state,
-				trunk = trunk,
-				showingDeletePrompt = deletingItem != null,
-				onDelete = { deletingItem = it },
-				onFinish = { onResult(state.items.toList()) },
-			)
-		}
-	}
-
-	val deletePrompt = remember(deletingItem) {
-		deletingItem?.let {
-			movableContentOf { sideBySide: Boolean ->
-				DeletePrompt(
-					item = it,
-					sideBySide = sideBySide,
-					trunk = trunk,
-					onFinish = { deletingItem = null },
-				)
-			}
-		}
-	}
 	Column(
 		verticalArrangement = spacedBy(1),
 	) {
-		if (deletePrompt != null) {
-			// Hacky hard-coded sizes matching the largest width of the list and the delete prompt.
-			val listWidth = maxOf(stack.maxOf { it.length + 10 }, trunk.length) + 2
-			val promptWidth = trunk.length + 35
-			val gap = 2
-
-			if (LocalTerminal.current.size.width >= listWidth + promptWidth + gap) {
-				Row(horizontalArrangement = spacedBy(gap)) {
-					mainList()
-					deletePrompt(true)
+		ListDetail(
+			modifier = Modifier.widthIn(max = LocalTerminal.current.size.width),
+			list = {
+				MainList(
+					state = state,
+					trunk = trunk,
+					showingDeletePrompt = deletingItem != null,
+					onDelete = { deletingItem = it },
+					onFinish = { onResult(state.items.toList()) },
+				)
+			},
+			detail = deletingItem?.let {
+				{
+					DeletePrompt(
+						item = it,
+						trunk = trunk,
+						onFinish = { deletingItem = null },
+					)
 				}
-			} else {
-				deletePrompt(false)
-			}
-		} else {
-			mainList()
-		}
+			},
+			detailHeader = deletingItem?.let {
+				{
+					Text(
+						buildAnnotatedString {
+							append("What would you like to do with ")
+							branch { append(it.name) }
+							append("?")
+						},
+					)
+				}
+			},
+		)
 
 		Text(
 			value = """
@@ -245,6 +236,68 @@ private class EditState(
 			Remove,
 			Untrack,
 			Delete,
+		}
+	}
+}
+
+@Composable
+private fun ListDetail(
+	list: @Composable () -> Unit,
+	detail: (@Composable () -> Unit)?,
+	detailHeader: (@Composable () -> Unit)?,
+	modifier: Modifier = Modifier,
+) {
+	Layout(
+		modifier = modifier,
+		content = {
+			list()
+			detail?.invoke()
+			detailHeader?.invoke()
+		},
+	) { measurables, constraints ->
+		val listMeasurable = measurables[0]
+		val detailMeasurable = measurables.getOrNull(1)
+		val detailHeaderMeasurable = measurables.getOrNull(2)
+
+		val listWidth = listMeasurable.maxIntrinsicWidth(constraints.maxHeight)
+		val detailWidth = detailMeasurable?.maxIntrinsicWidth(constraints.maxHeight) ?: 0
+		val gap = if (detailWidth != 0) 2 else 0
+
+		val sideBySide = constraints.maxWidth >= listWidth + detailWidth + gap
+		val listPlaceable = if (detailMeasurable == null || sideBySide) {
+			listMeasurable.measure(constraints.copy(minWidth = listWidth, maxWidth = listWidth))
+		} else {
+			null
+		}
+
+		val detailPlaceable = detailMeasurable?.measure(
+			constraints.copy(minWidth = detailWidth, maxWidth = detailWidth),
+		)
+
+		val detailHeaderPlaceable = if (detailMeasurable == null || sideBySide) {
+			null
+		} else {
+			detailHeaderMeasurable?.measure(constraints)
+		}
+
+		val listHeight = listPlaceable?.height ?: 0
+		val measuredListWidth = listPlaceable?.width ?: 0
+
+		val detailsHeight = detailPlaceable?.height ?: 0
+		val measuredDetailsWidth = detailPlaceable?.width ?: 0
+
+		val detailsHeaderHeight = detailHeaderPlaceable?.height ?: 0
+
+		val width = measuredListWidth + measuredDetailsWidth +
+			if (measuredListWidth > 0 && measuredDetailsWidth > 0) 2 else 0
+		val height = maxOf(listHeight, detailsHeight) + detailsHeaderHeight
+
+		layout(width, height) {
+			detailHeaderPlaceable?.place(0, 0)
+			listPlaceable?.place(0, detailsHeaderHeight)
+
+			val detailsX = if (listPlaceable == null) 0 else listPlaceable.width + gap
+			detailPlaceable?.place(detailsX, detailsHeaderHeight)
 		}
 	}
 }
@@ -326,30 +379,21 @@ private enum class RemovalOption {
 @Composable
 private fun DeletePrompt(
 	item: EditState.Item,
-	sideBySide: Boolean,
 	trunk: String,
 	onFinish: () -> Unit,
 ) {
 	InteractivePrompt(
 		modifier = Modifier.onKeyEvent {
-			if (it.key == "Escape" || (sideBySide && it.key == "ArrowLeft")) {
+			// TODO: I don't really want to support ArrowLeft if we're not in SBS mode. Not sure how to do
+			//  that. A scope?
+			if (it.key == "Escape" || it.key == "ArrowLeft") {
 				onFinish()
 				true
 			} else {
 				false
 			}
 		},
-		message = if (!sideBySide) {
-			remember {
-				buildAnnotatedString {
-					append("What would you like to do with ")
-					branch { append(item.name) }
-					append("?")
-				}
-			}
-		} else {
-			null
-		},
+		message = null,
 		state = remember {
 			PromptState(
 				options = RemovalOption.entries.toPersistentList(),
