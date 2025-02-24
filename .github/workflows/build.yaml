@@ -46,9 +46,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # TODO: Linking is not working on linux.
-#          - os: ubuntu-latest
-#            task: linkReleaseExecutableLinuxX64 linuxX64Test
+          - os: ubuntu-latest
+            task: linkReleaseExecutableLinuxX64 linuxX64Test
+            target: 'linuxX64'
           - os: macOS-13
             task: linkReleaseExecutableMacosX64 macosX64Test
             target: 'macosX64'

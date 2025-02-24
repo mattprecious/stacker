@@ -93,14 +93,18 @@ function build() {
   rm libgit2.zip
   mv libgit2-1.9.0 libgit2
   mkdir -p libgit2/build
+  # TODO: Change sha1 to builtin with next libgit update.
   cmake -S libgit2 -B libgit2/build\
     -DUSE_SSH=exec \
+    -DUSE_SHA1=CollisionDetection \
+    -DUSE_SHA256=builtin \
     -DBUILD_TESTS=OFF \
     -DCMAKE_PREFIX_PATH="$BUILD_PATH" \
     -DCMAKE_INSTALL_PREFIX="$BUILD_PATH" \
     -DCMAKE_IGNORE_PREFIX_PATH="/usr" \
     -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCH \
     -DBUILD_SHARED_LIBS=OFF \
+    -DGIT_THREADS=OFF \
     -DCMAKE_BUILD_TYPE=Release
   cmake --build libgit2/build --target install
 

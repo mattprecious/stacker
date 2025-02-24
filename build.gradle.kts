@@ -43,6 +43,7 @@ tasks.withType<CInteropProcess>().configureEach {
 }
 
 kotlin {
+	linuxX64()
 	macosArm64()
 	macosX64()
 
