@@ -54,7 +54,7 @@ internal class BranchUntrack(
 					append(" has children. Please retarget or untrack them.")
 				},
 			)
-			return
+			abort()
 		}
 
 		stackManager.untrackBranch(currentBranch.value)

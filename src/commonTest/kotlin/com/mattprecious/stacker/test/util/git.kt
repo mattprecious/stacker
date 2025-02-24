@@ -49,6 +49,10 @@ fun TestEnvironment.gitCreateAndCheckoutBranch(
 	environment.exec("git checkout -b $name")
 }
 
+fun TestEnvironment.gitCurrentBranch(): String {
+	return environment.exec("git rev-parse --abbrev-ref HEAD")
+}
+
 fun TestEnvironment.gitLog(path: String = "HEAD"): Sequence<String> {
 	return environment.exec("git log --format=format:'%h %s' $path").splitToSequence('\n')
 }
