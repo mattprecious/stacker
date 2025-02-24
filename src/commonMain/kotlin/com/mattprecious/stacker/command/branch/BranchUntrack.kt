@@ -34,29 +34,40 @@ internal class BranchUntrack(
 		requireNoLock(locker)
 
 		val branchName = branchName ?: vc.currentBranchName
-		val currentBranch = stackManager.getBranch(branchName)
-		if (currentBranch == null) {
+
+		if (branchName == configManager.trunk) {
+			printStaticError("Cannot untrack trunk branch.")
+			abort()
+		}
+
+		if (branchName == configManager.trailingTrunk) {
+			printStaticError("Cannot untrack trailing trunk branch.")
+			abort()
+		}
+
+		val branch = stackManager.getBranch(branchName)
+		if (branch == null) {
 			printStaticError(
 				buildAnnotatedString {
 					append("Branch ")
-					branch { append(branchName) }
+					this.branch { append(branchName) }
 					append(" is already not tracked.")
 				},
 			)
 			return
 		}
 
-		if (currentBranch.children.isNotEmpty()) {
+		if (branch.children.isNotEmpty()) {
 			printStaticError(
 				buildAnnotatedString {
 					append("Branch ")
-					branch { append(branchName) }
+					this.branch { append(branchName) }
 					append(" has children. Please retarget or untrack them.")
 				},
 			)
 			abort()
 		}
 
-		stackManager.untrackBranch(currentBranch.value)
+		stackManager.untrackBranch(branch.value)
 	}
 }
