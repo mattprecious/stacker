@@ -12,6 +12,7 @@ import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.delegates.Optional
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
+import com.mattprecious.stacker.test.util.gitCreateBranch
 import com.mattprecious.stacker.test.util.gitCurrentBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.withTestEnvironment
@@ -81,5 +82,48 @@ class BranchUntrackTest {
 
 		// Does not change branch.
 		assertThat(gitCurrentBranch()).isEqualTo("change-a")
+	}
+
+	@Test
+	fun cannotUntrackTrunk() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+
+		testCommand({ branchUntrack(null) }) {
+			awaitFrame(
+				static = "Cannot untrack trunk branch.",
+				output = "",
+			)
+
+			assertThat(awaitResult()).isFalse()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactly("main")
+		}
+	}
+
+	@Test
+	fun cannotUntrackTrailingTrunk() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		gitCreateBranch("green-main")
+		testCommand({ repoInit("main", Optional.Some("green-main")) })
+
+		testCommand({ branchUntrack("green-main") }) {
+			awaitFrame(
+				static = "Cannot untrack trailing trunk branch.",
+				output = "",
+			)
+
+			assertThat(awaitResult()).isFalse()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactly("main", "green-main")
+		}
 	}
 }
