@@ -71,7 +71,10 @@ internal class BranchTrack(
 		} else {
 			render { onResult ->
 				InteractivePrompt(
-					message = "Checkout a branch",
+					message = buildAnnotatedString {
+						append("Choose a parent branch for ")
+						branch { append(branchName) }
+					},
 					state = remember {
 						PromptState(
 							options.toPersistentList(),
