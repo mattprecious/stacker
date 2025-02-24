@@ -87,7 +87,9 @@ function build() {
 	popd
 
   curl -L https://github.com/libgit2/libgit2/archive/refs/tags/v1.9.0.zip > libgit2.zip
-  tar -xf libgit2.zip
+  # unzip can't handle the encoding of one of the test files/folders and tar won't extract zip files
+  # on ubuntu.
+  unzip libgit2.zip -x "libgit2-1.9.0/tests/*"
   rm libgit2.zip
   mv libgit2-1.9.0 libgit2
   mkdir -p libgit2/build
