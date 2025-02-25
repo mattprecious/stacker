@@ -226,6 +226,8 @@ class RepoInitTest {
 				static = "Do you use a trailing-trunk workflow? [y/N]: ",
 				output = "",
 			)
+
+			assertThat(awaitResult()).isTrue()
 		}
 
 		withDatabase {
