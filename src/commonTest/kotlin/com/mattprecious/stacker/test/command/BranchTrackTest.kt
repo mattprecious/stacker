@@ -188,4 +188,26 @@ class BranchTrackTest {
 			)
 		}
 	}
+
+	@Test
+	fun trunkIsAlwaysIncluded() = withTestEnvironment {
+		gitInit()
+		val mainSha = gitCommit("Empty")
+		gitCreateAndCheckoutBranch("change-a")
+		gitCommit("Change A")
+		gitCheckoutBranch("main")
+		gitCommit("Main update")
+		gitCreateAndCheckoutBranch("green-main")
+		testCommand({ repoInit("main", Optional.Some("green-main")) })
+
+		testCommand({ branchTrack("change-a") }) {
+			awaitFrame(
+				"""
+				|Choose a parent branch for change-a:$s
+				|❯ ○ green-main                      $s
+				|  ○ main                            $s
+				""".trimMargin(),
+			)
+		}
+	}
 }
