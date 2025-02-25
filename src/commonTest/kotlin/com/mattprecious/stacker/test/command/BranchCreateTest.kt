@@ -11,6 +11,7 @@ import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.delegates.Optional
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
+import com.mattprecious.stacker.test.util.gitCreateBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
@@ -100,6 +101,27 @@ class BranchCreateTest {
 				output = "",
 			)
 
+			assertThat(awaitResult()).isFalse()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactly("main")
+		}
+	}
+
+	@Test
+	fun duplicateBranch() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+		gitCreateBranch("change-a")
+
+		testCommand({ branchCreate("change-a") }) {
+			awaitFrame(
+				static = "Branch change-a already exists.",
+				output = "",
+			)
 			assertThat(awaitResult()).isFalse()
 		}
 
