@@ -18,7 +18,12 @@ interface VersionControl : AutoCloseable {
 
 	fun checkout(branchName: String)
 
-	fun createBranchFromCurrent(branchName: String)
+	enum class BranchCreateResult {
+		Success,
+		AlreadyExists,
+	}
+
+	fun createBranchFromCurrent(branchName: String): BranchCreateResult
 
 	fun renameBranch(branchName: String, newName: String)
 

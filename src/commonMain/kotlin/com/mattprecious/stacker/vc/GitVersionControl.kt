@@ -5,6 +5,7 @@ import com.github.git2.GIT_CHECKOUT_OPTIONS_VERSION
 import com.github.git2.GIT_CREDTYPE_SSH_KEY
 import com.github.git2.GIT_EAPPLIED
 import com.github.git2.GIT_ECONFLICT
+import com.github.git2.GIT_EEXISTS
 import com.github.git2.GIT_ENOTFOUND
 import com.github.git2.GIT_EUNMERGED
 import com.github.git2.GIT_FETCH_OPTIONS_VERSION
@@ -97,6 +98,8 @@ import com.github.git2.git_signature_default_from_env
 import com.github.git2.git_signature_free
 import com.github.git2.git_strarray
 import com.mattprecious.stacker.shell.Shell
+import com.mattprecious.stacker.vc.ReturnCodes.EEXISTS
+import com.mattprecious.stacker.vc.VersionControl.BranchCreateResult
 import com.mattprecious.stacker.vc.VersionControl.CommitInfo
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
@@ -196,10 +199,14 @@ class GitVersionControl(
 		checkout(branchName, treeish.pointed!!)
 	}
 
-	override fun createBranchFromCurrent(branchName: String) = memScoped {
+	override fun createBranchFromCurrent(branchName: String): BranchCreateResult = memScoped {
 		val commit = getCommitForBranch(currentBranchName)
-		checkError(git_branch_create(allocPointerTo<git_reference>().ptr, repo, branchName, commit.ptr, 0))
+		val code =
+			git_branch_create(allocPointerTo<git_reference>().ptr, repo, branchName, commit.ptr, 0)
+		if (code == EEXISTS) return BranchCreateResult.AlreadyExists
+		checkError(code)
 		checkout(branchName, commit.asObject())
+		return BranchCreateResult.Success
 	}
 
 	override fun renameBranch(branchName: String, newName: String) = memScoped {
@@ -590,6 +597,7 @@ private fun checkError(result: Int) {
 private object ReturnCodes {
 	val OK = GIT_OK
 	val ENOTFOUND = GIT_ENOTFOUND
+	val EEXISTS = GIT_EEXISTS
 	val EUNMERGED = GIT_EUNMERGED
 	val ECONFLICT = GIT_ECONFLICT
 	val EAPPLIED = GIT_EAPPLIED

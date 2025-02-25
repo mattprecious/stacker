@@ -11,6 +11,7 @@ import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.rendering.code
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
+import com.mattprecious.stacker.vc.VersionControl.BranchCreateResult
 
 fun StackerDeps.branchCreate(
 	branchName: String,
@@ -49,7 +50,21 @@ internal class BranchCreate(
 			abort()
 		}
 
-		vc.createBranchFromCurrent(branchName)
-		stackManager.trackBranch(branchName, currentBranch.name, vc.getSha(currentBranch.name))
+		when (vc.createBranchFromCurrent(branchName)) {
+			BranchCreateResult.Success -> {
+				stackManager.trackBranch(branchName, currentBranch.name, vc.getSha(currentBranch.name))
+			}
+			BranchCreateResult.AlreadyExists -> {
+				printStaticError(
+					buildAnnotatedString {
+						append("Branch ")
+						branch { append(branchName) }
+						append(" already exists.")
+					},
+				)
+
+				abort()
+			}
+		}
 	}
 }
