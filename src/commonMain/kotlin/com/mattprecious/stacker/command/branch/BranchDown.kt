@@ -29,11 +29,8 @@ internal class BranchDown(
 		requireNoLock(locker)
 
 		val parent = stackManager.getBranch(vc.currentBranchName)!!.parent
-		if (parent == null) {
-			printStaticError("Already at the base.")
-			abort()
+		if (parent != null) {
+			vc.checkout(parent.name)
 		}
-
-		vc.checkout(parent.name)
 	}
 }
