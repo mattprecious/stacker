@@ -186,10 +186,6 @@ class GitVersionControl(
 		git_libgit2_shutdown()
 	}
 
-	override fun fallthrough(commands: List<String>) {
-		shell.exec("git", *commands.toTypedArray())
-	}
-
 	override fun checkBranches(branchNames: Set<String>): Set<String> {
 		return branchNames.toMutableSet().apply { removeAll(branches.toSet()) }
 	}
