@@ -36,7 +36,7 @@ internal class BranchDelete(
 
 		val branchName = branchName ?: currentBranchName
 		if (branchName == configManager.trunk || branchName == configManager.trailingTrunk) {
-			printStaticError("Cannnot delete a trunk branch.")
+			printStaticError("Cannot delete a trunk branch.")
 			abort()
 		}
 
