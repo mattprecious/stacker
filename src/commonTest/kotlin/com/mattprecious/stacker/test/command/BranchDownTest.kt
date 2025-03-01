@@ -2,6 +2,7 @@ package com.mattprecious.stacker.test.command
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
+import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.branch.branchDown
@@ -17,6 +18,23 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchDownTest {
+	@Test
+	fun untracked() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main", None) })
+		gitCreateAndCheckoutBranch("change-a")
+
+		testCommand({ branchDown() }) {
+			awaitFrame(
+				static = "Branch change-a is not tracked.",
+				output = "",
+			)
+
+			assertThat(awaitResult()).isFalse()
+		}
+	}
+
 	@Test
 	fun singleBranch() = withTestEnvironment {
 		gitInit()
