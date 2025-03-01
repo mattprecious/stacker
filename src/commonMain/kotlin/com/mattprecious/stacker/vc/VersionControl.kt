@@ -12,8 +12,6 @@ interface VersionControl : AutoCloseable {
 	/** The default branch name from git config. Not necessarily the trunk branch in this repo. */
 	val defaultBranch: String?
 
-	fun fallthrough(commands: List<String>)
-
 	fun checkBranches(branchNames: Set<String>): Set<String>
 
 	fun checkout(branchName: String)
