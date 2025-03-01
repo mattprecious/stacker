@@ -12,6 +12,7 @@ import com.mattprecious.stacker.delegates.Optional
 import com.mattprecious.stacker.test.util.gitCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
+import com.mattprecious.stacker.test.util.gitCreateBranch
 import com.mattprecious.stacker.test.util.gitCurrentBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.withTestEnvironment
@@ -115,6 +116,47 @@ class BranchDeleteTest {
 	}
 
 	@Test
+	fun currentBranchUntracked() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+		gitCreateAndCheckoutBranch("change-a")
+
+		testCommand({ branchDelete(null) }) {
+			awaitFrame("")
+			assertThat(awaitResult()).isTrue()
+		}
+
+		assertThat(gitCurrentBranch()).isEqualTo("main")
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactly("main")
+		}
+	}
+
+	@Test
+	fun currentBranchUntrackedWithTrailingTrunk() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		gitCreateAndCheckoutBranch("green-main")
+		testCommand({ repoInit("main", Optional.Some("green-main")) })
+		gitCreateAndCheckoutBranch("change-a")
+
+		testCommand({ branchDelete(null) }) {
+			awaitFrame("")
+			assertThat(awaitResult()).isTrue()
+		}
+
+		assertThat(gitCurrentBranch()).isEqualTo("green-main")
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactly("main", "green-main")
+		}
+	}
+
+	@Test
 	fun notCurrentBranch() = withTestEnvironment {
 		gitInit()
 		gitCommit("Empty")
@@ -145,6 +187,27 @@ class BranchDeleteTest {
 		withDatabase {
 			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
 				.containsExactly("main")
+		}
+	}
+
+	@Test
+	fun notCurrentBranchUntracked() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+		testCommand({ branchCreate("change-a") })
+		gitCreateBranch("change-b")
+
+		testCommand({ branchDelete("change-b") }) {
+			awaitFrame("")
+			assertThat(awaitResult()).isTrue()
+		}
+
+		assertThat(gitCurrentBranch()).isEqualTo("change-a")
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactly("main", "change-a")
 		}
 	}
 }
