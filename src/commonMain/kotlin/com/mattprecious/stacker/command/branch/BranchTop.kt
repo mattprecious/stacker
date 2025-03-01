@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.command.branch
 
 import androidx.compose.runtime.remember
+import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.mattprecious.stacker.StackerDeps
 import com.mattprecious.stacker.collections.TreeNode
 import com.mattprecious.stacker.command.StackerCommand
@@ -11,6 +12,7 @@ import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
@@ -35,7 +37,20 @@ internal class BranchTop(
 		requireInitialized(configManager)
 		requireNoLock(locker)
 
-		val options = stackManager.getBranch(vc.currentBranchName)!!.leaves()
+		val currentBranchName = vc.currentBranchName
+		val currentBranch = stackManager.getBranch(currentBranchName)
+		if (currentBranch == null) {
+			printStaticError(
+				buildAnnotatedString {
+					append("Branch ")
+					this.branch { append(currentBranchName) }
+					append(" is not tracked.")
+				},
+			)
+			abort()
+		}
+
+		val options = currentBranch.leaves()
 		val branch = if (options.size == 1) {
 			options.single().name
 		} else {
