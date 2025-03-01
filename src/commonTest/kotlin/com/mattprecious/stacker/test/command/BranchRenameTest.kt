@@ -155,4 +155,27 @@ class BranchRenameTest {
 			"main",
 		)
 	}
+
+	@Test
+	fun renameUntracked() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+		gitCreateAndCheckoutBranch("change-a")
+
+		testCommand({ branchRename("new-a") }) {
+			awaitFrame("")
+			assertThat(awaitResult()).isTrue()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactly("main")
+		}
+
+		assertThat(gitBranches()).containsExactly(
+			"main",
+			"* new-a",
+		)
+	}
 }
