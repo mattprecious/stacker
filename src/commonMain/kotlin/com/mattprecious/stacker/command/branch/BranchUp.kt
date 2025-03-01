@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.command.branch
 
 import androidx.compose.runtime.remember
+import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.mattprecious.stacker.StackerDeps
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.StackerCommandScope
@@ -9,6 +10,7 @@ import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
@@ -33,10 +35,23 @@ internal class BranchUp(
 		requireInitialized(configManager)
 		requireNoLock(locker)
 
-		val options = stackManager.getBranch(vc.currentBranchName)!!.children
+		val currentBranchName = vc.currentBranchName
+		val currentBranch = stackManager.getBranch(currentBranchName)
+		if (currentBranch == null) {
+			printStaticError(
+				buildAnnotatedString {
+					append("Branch ")
+					this.branch { append(currentBranchName) }
+					append(" is not tracked.")
+				},
+			)
+			abort()
+		}
+
+		val options = currentBranch.children
 		if (options.isEmpty()) return
 
-		val branch = if (options.size == 1) {
+		val upBranch = if (options.size == 1) {
 			options.single().name
 		} else {
 			render { onResult ->
@@ -45,7 +60,7 @@ internal class BranchUp(
 					state = remember {
 						PromptState(
 							options.toPersistentList(),
-							default = options.find { it.name == vc.currentBranchName },
+							default = options.find { it.name == currentBranchName },
 							displayTransform = { it.name.toAnnotatedString() },
 							valueTransform = { it.name.toAnnotatedString() },
 						)
@@ -55,6 +70,6 @@ internal class BranchUp(
 			}
 		}
 
-		vc.checkout(branch)
+		vc.checkout(upBranch)
 	}
 }
