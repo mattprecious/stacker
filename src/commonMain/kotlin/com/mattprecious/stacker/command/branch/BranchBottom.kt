@@ -38,7 +38,7 @@ internal class BranchBottom(
 		}
 
 		var bottom = currentBranch
-		while (bottom.parent!!.name != trailingTrunk) {
+		while (bottom.parent!!.name != trailingTrunk && bottom.parent!!.name != trunk) {
 			bottom = bottom.parent!!
 		}
 
