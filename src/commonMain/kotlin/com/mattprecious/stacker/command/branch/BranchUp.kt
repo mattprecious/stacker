@@ -34,6 +34,7 @@ internal class BranchUp(
 		requireNoLock(locker)
 
 		val options = stackManager.getBranch(vc.currentBranchName)!!.children
+		if (options.isEmpty()) return
 
 		val branch = if (options.size == 1) {
 			options.single().name
