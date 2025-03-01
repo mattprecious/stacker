@@ -41,7 +41,7 @@ internal class BranchTop(
 		} else {
 			render { onResult ->
 				InteractivePrompt(
-					message = "Choose which top",
+					message = "Move up to",
 					state = remember {
 						PromptState(
 							options.toPersistentList(),
