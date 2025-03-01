@@ -1,6 +1,7 @@
 package com.mattprecious.stacker.command.branch
 
 import androidx.compose.runtime.remember
+import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.mattprecious.stacker.StackerDeps
 import com.mattprecious.stacker.command.StackerCommand
 import com.mattprecious.stacker.command.StackerCommandScope
@@ -10,6 +11,7 @@ import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
+import com.mattprecious.stacker.rendering.branch
 import com.mattprecious.stacker.rendering.toAnnotatedString
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
@@ -63,7 +65,13 @@ internal class BranchCheckout(
 		} else if (vc.branches.contains(branchName)) {
 			branchName
 		} else {
-			printStaticError("'$branchName' does not match any branches known to git.")
+			printStaticError(
+				buildAnnotatedString {
+					branch { append(branchName) }
+					append(" does not match any branches known to git.")
+				},
+			)
+
 			abort()
 		}
 
