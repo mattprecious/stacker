@@ -52,6 +52,8 @@ internal class BranchDelete(
 			}
 
 			stackManager.untrackBranch(branch.value)
+		} else if (branchName == currentBranchName) {
+			vc.checkout(configManager.trailingTrunk ?: configManager.trunk!!)
 		}
 
 		vc.delete(branchName)
