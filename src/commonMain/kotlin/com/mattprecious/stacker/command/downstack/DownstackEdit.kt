@@ -112,6 +112,7 @@ internal class DownstackEdit(
 			when (it.state) {
 				EditState.Item.State.Untrack -> stackManager.untrackBranch(branch.value)
 				EditState.Item.State.Remove -> {
+					// TODO: This branch should be restacked.
 					stackManager.updateParent(
 						branch = stackManager.getBranch(branch.name)!!.value,
 						parent = stackManager.getBranch(downstackTrunk)!!.value,

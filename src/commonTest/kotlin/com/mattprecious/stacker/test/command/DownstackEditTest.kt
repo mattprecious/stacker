@@ -260,6 +260,97 @@ class DownstackEditTest {
 	}
 
 	@Test
+	fun removingCurrentBranch() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main") })
+		testCommand({ branchCreate("change-a") })
+		environment.exec("touch a.txt")
+		gitAdd("a.txt".toPath())
+		assertThat(gitCommit("Change A").short).isEqualTo("3d9b7d7")
+		testCommand({ branchCreate("change-b") })
+		environment.exec("touch b.txt")
+		gitAdd("b.txt".toPath())
+		assertThat(gitCommit("Change B").short).isEqualTo("929371e")
+
+		testCommand({ downstackEdit() }) {
+			awaitFrame(
+				"""
+				|❯ change-b                                $s
+				|  change-a                                $s
+				|  main                                    $s
+				|                                          $s
+				|Move branches up/down by holding Shift.   $s
+				|Remove branch by pressing Backspace/Delete.$reset
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Delete"))
+
+			awaitFrame(
+				"""
+				|❯ change-b  ❯ Remove from stack, set parent to main$reset
+				|  change-a    Untrack it                          $s
+				|  main        Delete it                           $s
+				|              Cancel                              $s
+				|                                                  $s
+				|Move branches up/down by holding Shift.           $s
+				|Remove branch by pressing Backspace/Delete.       $s
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Enter"))
+
+			awaitFrame(
+				"""
+				|❯ change-b (remove)                       $s
+				|  change-a                                $s
+				|  main                                    $s
+				|                                          $s
+				|Move branches up/down by holding Shift.   $s
+				|Remove branch by pressing Backspace/Delete.$reset
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Enter"))
+			awaitFrame("")
+
+			assertThat(awaitResult()).isTrue()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name to it.parent })
+				.containsExactlyInAnyOrder(
+					"change-a" to "main",
+					"change-b" to "main",
+					"main" to null,
+				)
+		}
+
+		assertThat(gitLog("main")).containsExactly(
+			"94cf6f0 Empty",
+		)
+
+		// TODO: Change A should not be here.
+		assertThat(gitLog("change-b")).containsExactly(
+			"929371e Change B",
+			"3d9b7d7 Change A",
+			"94cf6f0 Empty",
+		)
+
+		assertThat(gitLog("change-a")).containsExactly(
+			"3d9b7d7 Change A",
+			"94cf6f0 Empty",
+		)
+
+		assertThat(gitBranches()).containsExactly(
+			"change-a",
+			"* change-b",
+			"main",
+		)
+	}
+
+	@Test
 	fun untrackingBranch() = withTestEnvironment {
 		gitInit()
 		gitCommit("Empty")
@@ -347,6 +438,109 @@ class DownstackEditTest {
 
 		assertThat(gitLog("change-b")).containsExactly(
 			"23535fb Change B",
+			"94cf6f0 Empty",
+		)
+
+		assertThat(gitLog("change-a")).containsExactly(
+			"3d9b7d7 Change A",
+			"94cf6f0 Empty",
+		)
+
+		assertThat(gitBranches()).containsExactly(
+			"change-a",
+			"* change-b",
+			"main",
+		)
+	}
+
+	@Test
+	fun untrackingCurrentBranch() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main") })
+		testCommand({ branchCreate("change-a") })
+		environment.exec("touch a.txt")
+		gitAdd("a.txt".toPath())
+		assertThat(gitCommit("Change A").short).isEqualTo("3d9b7d7")
+		testCommand({ branchCreate("change-b") })
+		environment.exec("touch b.txt")
+		gitAdd("b.txt".toPath())
+		assertThat(gitCommit("Change B").short).isEqualTo("929371e")
+
+		testCommand({ downstackEdit() }) {
+			awaitFrame(
+				"""
+				|❯ change-b                                $s
+				|  change-a                                $s
+				|  main                                    $s
+				|                                          $s
+				|Move branches up/down by holding Shift.   $s
+				|Remove branch by pressing Backspace/Delete.$reset
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Delete"))
+
+			awaitFrame(
+				"""
+				|❯ change-b  ❯ Remove from stack, set parent to main$reset
+				|  change-a    Untrack it                          $s
+				|  main        Delete it                           $s
+				|              Cancel                              $s
+				|                                                  $s
+				|Move branches up/down by holding Shift.           $s
+				|Remove branch by pressing Backspace/Delete.       $s
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("ArrowDown"))
+
+			awaitFrame(
+				"""
+				|❯ change-b    Remove from stack, set parent to main$reset
+				|  change-a  ❯ Untrack it                          $s
+				|  main        Delete it                           $s
+				|              Cancel                              $s
+				|                                                  $s
+				|Move branches up/down by holding Shift.           $s
+				|Remove branch by pressing Backspace/Delete.       $s
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Enter"))
+
+			awaitFrame(
+				"""
+				|❯ change-b (untrack)                      $s
+				|  change-a                                $s
+				|  main                                    $s
+				|                                          $s
+				|Move branches up/down by holding Shift.   $s
+				|Remove branch by pressing Backspace/Delete.$reset
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Enter"))
+			awaitFrame("")
+
+			assertThat(awaitResult()).isTrue()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name to it.parent })
+				.containsExactlyInAnyOrder(
+					"change-a" to "main",
+					"main" to null,
+				)
+		}
+
+		assertThat(gitLog("main")).containsExactly(
+			"94cf6f0 Empty",
+		)
+
+		assertThat(gitLog("change-b")).containsExactly(
+			"929371e Change B",
+			"3d9b7d7 Change A",
 			"94cf6f0 Empty",
 		)
 
@@ -456,6 +650,103 @@ class DownstackEditTest {
 
 		assertThat(gitBranches()).containsExactly(
 			"* change-b",
+			"main",
+		)
+	}
+
+	@Test
+	fun deletingCurrentBranch() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main") })
+		testCommand({ branchCreate("change-a") })
+		environment.exec("touch a.txt")
+		gitAdd("a.txt".toPath())
+		assertThat(gitCommit("Change A").short).isEqualTo("3d9b7d7")
+		testCommand({ branchCreate("change-b") })
+		environment.exec("touch b.txt")
+		gitAdd("b.txt".toPath())
+		assertThat(gitCommit("Change B").short).isEqualTo("929371e")
+
+		testCommand({ downstackEdit() }) {
+			awaitFrame(
+				"""
+				|❯ change-b                                $s
+				|  change-a                                $s
+				|  main                                    $s
+				|                                          $s
+				|Move branches up/down by holding Shift.   $s
+				|Remove branch by pressing Backspace/Delete.$reset
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Delete"))
+
+			awaitFrame(
+				"""
+				|❯ change-b  ❯ Remove from stack, set parent to main$reset
+				|  change-a    Untrack it                          $s
+				|  main        Delete it                           $s
+				|              Cancel                              $s
+				|                                                  $s
+				|Move branches up/down by holding Shift.           $s
+				|Remove branch by pressing Backspace/Delete.       $s
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyEvent("ArrowDown"))
+
+			awaitFrame(
+				"""
+				|❯ change-b    Remove from stack, set parent to main$reset
+				|  change-a    Untrack it                          $s
+				|  main      ❯ Delete it                           $s
+				|              Cancel                              $s
+				|                                                  $s
+				|Move branches up/down by holding Shift.           $s
+				|Remove branch by pressing Backspace/Delete.       $s
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Enter"))
+
+			awaitFrame(
+				"""
+				|❯ change-b (delete)                       $s
+				|  change-a                                $s
+				|  main                                    $s
+				|                                          $s
+				|Move branches up/down by holding Shift.   $s
+				|Remove branch by pressing Backspace/Delete.$reset
+				""".trimMargin(),
+			)
+
+			sendKeyEvent(KeyEvent("Enter"))
+			awaitFrame("")
+
+			assertThat(awaitResult()).isTrue()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name to it.parent })
+				.containsExactlyInAnyOrder(
+					"change-a" to "main",
+					"main" to null,
+				)
+		}
+
+		assertThat(gitLog("main")).containsExactly(
+			"94cf6f0 Empty",
+		)
+
+		assertThat(gitLog("change-a")).containsExactly(
+			"3d9b7d7 Change A",
+			"94cf6f0 Empty",
+		)
+
+		assertThat(gitBranches()).containsExactly(
+			"* change-a",
 			"main",
 		)
 	}
