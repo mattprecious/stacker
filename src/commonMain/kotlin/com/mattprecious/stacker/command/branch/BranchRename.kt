@@ -36,6 +36,11 @@ internal class BranchRename(
 		requireNoLock(locker)
 
 		val currentBranchName = vc.currentBranchName
+		if (currentBranchName == configManager.trunk || currentBranchName == configManager.trailingTrunk) {
+			printStaticError("Cannot rename a trunk branch.")
+			abort()
+		}
+
 		val currentBranch = stackManager.getBranch(currentBranchName)
 		if (currentBranch == null) {
 			printStaticError(

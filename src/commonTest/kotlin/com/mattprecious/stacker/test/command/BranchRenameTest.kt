@@ -3,6 +3,7 @@ package com.mattprecious.stacker.test.command
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.containsExactlyInAnyOrder
+import assertk.assertions.isFalse
 import assertk.assertions.isTrue
 import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.branch.branchRename
@@ -12,6 +13,7 @@ import com.mattprecious.stacker.delegates.Optional
 import com.mattprecious.stacker.test.util.gitBranches
 import com.mattprecious.stacker.test.util.gitCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCommit
+import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
@@ -103,6 +105,54 @@ class BranchRenameTest {
 			"change-d",
 			"main",
 			"* new-a",
+		)
+	}
+
+	@Test
+	fun cannotRenameTrunk() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		testCommand({ repoInit("main", Optional.None) })
+
+		testCommand({ branchRename("trunk") }) {
+			awaitFrame(
+				static = "Cannot rename a trunk branch.",
+				output = "",
+			)
+			assertThat(awaitResult()).isFalse()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactly("main")
+		}
+
+		assertThat(gitBranches()).containsExactly("* main")
+	}
+
+	@Test
+	fun cannotRenameTrailingTrunk() = withTestEnvironment {
+		gitInit()
+		gitCommit("Empty")
+		gitCreateAndCheckoutBranch("green-main")
+		testCommand({ repoInit("main", Optional.Some("green-main")) })
+
+		testCommand({ branchRename("green-trunk") }) {
+			awaitFrame(
+				static = "Cannot rename a trunk branch.",
+				output = "",
+			)
+			assertThat(awaitResult()).isFalse()
+		}
+
+		withDatabase {
+			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+				.containsExactlyInAnyOrder("main", "green-main")
+		}
+
+		assertThat(gitBranches()).containsExactly(
+			"* green-main",
+			"main",
 		)
 	}
 }
