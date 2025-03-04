@@ -391,12 +391,8 @@ class GitVersionControl(
 				"Unsupported credential types: $types"
 			}
 
-			checkError(
-				functionName = "git_credential_ssh_key_from_agent",
-				result = git_credential_ssh_key_from_agent(out, username?.toKString()),
-			)
-
-			return@staticCFunction 0
+			// Propagate the return code.
+			return@staticCFunction git_credential_ssh_key_from_agent(out, username?.toKString())
 		}
 
 		// Is this bad? I don't know why it's not a known host.
@@ -675,19 +671,18 @@ class GitVersionControl(
 		// All commits are objects, so it's safe to do this.
 		return reinterpret()
 	}
-}
 
-// This is invoked from inside C callbacks so it needs to be static.
-private fun checkError(
-	functionName: String,
-	result: Int,
-) {
-	if (result != ReturnCodes.OK) {
-		throw LibGit2Error(
-			code = result,
-			functionName = functionName,
-			errorMessage = git_error_last()!!.pointed.message!!.toKString(),
-		)
+	private fun checkError(
+		functionName: String,
+		result: Int,
+	) {
+		if (result != ReturnCodes.OK) {
+			throw LibGit2Error(
+				code = result,
+				functionName = functionName,
+				errorMessage = git_error_last()!!.pointed.message!!.toKString(),
+			)
+		}
 	}
 }
 
