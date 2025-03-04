@@ -14,6 +14,7 @@ import androidx.compose.runtime.snapshotFlow
 import com.jakewharton.mosaic.runMosaic
 import com.mattprecious.stacker.rendering.LocalPrinter
 import com.mattprecious.stacker.rendering.Printer
+import com.mattprecious.stacker.vc.LibGit2Error
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.transformWhile
@@ -83,7 +84,15 @@ abstract class StackerCommand {
 			LaunchedEffect(Unit) {
 				// Don't block the render thread.
 				withContext(Dispatchers.IO) {
-					StackerCommandScope(printer, workState).work()
+					with(StackerCommandScope(printer, workState)) {
+						try {
+							work()
+						} catch (e: LibGit2Error) {
+							printStatic(e.message!!)
+							abort()
+						}
+					}
+
 					workState.state = State.Finished
 				}
 			}
