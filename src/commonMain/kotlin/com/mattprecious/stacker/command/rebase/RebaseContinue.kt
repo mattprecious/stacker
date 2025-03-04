@@ -37,6 +37,9 @@ internal class RebaseContinue(
 				is Locker.Operation.Restack -> {
 					if (vc.continueRebase(operation.branches.first())) {
 						operation.perform(this@work, this, stackManager, vc, continuing = true)
+					} else {
+						printStaticError("Unresolved merge conflicts.")
+						abort()
 					}
 				}
 			}
