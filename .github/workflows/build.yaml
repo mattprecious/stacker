@@ -71,7 +71,7 @@ jobs:
 
       - run: ./gradlew buildDependencies ${{ matrix.task }}
 
-      - uses: dorny/test-reporter@v1
+      - uses: dorny/test-reporter@v2
         # Doesn't work with forks.
         if: (success() || failure()) && (github.event.pull_request == null || github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
         with:
