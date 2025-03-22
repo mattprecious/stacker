@@ -5,14 +5,19 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.jakewharton.mosaic.LocalTerminal
 import com.jakewharton.mosaic.layout.onKeyEvent
+import com.jakewharton.mosaic.layout.padding
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.AnnotatedString
 import com.jakewharton.mosaic.text.buildAnnotatedString
+import com.jakewharton.mosaic.ui.Alignment
+import com.jakewharton.mosaic.ui.Box
 import com.jakewharton.mosaic.ui.Column
 import com.jakewharton.mosaic.ui.Row
 import com.jakewharton.mosaic.ui.Text
@@ -167,6 +172,7 @@ class PromptState<T>(
 	@Immutable
 	internal inner class Option(
 		val option: T,
+		val highlighted: Boolean,
 	) {
 		val display: AnnotatedString get() = displayTransform(option)
 		val value: AnnotatedString get() = valueTransform(option)
@@ -179,18 +185,41 @@ class PromptState<T>(
 	//   - In the case of a tie, prefer the earlier (left/top) option.
 	// - When popping from the filter, restore the highlight to what it was for this filter
 	//   previously, unless an arrow key was pressed at any point since the filter was appended.
-	var highlighted by mutableStateOf(default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0)
-		private set
+	private var highlighted by mutableIntStateOf(
+		default?.let(options::indexOf)?.coerceAtLeast(0) ?: 0,
+	)
+
+	private var windowSize by mutableIntStateOf(Int.MAX_VALUE)
+
+	fun setWindowSize(windowSize: Int) {
+		if (windowSize == this.windowSize) return
+		this.windowSize = windowSize
+		windowOffset = (highlighted - 2).coerceIn(0, (filteredOptions.size - windowSize).coerceAtLeast(0))
+	}
+
+	private var windowOffset by mutableIntStateOf(0)
+
+	val canScrollUp by derivedStateOf { windowOffset > 0 }
+
+	val canScrollDown by derivedStateOf {
+		windowOffset + windowSize < filteredOptions.size
+	}
 
 	private val highlightedStack = mutableStateListOf<Int>()
 
 	internal var filter by mutableStateOf("")
 		private set
 
-	internal val filteredOptions by derivedStateOf {
+	private val filteredOptions by derivedStateOf {
 		options
-			.map(::Option)
-			.filter { filter.isEmpty() || it.value.contains(filter) }
+			.filter { filter.isEmpty() || valueTransform(it).contains(filter) }
+			.mapIndexed { index, option -> Option(option, index == highlighted) }
+	}
+
+	internal val windowedOptions by derivedStateOf {
+		// TODO: This throws when the filtered options size changes.
+		filteredOptions
+			.subList(windowOffset, (windowOffset + windowSize).coerceAtMost(options.size))
 	}
 
 	init {
@@ -201,12 +230,20 @@ class PromptState<T>(
 		if (filteredOptions.isEmpty()) return
 		highlighted = (highlighted - 1).coerceAtLeast(0)
 		highlightedStack.clear()
+
+		if (windowOffset > 0 && highlighted - windowOffset < 2) {
+			windowOffset--
+		}
 	}
 
 	internal fun moveDown() {
 		if (filteredOptions.isEmpty()) return
 		highlighted = (highlighted + 1).coerceAtMost(filteredOptions.size - 1)
 		highlightedStack.clear()
+
+		if (windowOffset < filteredOptions.size - windowSize && windowOffset + windowSize - highlighted <= 2) {
+			windowOffset++
+		}
 	}
 
 	internal fun filterAppend(char: Char) {
@@ -308,74 +345,96 @@ fun <T> InteractivePrompt(
 		}
 	}
 
-	Column(
-		modifier = modifier
-			.onKeyEvent {
-				when {
-					it.key == "Enter" -> {
-						state.select()?.let { selected ->
-							if (staticPrintResult && prompt != null) {
-								printer.printStatic(
-									buildAnnotatedString {
-										append(prompt)
-										append(' ')
-										append(selected.value)
-									},
-								)
+
+	val promptHeight = prompt?.lines()?.size ?: 0
+
+	// Mosaic always adds a trailing new line. Remove -1 when it stops.
+	state.setWindowSize(LocalTerminal.current.size.height - promptHeight - 1)
+
+	Box {
+		Column(
+			modifier = modifier
+				.onKeyEvent {
+					when {
+						it.key == "Enter" -> {
+							state.select()?.let { selected ->
+								if (staticPrintResult && prompt != null) {
+									printer.printStatic(
+										buildAnnotatedString {
+											append(prompt)
+											append(' ')
+											append(selected.value)
+										},
+									)
+								}
+
+								onSelected(selected.option)
 							}
 
-							onSelected(selected.option)
+							true
 						}
 
-						true
-					}
+						it.key == "ArrowDown" -> {
+							state.moveDown()
+							true
+						}
 
-					it.key == "ArrowDown" -> {
-						state.moveDown()
-						true
-					}
+						it.key == "ArrowUp" -> {
+							state.moveUp()
+							true
+						}
 
-					it.key == "ArrowUp" -> {
-						state.moveUp()
-						true
-					}
+						filteringEnabled && it.key == "Backspace" -> {
+							state.filterDrop()
+							true
+						}
 
-					filteringEnabled && it.key == "Backspace" -> {
-						state.filterDrop()
-						true
-					}
+						!it.ctrl && filteringEnabled && it.key.singleOrNull()?.code in 32..126 -> {
+							state.filterAppend(it.key.single())
+							true
+						}
 
-					!it.ctrl && filteringEnabled && it.key.singleOrNull()?.code in 32..126 -> {
-						state.filterAppend(it.key.single())
-						true
+						else -> false
 					}
-
-					else -> false
-				}
-			},
-	) {
-		when {
-			prompt != null && !filteringEnabled -> Text(prompt)
-			prompt != null -> Text(
-				buildAnnotatedString {
-					append(prompt)
-					append(' ')
-					append(state.filter)
 				},
-			)
+		) {
+			when {
+				prompt != null && !filteringEnabled -> Text(prompt)
+				prompt != null -> Text(
+					buildAnnotatedString {
+						append(prompt)
+						append(' ')
+						append(state.filter)
+					},
+				)
 
-			// This is weird. Probably shouldn't allow filtering + no message.
-			filteringEnabled -> Text(state.filter)
-		}
-
-		state.filteredOptions.forEachIndexed { index, option ->
-			val text = buildAnnotatedString {
-				promptItem(index == state.highlighted) {
-					append(option.display)
-				}
+				// This is weird. Probably shouldn't allow filtering + no message.
+				filteringEnabled -> Text(state.filter)
 			}
 
-			Text(text)
+			state.windowedOptions.forEachIndexed { index, option ->
+				val text = buildAnnotatedString {
+					promptItem(option.highlighted) {
+						append(option.display)
+					}
+				}
+
+				Text(text)
+			}
+		}
+
+		if (state.canScrollUp) {
+			Text(
+				modifier = Modifier.padding(top = promptHeight),
+				value = "↑",
+			)
+		}
+
+		if (state.canScrollDown) {
+			Text(
+				modifier = Modifier.align(Alignment.BottomStart),
+				value = "↓",
+			)
 		}
 	}
 }
