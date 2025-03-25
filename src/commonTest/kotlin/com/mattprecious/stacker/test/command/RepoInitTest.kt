@@ -8,18 +8,18 @@ import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.delegates.Optional
 import com.mattprecious.stacker.delegates.Optional.Some
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCreateBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.gitSetDefaultBranch
-import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
@@ -56,16 +56,19 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|❯ main                                                         $s
+				|Select your trunk branch, which you open pull requests against:
+				|❯ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select your trunk branch, which you open pull requests against: main",
-				output = "",
+				output = """
+				|Select your trunk branch, which you open pull requests against:
+				|❯ main
+				""".trimMargin(),
 			)
 
 			assertThat(awaitResult()).isTrue()
@@ -97,9 +100,9 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|❯ main                                                         $s
-				|  trunk                                                        $s
+				|Select your trunk branch, which you open pull requests against:
+				|❯ main
+				|  trunk
 				""".trimMargin(),
 			)
 		}
@@ -109,9 +112,9 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|  main                                                         $s
-				|❯ trunk                                                        $s
+				|Select your trunk branch, which you open pull requests against:
+				|  main
+				|❯ trunk
 				""".trimMargin(),
 			)
 		}
@@ -128,24 +131,32 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|  a                                                            $s
-				|❯ main                                                         $s
+				|Select your trunk branch, which you open pull requests against:
+				|  a
+				|❯ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select your trunk branch, which you open pull requests against: main",
-				output = "Do you use a trailing-trunk workflow? [y/N]: ",
+				output = """
+				|Select your trunk branch, which you open pull requests against:
+				|  a
+				|❯ main
+				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			awaitFrame(
+				output = "Do you use a trailing-trunk workflow? [y/N]:",
+			)
+
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Do you use a trailing-trunk workflow? [y/N]: ",
-				output = "",
+				output = "Do you use a trailing-trunk workflow? [y/N]:",
 			)
 
 			assertThat(awaitResult()).isTrue()
@@ -177,50 +188,50 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|  a                                                            $s
-				|❯ main                                                         $s
+				|Select your trunk branch, which you open pull requests against:
+				|  a
+				|❯ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowUp"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Up))
 
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|❯ a                                                            $s
-				|  main                                                         $s
+				|Select your trunk branch, which you open pull requests against:
+				|❯ a
+				|  main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|  a                                                            $s
-				|❯ main                                                         $s
+				|Select your trunk branch, which you open pull requests against:
+				|  a
+				|❯ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowUp"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Up))
 
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|❯ a                                                            $s
-				|  main                                                         $s
+				|Select your trunk branch, which you open pull requests against:
+				|❯ a
+				|  main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select your trunk branch, which you open pull requests against: a",
 				output = "Do you use a trailing-trunk workflow? [y/N]: ",
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Do you use a trailing-trunk workflow? [y/N]: ",
@@ -258,13 +269,13 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|  green-main                                                   $s
-				|❯ main                                                         $s
+				|Select your trunk branch, which you open pull requests against:
+				|  green-main
+				|❯ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select your trunk branch, which you open pull requests against: main",
@@ -275,17 +286,17 @@ class RepoInitTest {
 
 			awaitFrame("Do you use a trailing-trunk workflow? [y/N]: y")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Do you use a trailing-trunk workflow? [y/N]: y",
 				output = """
-				|Select your trailing trunk branch, which you branch from:$s
-				|❯ green-main                                             $s
+				|Select your trailing trunk branch, which you branch from:
+				|❯ green-main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select your trailing trunk branch, which you branch from: green-main",
@@ -332,30 +343,30 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|  alpha                                                        $s
-				|  green-trunk                                                  $s
-				|  main                                                         $s
-				|❯ trunk                                                        $s
+				|Select your trunk branch, which you open pull requests against:
+				|  alpha
+				|  green-trunk
+				|  main
+				|❯ trunk
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select your trunk branch, which you open pull requests against: trunk",
 				output = "Do you use a trailing-trunk workflow? [Y/n]: ",
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Do you use a trailing-trunk workflow? [Y/n]: ",
 				output = """
-				|Select your trailing trunk branch, which you branch from:$s
-				|  alpha                                                  $s
-				|❯ green-trunk                                            $s
-				|  main                                                   $s
+				|Select your trailing trunk branch, which you branch from:
+				|  alpha
+				|❯ green-trunk
+				|  main
 				""".trimMargin(),
 			)
 		}
@@ -372,26 +383,26 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|  feature                                                      $s
-				|❯ main                                                         $s
-				|  trunk                                                        $s
+				|Select your trunk branch, which you open pull requests against:
+				|  feature
+				|❯ main
+				|  trunk
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select your trunk branch, which you open pull requests against: trunk",
 				output = "Do you use a trailing-trunk workflow? [y/N]: ",
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = """
-					|Do you use a trailing-trunk workflow? [y/N]:$s
+					|Do you use a trailing-trunk workflow? [y/N]:
 					|Cannot change trunk. Current trunk branch main has children.
 				""".trimMargin(),
 				output = "",
@@ -413,35 +424,35 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|  feature                                                      $s
-				|  green-main                                                   $s
-				|  green-trunk                                                  $s
-				|❯ main                                                         $s
+				|Select your trunk branch, which you open pull requests against:
+				|  feature
+				|  green-main
+				|  green-trunk
+				|❯ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select your trunk branch, which you open pull requests against: main",
 				output = "Do you use a trailing-trunk workflow? [Y/n]: ",
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Do you use a trailing-trunk workflow? [Y/n]: ",
 				output = """
-				|Select your trailing trunk branch, which you branch from:$s
-				|  feature                                                $s
-				|❯ green-main                                             $s
-				|  green-trunk                                            $s
+				|Select your trailing trunk branch, which you branch from:
+				|  feature
+				|❯ green-main
+				|  green-trunk
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = """
@@ -464,9 +475,9 @@ class RepoInitTest {
 		testCommand({ repoInit() }) {
 			awaitFrame(
 				"""
-				|Select your trunk branch, which you open pull requests against:$s
-				|❯ main                                                         $s
-				|  trunk                                                        $s
+				|Select your trunk branch, which you open pull requests against:
+				|❯ main
+				|  trunk
 				""".trimMargin(),
 			)
 
@@ -475,7 +486,7 @@ class RepoInitTest {
 			awaitFrame(
 				"""
 				|Select your trunk branch, which you open pull requests against: t
-				|❯ trunk                                                         $s
+				|❯ trunk
 				""".trimMargin(),
 			)
 		}

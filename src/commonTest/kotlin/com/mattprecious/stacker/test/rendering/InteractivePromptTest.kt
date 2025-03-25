@@ -8,16 +8,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.runMosaicTest
 import com.mattprecious.stacker.rendering.InteractivePrompt
 import com.mattprecious.stacker.rendering.PromptState
 import com.mattprecious.stacker.rendering.toAnnotatedString
+import com.mattprecious.stacker.test.util.Backspace
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.hasStaticsEqualTo
 import com.mattprecious.stacker.test.util.matches
-import com.mattprecious.stacker.test.util.reset
-import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.sendText
 import com.mattprecious.stacker.test.util.setContentWithStatics
 import kotlinx.collections.immutable.persistentListOf
@@ -42,13 +42,13 @@ class InteractivePromptTest {
 			assertThat(first).matches(
 				"""
 				|Select an animal:
-				|❯ Lion          $s
-				|  Tiger         $s
-				|  Bear          $s
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("Select an animal: Lion")
 		}
@@ -73,13 +73,13 @@ class InteractivePromptTest {
 			assertThat(first).matches(
 				"""
 				|Select an animal:
-				|  Lion          $s
-				|❯ Tiger         $s
-				|  Bear          $s
+				|  Lion
+				|❯ Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("Select an animal: Tiger")
 		}
@@ -102,9 +102,9 @@ class InteractivePromptTest {
 			assertThat(first).matches(
 				"""
 				|Select an animal:
-				|❯ Lion          $s
-				|  Tiger         $s
-				|  Bear          $s
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 		}
@@ -125,9 +125,9 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|❯ Lion$s
+				|❯ Lion
 				|  Tiger
-				|  Bear$s
+				|  Bear
 				""".trimMargin(),
 			)
 		}
@@ -150,46 +150,46 @@ class InteractivePromptTest {
 			assertThat(first).matches(
 				"""
 				|Select an animal:
-				|❯ Lion          $s
-				|  Tiger         $s
-				|  Bear          $s
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal:
-				|  Lion          $s
-				|❯ Tiger         $s
-				|  Bear          $s
+				|  Lion
+				|❯ Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal:
-				|  Lion          $s
-				|  Tiger         $s
-				|❯ Bear          $s
+				|  Lion
+				|  Tiger
+				|❯ Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowUp"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Up))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal:
-				|  Lion          $s
-				|❯ Tiger         $s
-				|  Bear          $s
+				|  Lion
+				|❯ Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("Select an animal: Tiger")
 		}
@@ -232,13 +232,13 @@ class InteractivePromptTest {
 			assertThat(first).matches(
 				"""
 				|Select an animal:
-				|❯ Lazy Lion     $s
-				|  Timid Tiger   $s
-				|  Brave Bear    $s
+				|❯ Lazy Lion
+				|  Timid Tiger
+				|  Brave Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("Select an animal: Lion")
 		}
@@ -263,9 +263,9 @@ class InteractivePromptTest {
 			assertThat(first).matches(
 				"""
 				|Select an animal:
-				|❯ Lion          $s
-				|  Tiger         $s
-				|  Bear          $s
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
@@ -275,9 +275,9 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal:
-				|❯ Lion          $s
-				|  Tiger         $s
-				|  Bear          $s
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 		}
@@ -299,10 +299,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
@@ -311,8 +311,8 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: i
-				|❯ Lion            $s
-				|  Tiger           $s
+				|❯ Lion
+				|  Tiger
 				""".trimMargin(),
 			)
 
@@ -321,11 +321,11 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: io
-				|❯ Lion             $s
+				|❯ Lion
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("Select an animal: Lion")
 		}
@@ -350,10 +350,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|      $s
-				|❯ Lion$s
+				|
+				|❯ Lion
 				|  Tiger
-				|  Bear$s
+				|  Bear
 				""".trimMargin(),
 			)
 
@@ -361,12 +361,12 @@ class InteractivePromptTest {
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|io   $s
-				|❯ Lion$reset
+				|io
+				|❯ Lion
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			forceRecompose++
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("")
@@ -394,14 +394,14 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			forceRecompose++
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("")
@@ -424,10 +424,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
@@ -439,19 +439,19 @@ class InteractivePromptTest {
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
-			sendKeyEvent(KeyEvent("Backspace"))
-			sendKeyEvent(KeyEvent("Backspace"))
-			sendKeyEvent(KeyEvent("Backspace"))
-			sendKeyEvent(KeyEvent("Backspace"))
-			sendKeyEvent(KeyEvent("Backspace"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 		}
@@ -473,10 +473,10 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
@@ -485,8 +485,8 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: e
-				|❯ Tiger           $s
-				|  Bear            $s
+				|❯ Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 
@@ -495,11 +495,11 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: ea
-				|❯ Bear             $s
+				|❯ Bear
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).hasStaticsEqualTo("Select an animal: Bear")
 		}
@@ -519,15 +519,15 @@ class InteractivePromptTest {
 				)
 			}
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|  Lion           $s
-				|  Tiger          $s
-				|❯ Bear           $s
+				|Select an animal:
+				|  Lion
+				|  Tiger
+				|❯ Bear
 				""".trimMargin(),
 			)
 
@@ -536,28 +536,28 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: io
-				|❯ Lion             $s
+				|❯ Lion
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Backspace"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: i
-				|  Lion            $s
-				|❯ Tiger           $s
+				|  Lion
+				|❯ Tiger
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Backspace"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|  Lion           $s
-				|  Tiger          $s
-				|❯ Bear           $s
+				|Select an animal:
+				|  Lion
+				|  Tiger
+				|❯ Bear
 				""".trimMargin(),
 			)
 		}
@@ -575,15 +575,15 @@ class InteractivePromptTest {
 				)
 			}
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|  Lion           $s
-				|  Tiger          $s
-				|❯ Bear           $s
+				|Select an animal:
+				|  Lion
+				|  Tiger
+				|❯ Bear
 				""".trimMargin(),
 			)
 
@@ -592,29 +592,29 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: io
-				|❯ Lion             $s
+				|❯ Lion
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("Backspace"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: i
-				|❯ Lion            $s
-				|  Tiger           $s
+				|❯ Lion
+				|  Tiger
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Backspace"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|❯ Lion           $s
-				|  Tiger          $s
-				|  Bear           $s
+				|Select an animal:
+				|❯ Lion
+				|  Tiger
+				|  Bear
 				""".trimMargin(),
 			)
 		}
@@ -652,17 +652,17 @@ class InteractivePromptTest {
 
 			assertThat(first).matches(
 				"""
-				|Select an animal:$s
-				|  Aardvark       $s
-				|  Bear           $s
-				|  Chicken        $s
-				|  Dog            $s
-				|  Elephant       $s
-				|❯ Fox            $s
-				|  Goat           $s
-				|  Horse          $s
-				|  Iguana         $s
-				|  Jaguar         $s
+				|Select an animal:
+				|  Aardvark
+				|  Bear
+				|  Chicken
+				|  Dog
+				|  Elephant
+				|❯ Fox
+				|  Goat
+				|  Horse
+				|  Iguana
+				|  Jaguar
 				""".trimMargin(),
 			)
 
@@ -671,12 +671,12 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: a
-				|  Aardvark        $s
-				|  Bear            $s
-				|❯ Elephant        $s
-				|  Goat            $s
-				|  Iguana          $s
-				|  Jaguar          $s
+				|  Aardvark
+				|  Bear
+				|❯ Elephant
+				|  Goat
+				|  Iguana
+				|  Jaguar
 				""".trimMargin(),
 			)
 
@@ -685,32 +685,32 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: ar
-				|  Aardvark         $s
-				|❯ Bear             $s
-				|  Jaguar           $s
+				|  Aardvark
+				|❯ Bear
+				|  Jaguar
 				""".trimMargin(),
 			)
 
 			// Reset and change starting selection.
-			sendKeyEvent(KeyEvent("Backspace"))
-			sendKeyEvent(KeyEvent("Backspace"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			assertThat(awaitSnapshot()).matches(
 				"""
-				|Select an animal:$s
-				|  Aardvark       $s
-				|  Bear           $s
-				|  Chicken        $s
-				|  Dog            $s
-				|  Elephant       $s
-				|  Fox            $s
-				|  Goat           $s
-				|  Horse          $s
-				|❯ Iguana         $s
-				|  Jaguar         $s
+				|Select an animal:
+				|  Aardvark
+				|  Bear
+				|  Chicken
+				|  Dog
+				|  Elephant
+				|  Fox
+				|  Goat
+				|  Horse
+				|❯ Iguana
+				|  Jaguar
 				""".trimMargin(),
 			)
 
@@ -719,12 +719,12 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: a
-				|  Aardvark        $s
-				|  Bear            $s
-				|  Elephant        $s
-				|  Goat            $s
-				|❯ Iguana          $s
-				|  Jaguar          $s
+				|  Aardvark
+				|  Bear
+				|  Elephant
+				|  Goat
+				|❯ Iguana
+				|  Jaguar
 				""".trimMargin(),
 			)
 
@@ -733,9 +733,9 @@ class InteractivePromptTest {
 			assertThat(awaitSnapshot()).matches(
 				"""
 				|Select an animal: ar
-				|  Aardvark         $s
-				|  Bear             $s
-				|❯ Jaguar           $s
+				|  Aardvark
+				|  Bear
+				|❯ Jaguar
 				""".trimMargin(),
 			)
 		}

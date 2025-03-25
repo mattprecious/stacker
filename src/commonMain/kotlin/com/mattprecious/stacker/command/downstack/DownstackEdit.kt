@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
-import com.jakewharton.mosaic.LocalTerminal
+import com.jakewharton.mosaic.LocalTerminalState
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.SpanStyle
@@ -185,7 +185,7 @@ private fun Edit(
 			val promptWidth = trunk.length + 35
 			val gap = 2
 
-			if (LocalTerminal.current.size.width >= listWidth + promptWidth + gap) {
+			if (LocalTerminalState.current.size.width >= listWidth + promptWidth + gap) {
 				Row(horizontalArrangement = spacedBy(gap)) {
 					mainList()
 					deletePrompt(true)

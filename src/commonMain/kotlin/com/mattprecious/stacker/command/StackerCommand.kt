@@ -1,7 +1,6 @@
 package com.mattprecious.stacker.command
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
@@ -11,9 +10,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import com.jakewharton.mosaic.LocalStaticLogger
 import com.jakewharton.mosaic.runMosaic
-import com.mattprecious.stacker.rendering.LocalPrinter
-import com.mattprecious.stacker.rendering.Printer
 import com.mattprecious.stacker.vc.LibGit2Error
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -61,8 +59,6 @@ abstract class StackerCommand {
 		onFinish: (Boolean) -> Unit,
 		workState: WorkState = rememberWorkState(),
 	) {
-		val printer = remember { Printer() }
-
 		// Mosaic will wait for all effects to finish before exiting. Finished and Aborted signal that
 		// we should terminate this collect in order to tear down.
 		val currentState = remember {
@@ -76,15 +72,14 @@ abstract class StackerCommand {
 			.collectAsState(workState.state)
 			.value
 
-		printer.Messages()
-
 		if (currentState is State.TerminalState) {
 			SideEffect { onFinish(currentState is State.Finished) }
 		} else {
+			val logger = LocalStaticLogger.current
 			LaunchedEffect(Unit) {
 				// Don't block the render thread.
 				withContext(Dispatchers.IO) {
-					with(StackerCommandScope(printer, workState)) {
+					with(StackerCommandScope(logger, workState)) {
 						try {
 							work()
 						} catch (e: LibGit2Error) {
@@ -99,9 +94,7 @@ abstract class StackerCommand {
 		}
 
 		if (currentState is State.Rendering<*>) {
-			CompositionLocalProvider(LocalPrinter provides printer) {
-				currentState.content { workState.state = State.DeliveringRenderResult(it) }
-			}
+			currentState.content { workState.state = State.DeliveringRenderResult(it) }
 		}
 	}
 

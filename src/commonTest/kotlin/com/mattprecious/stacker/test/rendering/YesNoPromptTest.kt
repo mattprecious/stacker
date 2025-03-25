@@ -11,10 +11,12 @@ import assertk.assertions.isFalse
 import assertk.assertions.isNotNull
 import assertk.assertions.isNull
 import assertk.assertions.isTrue
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.runMosaicTest
 import com.mattprecious.stacker.rendering.YesNoPrompt
+import com.mattprecious.stacker.test.util.Backspace
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.matches
 import com.mattprecious.stacker.test.util.sendText
 import com.mattprecious.stacker.test.util.setContentWithStatics
@@ -40,7 +42,7 @@ class YesNoPromptTest {
 
 			assertThat(first).matches("Yes or no? [y/n]: ")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			forceRecompose++
 
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
@@ -48,19 +50,19 @@ class YesNoPromptTest {
 			sendText("a")
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: a")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
 
 			sendText("1")
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: 1")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
 
 			sendText("yes")
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: yes")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
 		}
 
@@ -98,7 +100,7 @@ class YesNoPromptTest {
 
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ${case.input}")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).matches(static = "Yes or no? [y/n]: ${case.input}")
 		}
@@ -121,7 +123,7 @@ class YesNoPromptTest {
 
 			assertThat(first).matches("Yes or no? [Y/n]: ")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).matches(static = "Yes or no? [Y/n]: ")
 		}
@@ -144,7 +146,7 @@ class YesNoPromptTest {
 
 			assertThat(first).matches("Yes or no? [y/N]: ")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).matches(static = "Yes or no? [y/N]: ")
 		}
@@ -170,7 +172,7 @@ class YesNoPromptTest {
 			sendText("y")
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: y")
 
-			sendKeyEvent(KeyEvent("Backspace"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
 		}
 

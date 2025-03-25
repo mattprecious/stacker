@@ -4,18 +4,18 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.branch.branchTop
 import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.delegates.Optional.None
 import com.mattprecious.stacker.delegates.Optional.Some
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.gitCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCurrentBranch
 import com.mattprecious.stacker.test.util.gitInit
-import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
@@ -87,13 +87,13 @@ class BranchTopTest {
 		testCommand({ branchTop() }) {
 			awaitFrame(
 				"""
-				|Move up to:$s
-				|❯ change-a $s
-				|  change-b $s
+				|Move up to:
+				|❯ change-a
+				|  change-b
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Move up to: change-a",
@@ -110,23 +110,23 @@ class BranchTopTest {
 		testCommand({ branchTop() }) {
 			awaitFrame(
 				"""
-				|Move up to:$s
-				|❯ change-a $s
-				|  change-b $s
+				|Move up to:
+				|❯ change-a
+				|  change-b
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			awaitFrame(
 				"""
-				|Move up to:$s
-				|  change-a $s
-				|❯ change-b $s
+				|Move up to:
+				|  change-a
+				|❯ change-b
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Move up to: change-b",
@@ -160,16 +160,16 @@ class BranchTopTest {
 		testCommand({ branchTop() }) {
 			awaitFrame(
 				"""
-				|Move up to:$s
-				|❯ change-a $s
-				|  change-d $s
-				|  change-e $s
-				|  change-f $s
-				|  change-g $s
+				|Move up to:
+				|❯ change-a
+				|  change-d
+				|  change-e
+				|  change-f
+				|  change-g
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Move up to: change-a",

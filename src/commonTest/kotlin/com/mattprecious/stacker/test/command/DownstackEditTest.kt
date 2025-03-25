@@ -6,20 +6,20 @@ import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.jakewharton.mosaic.ui.unit.IntSize
 import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.downstack.downstackEdit
 import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.delegates.Optional
+import com.mattprecious.stacker.test.util.Backspace
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.gitAdd
 import com.mattprecious.stacker.test.util.gitBranches
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.gitLog
-import com.mattprecious.stacker.test.util.reset
-import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import okio.Path.Companion.toPath
 import kotlin.test.Test
@@ -109,29 +109,29 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown", shift = true))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down, modifiers = KeyboardEvent.ModifierShift))
 
 			awaitFrame(
 				"""
-				|  change-a                                $s
-				|❯ change-b                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|  change-a
+				|❯ change-b
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame("")
 
@@ -186,44 +186,44 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|  change-b  ❯ Remove from stack, set parent to main$reset
-				|❯ change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|  change-b  ❯ Remove from stack, set parent to main
+				|❯ change-a    Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				"""
-				|  change-b                                $s
-				|❯ change-a (remove)                       $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|  change-b
+				|❯ change-a (remove)
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			awaitFrame("")
 
 			assertThat(awaitResult()).isTrue()
@@ -276,43 +276,43 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|❯ change-b  ❯ Remove from stack, set parent to main$reset
-				|  change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b  ❯ Remove from stack, set parent to main
+				|  change-a    Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				"""
-				|❯ change-b (remove)                       $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b (remove)
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			awaitFrame("")
 
 			assertThat(awaitResult()).isTrue()
@@ -367,58 +367,58 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|  change-b  ❯ Remove from stack, set parent to main$reset
-				|❯ change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|  change-b  ❯ Remove from stack, set parent to main
+				|❯ change-a    Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			awaitFrame(
 				"""
-				|  change-b    Remove from stack, set parent to main$reset
-				|❯ change-a  ❯ Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|  change-b    Remove from stack, set parent to main
+				|❯ change-a  ❯ Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				"""
-				|  change-b                                $s
-				|❯ change-a (untrack)                      $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|  change-b
+				|❯ change-a (untrack)
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			awaitFrame("")
 
 			assertThat(awaitResult()).isTrue()
@@ -470,57 +470,57 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|❯ change-b  ❯ Remove from stack, set parent to main$reset
-				|  change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b  ❯ Remove from stack, set parent to main
+				|  change-a    Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			awaitFrame(
 				"""
-				|❯ change-b    Remove from stack, set parent to main$reset
-				|  change-a  ❯ Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b    Remove from stack, set parent to main
+				|  change-a  ❯ Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				"""
-				|❯ change-b (untrack)                      $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b (untrack)
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			awaitFrame("")
 
 			assertThat(awaitResult()).isTrue()
@@ -573,59 +573,59 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|  change-b  ❯ Remove from stack, set parent to main$reset
-				|❯ change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|  change-b  ❯ Remove from stack, set parent to main
+				|❯ change-a    Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			awaitFrame(
 				"""
-				|  change-b    Remove from stack, set parent to main$reset
-				|❯ change-a    Untrack it                          $s
-				|  main      ❯ Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|  change-b    Remove from stack, set parent to main
+				|❯ change-a    Untrack it
+				|  main      ❯ Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				"""
-				|  change-b                                $s
-				|❯ change-a (delete)                       $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|  change-b
+				|❯ change-a (delete)
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			awaitFrame("")
 
 			assertThat(awaitResult()).isTrue()
@@ -671,58 +671,58 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|❯ change-b  ❯ Remove from stack, set parent to main$reset
-				|  change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b  ❯ Remove from stack, set parent to main
+				|  change-a    Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			awaitFrame(
 				"""
-				|❯ change-b    Remove from stack, set parent to main$reset
-				|  change-a    Untrack it                          $s
-				|  main      ❯ Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b    Remove from stack, set parent to main
+				|  change-a    Untrack it
+				|  main      ❯ Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				"""
-				|❯ change-b (delete)                       $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b (delete)
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			awaitFrame("")
 
 			assertThat(awaitResult()).isTrue()
@@ -768,60 +768,60 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|❯ change-b  ❯ Remove from stack, set parent to main$reset
-				|  change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b  ❯ Remove from stack, set parent to main
+				|  change-a    Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			awaitFrame(
 				"""
-				|❯ change-b    Remove from stack, set parent to main$reset
-				|  change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|            ❯ Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b    Remove from stack, set parent to main
+				|  change-a    Untrack it
+				|  main        Delete it
+				|            ❯ Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			awaitFrame("")
 
 			assertThat(awaitResult()).isTrue()
@@ -873,40 +873,40 @@ class DownstackEditTest {
 
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|What would you like to do with change-b?  $s
-				|❯ Remove from stack, set parent to main   $s
-				|  Untrack it                              $s
-				|  Delete it                               $s
-				|  Cancel                                  $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|What would you like to do with change-b?
+				|❯ Remove from stack, set parent to main
+				|  Untrack it
+				|  Delete it
+				|  Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				"""
-				|❯ change-b (remove)                       $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b (remove)
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 		}
@@ -925,40 +925,40 @@ class DownstackEditTest {
 		testCommand({ downstackEdit() }) {
 			awaitFrame(
 				"""
-				|❯ change-b                                $s
-				|  change-a                                $s
-				|  main                                    $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|❯ change-b
+				|  change-a
+				|  main
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Delete"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 
 			awaitFrame(
 				"""
-				|❯ change-b  ❯ Remove from stack, set parent to main$reset
-				|  change-a    Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b  ❯ Remove from stack, set parent to main
+				|  change-a    Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
 
 			awaitFrame(
 				"""
-				|❯ change-b    Remove from stack, set parent to main$reset
-				|  change-a  ❯ Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b    Remove from stack, set parent to main
+				|  change-a  ❯ Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
@@ -966,14 +966,14 @@ class DownstackEditTest {
 
 			awaitFrame(
 				"""
-				|What would you like to do with change-b?  $s
-				|  Remove from stack, set parent to main   $s
-				|❯ Untrack it                              $s
-				|  Delete it                               $s
-				|  Cancel                                  $s
-				|                                          $s
-				|Move branches up/down by holding Shift.   $s
-				|Remove branch by pressing Backspace/Delete.$reset
+				|What would you like to do with change-b?
+				|  Remove from stack, set parent to main
+				|❯ Untrack it
+				|  Delete it
+				|  Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 
@@ -981,13 +981,13 @@ class DownstackEditTest {
 
 			awaitFrame(
 				"""
-				|❯ change-b    Remove from stack, set parent to main$reset
-				|  change-a  ❯ Untrack it                          $s
-				|  main        Delete it                           $s
-				|              Cancel                              $s
-				|                                                  $s
-				|Move branches up/down by holding Shift.           $s
-				|Remove branch by pressing Backspace/Delete.       $s
+				|❯ change-b    Remove from stack, set parent to main
+				|  change-a  ❯ Untrack it
+				|  main        Delete it
+				|              Cancel
+				|
+				|Move branches up/down by holding Shift.
+				|Remove branch by pressing Backspace/Delete.
 				""".trimMargin(),
 			)
 		}

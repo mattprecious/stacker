@@ -6,19 +6,19 @@ import assertk.assertions.containsExactlyInAnyOrder
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.command.upstack.upstackOnto
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.delegates.Optional
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.gitAdd
 import com.mattprecious.stacker.test.util.gitCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
 import com.mattprecious.stacker.test.util.gitInit
 import com.mattprecious.stacker.test.util.gitLog
-import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import okio.Path.Companion.toPath
 import kotlin.test.Test
@@ -87,12 +87,12 @@ class UpstackOntoTest {
 		testCommand({ upstackOnto() }) {
 			awaitFrame(
 				"""
-				|Select the parent branch for change-a:$s
-				|❯ ○ main                              $s
+				|Select the parent branch for change-a:
+				|❯ ○ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select the parent branch for change-a: main",
@@ -137,14 +137,14 @@ class UpstackOntoTest {
 		testCommand({ upstackOnto() }) {
 			awaitFrame(
 				"""
-				|Select the parent branch for change-b:$s
-				|❯ ○ change-a                          $s
-				|  ○ main                              $s
+				|Select the parent branch for change-b:
+				|❯ ○ change-a
+				|  ○ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select the parent branch for change-b: main",
@@ -200,14 +200,14 @@ class UpstackOntoTest {
 		testCommand({ upstackOnto() }) {
 			awaitFrame(
 				"""
-				|Select the parent branch for change-b:$s
-				|❯ ○ change-a                          $s
-				|  ○ main                              $s
+				|Select the parent branch for change-b:
+				|❯ ○ change-a
+				|  ○ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowDown"))
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Down))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Select the parent branch for change-b: main",
