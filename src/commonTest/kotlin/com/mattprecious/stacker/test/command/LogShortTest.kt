@@ -10,7 +10,6 @@ import com.mattprecious.stacker.test.util.gitCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateBranch
 import com.mattprecious.stacker.test.util.gitInit
-import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
@@ -43,7 +42,7 @@ class LogShortTest {
 				"a" to "main",
 			),
 			output = """
-				|○ a  $s
+				|○ a
 				|● main
 			""".trimMargin(),
 		),
@@ -54,7 +53,7 @@ class LogShortTest {
 			),
 			headBranch = "a",
 			output = """
-				|● a  $s
+				|● a
 				|○ main
 			""".trimMargin(),
 		),
@@ -65,8 +64,8 @@ class LogShortTest {
 				"b" to "a",
 			),
 			output = """
-				|○ b  $s
-				|○ a  $s
+				|○ b
+				|○ a
 				|● main
 			""".trimMargin(),
 		),
@@ -77,8 +76,8 @@ class LogShortTest {
 				"b" to "main",
 			),
 			output = """
-				|○   a  $s
-				|│ ○ b  $s
+				|○   a
+				|│ ○ b
 				|●─┘ main
 			""".trimMargin(),
 		),
@@ -90,9 +89,9 @@ class LogShortTest {
 				"c" to "main",
 			),
 			output = """
-				|○     a  $s
-				|│ ○   b  $s
-				|│ │ ○ c  $s
+				|○     a
+				|│ ○   b
+				|│ │ ○ c
 				|●─┴─┘ main
 			""".trimMargin(),
 		),
@@ -113,17 +112,17 @@ class LogShortTest {
 			),
 			headBranch = "f",
 			output = """
-				|○       i  $s
-				|○       d  $s
-				|○       a  $s
-				|│ ○     k  $s
-				|│ ○     j  $s
-				|│ ○     e  $s
-				|│ ○     b  $s
-				|│ │ ○   g  $s
-				|│ │ │ ○ h  $s
-				|│ │ ●─┘ f  $s
-				|│ │ ○   c  $s
+				|○       i
+				|○       d
+				|○       a
+				|│ ○     k
+				|│ ○     j
+				|│ ○     e
+				|│ ○     b
+				|│ │ ○   g
+				|│ │ │ ○ h
+				|│ │ ●─┘ f
+				|│ │ ○   c
 				|○─┴─┘   main
 			""".trimMargin(),
 		),
@@ -168,7 +167,7 @@ class LogShortTest {
 			awaitFrame(
 				static = """
 					|○ a (needs restack)
-					|● main            $s
+					|● main
 				""".trimMargin(),
 				output = "",
 			)
@@ -190,9 +189,9 @@ class LogShortTest {
 		testCommand({ logShort() }) {
 			awaitFrame(
 				static = """
-					|○ b               $s
+					|○ b
 					|○ a (needs restack)
-					|● main            $s
+					|● main
 				""".trimMargin(),
 				output = "",
 			)
@@ -211,7 +210,7 @@ class LogShortTest {
 			awaitFrame(
 				static = """
 					|○ green-main
-					|● main     $s
+					|● main
 				""".trimMargin(),
 				output = "",
 			)

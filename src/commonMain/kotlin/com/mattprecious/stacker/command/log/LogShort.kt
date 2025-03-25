@@ -33,7 +33,7 @@ internal class LogShort(
 		stackManager.getBase()?.prettyTree(
 			selected = stackManager.getBranch(vc.currentBranchName),
 			useFancySymbols = useFancySymbols,
-		)?.joinToString("\n") {
+		)?.map {
 			val needsRestack = run needsRestack@{
 				val parent = it.branch.parent ?: return@needsRestack false
 				val parentSha = vc.getSha(parent.name)
@@ -50,6 +50,6 @@ internal class LogShort(
 			} else {
 				it.pretty
 			}
-		}?.let(::printStatic)
+		}?.forEach(::printStatic)
 	}
 }
