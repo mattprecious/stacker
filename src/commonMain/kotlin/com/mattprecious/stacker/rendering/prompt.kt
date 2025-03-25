@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.jakewharton.mosaic.LocalStaticLogger
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
 import com.jakewharton.mosaic.text.AnnotatedString
@@ -38,7 +39,7 @@ fun Prompt(
 	hideInput: Boolean = false,
 	onSubmit: (String) -> Unit,
 ) {
-	val printer = LocalPrinter.current
+	val logger = LocalStaticLogger.current
 	var input by remember { mutableStateOf("") }
 
 	val prompt = remember(message) {
@@ -63,7 +64,7 @@ fun Prompt(
 							}
 						}
 
-						printer.printStatic(staticMessage)
+						logger.log(staticMessage.text) // DNM
 						onSubmit(input)
 					}
 
@@ -98,7 +99,7 @@ fun YesNoPrompt(
 	default: Boolean? = null,
 	onSubmit: (Boolean) -> Unit,
 ) {
-	val printer = LocalPrinter.current
+	val logger = LocalStaticLogger.current
 	var input by remember { mutableStateOf("") }
 
 	val prompt = remember(message, default) {
@@ -126,7 +127,7 @@ fun YesNoPrompt(
 			}
 		}
 
-		printer.printStatic(staticMessage)
+		logger.log(staticMessage.text) // DNM
 		onSubmit(result)
 	}
 
@@ -294,7 +295,7 @@ fun <T> InteractivePrompt(
 	filteringEnabled: Boolean = true,
 	staticPrintResult: Boolean = true,
 ) {
-	val printer = LocalPrinter.current
+	val logger = LocalStaticLogger.current
 	val prompt = remember(message) {
 		if (message == null) {
 			null
@@ -315,12 +316,12 @@ fun <T> InteractivePrompt(
 					it.key == "Enter" -> {
 						state.select()?.let { selected ->
 							if (staticPrintResult && prompt != null) {
-								printer.printStatic(
+								logger.log(
 									buildAnnotatedString {
 										append(prompt)
 										append(' ')
 										append(selected.value)
-									},
+									}.text, // DNM
 								)
 							}
 

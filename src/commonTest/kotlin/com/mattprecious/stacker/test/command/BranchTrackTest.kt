@@ -3,16 +3,16 @@ package com.mattprecious.stacker.test.command
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isTrue
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.mattprecious.stacker.command.branch.branchTrack
 import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.delegates.Optional
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.gitCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
 import com.mattprecious.stacker.test.util.gitInit
-import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
@@ -101,14 +101,14 @@ class BranchTrackTest {
 		testCommand({ branchTrack(null) }) {
 			awaitFrame(
 				"""
-				|Choose a parent branch for change-b:$s
-				|  ○ change-a                        $s
-				|❯ ○ main                            $s
+				|Choose a parent branch for change-b:
+				|  ○ change-a
+				|❯ ○ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowUp"))
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Up))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Choose a parent branch for change-b: change-a",
@@ -203,9 +203,9 @@ class BranchTrackTest {
 		testCommand({ branchTrack("change-a") }) {
 			awaitFrame(
 				"""
-				|Choose a parent branch for change-a:$s
-				|❯ ○ green-main                      $s
-				|  ○ main                            $s
+				|Choose a parent branch for change-a:
+				|❯ ○ green-main
+				|  ○ main
 				""".trimMargin(),
 			)
 		}

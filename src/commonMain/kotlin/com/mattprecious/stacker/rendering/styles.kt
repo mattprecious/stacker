@@ -5,8 +5,8 @@ import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.text.withStyle
 import com.jakewharton.mosaic.ui.Color
-import com.jakewharton.mosaic.ui.TextStyle
 import com.jakewharton.mosaic.ui.TextStyle.Companion.Italic
+import com.jakewharton.mosaic.ui.UnderlineStyle
 
 private val branchStyle = SpanStyle(
 	color = Color(189, 147, 249),
@@ -31,7 +31,7 @@ fun AnnotatedString.Builder.promptItem(
 ) {
 	if (selected) {
 		append("❯ ")
-		withStyle(SpanStyle(textStyle = TextStyle.Underline), content)
+		withStyle(SpanStyle(underlineStyle = UnderlineStyle.Straight), content)
 	} else {
 		append("  ")
 		content()

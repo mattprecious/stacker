@@ -2,37 +2,37 @@ package com.mattprecious.stacker.command
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshotFlow
+import com.jakewharton.mosaic.StaticLogger
 import com.jakewharton.mosaic.text.AnnotatedString
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.mattprecious.stacker.command.StackerCommand.WorkState
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.lock.Locker
-import com.mattprecious.stacker.rendering.Printer
 import com.mattprecious.stacker.rendering.code
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 
 class StackerCommandScope internal constructor(
-	private val printer: Printer,
+	private val logger: StaticLogger,
 	private val workState: WorkState,
 ) {
 	fun printStatic(message: String) {
-		printer.printStatic(message)
+		logger.log(message)
 	}
 
 	fun printStatic(message: AnnotatedString) {
-		printer.printStatic(message)
+		logger.log(message.text) // DNM
 	}
 
 	fun printStaticError(message: String) {
 		// TODO: Red.
-		printer.printStatic(message)
+		logger.log(message)
 	}
 
 	fun printStaticError(message: AnnotatedString) {
 		// TODO: Red.
-		printer.printStatic(message)
+		logger.log(message.text) // DNM
 	}
 
 	suspend fun <R> render(content: @Composable (onResult: (R) -> Unit) -> Unit): R {

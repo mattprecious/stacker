@@ -8,10 +8,12 @@ import assertk.assertThat
 import assertk.assertions.isEmpty
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.runMosaicTest
 import com.mattprecious.stacker.rendering.Prompt
+import com.mattprecious.stacker.test.util.Backspace
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.matches
 import com.mattprecious.stacker.test.util.sendText
 import com.mattprecious.stacker.test.util.setContentWithStatics
@@ -34,7 +36,7 @@ class PromptTest {
 
 			assertThat(first).matches("Enter your name: ")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			assertThat(awaitSnapshot()).matches(static = "Enter your name: ")
 		}
@@ -60,10 +62,10 @@ class PromptTest {
 			sendText("Mattt")
 			assertThat(awaitSnapshot()).matches("Enter your name: Mattt")
 
-			sendKeyEvent(KeyEvent("Backspace"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Backspace))
 			assertThat(awaitSnapshot()).matches("Enter your name: Matt")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			assertThat(awaitSnapshot()).matches(static = "Enter your name: Matt")
 		}
 
@@ -91,7 +93,7 @@ class PromptTest {
 			forceRecompose++
 			assertThat(awaitSnapshot()).matches("Enter your name: ")
 
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 			assertThat(awaitSnapshot()).matches(static = "Enter your name: ")
 		}
 

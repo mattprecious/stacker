@@ -1,33 +1,22 @@
 package com.mattprecious.stacker.test.util
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import assertk.Assert
 import assertk.assertions.isEqualTo
 import assertk.assertions.prop
 import com.jakewharton.mosaic.Mosaic
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.AnsiLevel
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.jakewharton.mosaic.testing.TestMosaic
-import com.jakewharton.mosaic.ui.AnsiLevel
-import com.mattprecious.stacker.rendering.LocalPrinter
-import com.mattprecious.stacker.rendering.Printer
 
-// So the IDE doesn't trim trailing spaces in test assertions...
-val s = " "
-
-// Workaround for mosaic bug that is fixed in 0.17.
-val reset = "\u001B[0m"
+val KeyboardEvent.Companion.Backspace get() = 127
+val KeyboardEvent.Companion.Enter get() = 13
 
 fun TestMosaic<Mosaic>.setContentWithStatics(
 	content: @Composable () -> Unit,
 ): Mosaic {
 	return setContentAndSnapshot {
-		CompositionLocalProvider(
-			LocalPrinter provides Printer(),
-		) {
-			LocalPrinter.current.Messages()
-			content()
-		}
+		content()
 	}
 }
 
@@ -40,14 +29,15 @@ fun Assert<Mosaic>.matches(
 }
 
 fun Assert<Mosaic>.hasOutputEqualTo(expected: String) {
-	prop("output") { it.paint().render(AnsiLevel.NONE) }.isEqualTo(expected)
+	prop("output") { it.draw().render(AnsiLevel.NONE, supportsKittyUnderlines = false) }
+		.isEqualTo(expected)
 }
 
 fun Assert<Mosaic>.hasStaticsEqualTo(expected: String) {
-	prop("statics") { it.paintStatics().joinToString("\n") { it.render(AnsiLevel.NONE) } }
+	prop("statics") { it.static() ?: "" }
 		.isEqualTo(expected)
 }
 
 fun TestMosaic<*>.sendText(text: String) {
-	text.forEach { sendKeyEvent(KeyEvent("$it")) }
+	text.forEach { sendKeyEvent(KeyboardEvent(it.code)) }
 }

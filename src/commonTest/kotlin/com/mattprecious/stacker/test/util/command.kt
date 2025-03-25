@@ -2,8 +2,8 @@
 import androidx.compose.runtime.snapshotFlow
 import assertk.assertThat
 import com.jakewharton.mosaic.Mosaic
-import com.jakewharton.mosaic.Terminal
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
+import com.jakewharton.mosaic.terminal.Terminal
 import com.jakewharton.mosaic.testing.MosaicSnapshots
 import com.jakewharton.mosaic.testing.TestMosaic
 import com.jakewharton.mosaic.testing.runMosaicTest
@@ -47,12 +47,12 @@ class CommandTestScope internal constructor(
 		mosaic.sendText(text)
 	}
 
-	fun sendKeyEvent(keyEvent: KeyEvent) {
+	fun sendKeyEvent(keyEvent: KeyboardEvent) {
 		mosaic.sendKeyEvent(keyEvent)
 	}
 
 	fun setSize(size: IntSize) {
-		mosaic.terminalState.value = Terminal(size)
+		mosaic.state.size.value = Terminal.Size(columns = size.width, rows = size.height)
 	}
 
 	suspend fun awaitFrame(

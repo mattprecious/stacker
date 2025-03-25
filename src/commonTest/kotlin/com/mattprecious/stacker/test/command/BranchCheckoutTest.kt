@@ -4,17 +4,17 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isFalse
 import assertk.assertions.isTrue
-import com.jakewharton.mosaic.layout.KeyEvent
+import com.jakewharton.mosaic.terminal.KeyboardEvent
 import com.mattprecious.stacker.command.branch.branchCheckout
 import com.mattprecious.stacker.command.branch.branchCreate
 import com.mattprecious.stacker.command.repo.repoInit
 import com.mattprecious.stacker.delegates.Optional
+import com.mattprecious.stacker.test.util.Enter
 import com.mattprecious.stacker.test.util.gitCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCommit
 import com.mattprecious.stacker.test.util.gitCreateAndCheckoutBranch
 import com.mattprecious.stacker.test.util.gitCurrentBranch
 import com.mattprecious.stacker.test.util.gitInit
-import com.mattprecious.stacker.test.util.s
 import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
@@ -62,16 +62,16 @@ class BranchCheckoutTest {
 		testCommand({ branchCheckout(null) }) {
 			awaitFrame(
 				"""
-				|Checkout a branch:$s
-				|  ○   change-b    $s
-				|❯ ○   change-a    $s
-				|  │ ○ change-c    $s
-				|  ○─┘ main        $s
+				|Checkout a branch:
+				|  ○   change-b
+				|❯ ○   change-a
+				|  │ ○ change-c
+				|  ○─┘ main
 				""".trimMargin(),
 			)
 
-			sendKeyEvent(KeyEvent("ArrowUp"))
-			sendKeyEvent(KeyEvent("Enter"))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Up))
+			sendKeyEvent(KeyboardEvent(KeyboardEvent.Enter))
 
 			awaitFrame(
 				static = "Checkout a branch: change-b",
@@ -136,11 +136,11 @@ class BranchCheckoutTest {
 		testCommand({ branchCheckout(null) }) {
 			awaitFrame(
 				"""
-				|Checkout a branch:$s
-				|  ○   change-b    $s
-				|❯ ○   change-a    $s
-				|  │ ○ change-c    $s
-				|  ○─┘ main        $s
+				|Checkout a branch:
+				|  ○   change-b
+				|❯ ○   change-a
+				|  │ ○ change-c
+				|  ○─┘ main
 				""".trimMargin(),
 			)
 
@@ -149,7 +149,7 @@ class BranchCheckoutTest {
 			awaitFrame(
 				"""
 				|Checkout a branch: -c
-				|❯ │ ○ change-c      $s
+				|❯ │ ○ change-c
 				""".trimMargin(),
 			)
 		}
