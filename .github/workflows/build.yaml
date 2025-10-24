@@ -80,7 +80,7 @@ jobs:
           reporter: java-junit
 
       - name: Upload distribution
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: stacker-${{ matrix.target }}
           path: build/bin/${{ matrix.target }}/releaseExecutable/stacker.kexe
