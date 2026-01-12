@@ -6,10 +6,9 @@ import com.mattprecious.stacker.StackerDeps
 import com.mattprecious.stacker.cli.StackerCliktCommand
 import com.mattprecious.stacker.command.branch.branchRestack
 
-internal class Restack(
-	private val stacker: StackerDeps,
-) : StackerCliktCommand(shortAlias = "r") {
-	private val branchName: String? by argument().optional()
+internal class Restack(private val stacker: StackerDeps) : StackerCliktCommand(shortAlias = "r") {
+  private val branchName: String? by argument().optional()
 
-	override val command get() = stacker.branchRestack(branchName)
+  override val command
+    get() = stacker.branchRestack(branchName)
 }

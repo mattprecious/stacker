@@ -19,163 +19,143 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchRenameTest {
-	@Test
-	fun renameLeaf() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
+  @Test
+  fun renameLeaf() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
 
-		testCommand({ branchRename("new-a") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchRename("new-a") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main", "new-a")
-		}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main", "new-a")
+    }
 
-		assertThat(gitBranches()).containsExactly(
-			"main",
-			"* new-a",
-		)
-	}
+    assertThat(gitBranches()).containsExactly("main", "* new-a")
+  }
 
-	@Test
-	fun renameWithChildren() = withTestEnvironment {
-		gitInit()
-		val sha = gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
-		testCommand({ branchCreate("change-c") })
-		gitCheckoutBranch("change-a")
-		testCommand({ branchCreate("change-d") })
-		gitCheckoutBranch("change-a")
+  @Test
+  fun renameWithChildren() = withTestEnvironment {
+    gitInit()
+    val sha = gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
+    testCommand({ branchCreate("change-c") })
+    gitCheckoutBranch("change-a")
+    testCommand({ branchCreate("change-d") })
+    gitCheckoutBranch("change-a")
 
-		testCommand({ branchRename("new-a") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchRename("new-a") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList()).containsExactlyInAnyOrder(
-				Branch(
-					name = "main",
-					parent = null,
-					parentSha = null,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-				Branch(
-					name = "new-a",
-					parent = "main",
-					parentSha = sha.long,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-				Branch(
-					name = "change-b",
-					parent = "new-a",
-					parentSha = sha.long,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-				Branch(
-					name = "change-c",
-					parent = "change-b",
-					parentSha = sha.long,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-				Branch(
-					name = "change-d",
-					parent = "new-a",
-					parentSha = sha.long,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-			)
-		}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList())
+        .containsExactlyInAnyOrder(
+          Branch(
+            name = "main",
+            parent = null,
+            parentSha = null,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+          Branch(
+            name = "new-a",
+            parent = "main",
+            parentSha = sha.long,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+          Branch(
+            name = "change-b",
+            parent = "new-a",
+            parentSha = sha.long,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+          Branch(
+            name = "change-c",
+            parent = "change-b",
+            parentSha = sha.long,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+          Branch(
+            name = "change-d",
+            parent = "new-a",
+            parentSha = sha.long,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+        )
+    }
 
-		assertThat(gitBranches()).containsExactly(
-			"change-b",
-			"change-c",
-			"change-d",
-			"main",
-			"* new-a",
-		)
-	}
+    assertThat(gitBranches()).containsExactly("change-b", "change-c", "change-d", "main", "* new-a")
+  }
 
-	@Test
-	fun cannotRenameTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
+  @Test
+  fun cannotRenameTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
 
-		testCommand({ branchRename("trunk") }) {
-			awaitFrame(
-				static = "Cannot rename a trunk branch.",
-				output = "",
-			)
-			assertThat(awaitResult()).isFalse()
-		}
+    testCommand({ branchRename("trunk") }) {
+      awaitFrame(static = "Cannot rename a trunk branch.", output = "")
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
 
-		assertThat(gitBranches()).containsExactly("* main")
-	}
+    assertThat(gitBranches()).containsExactly("* main")
+  }
 
-	@Test
-	fun cannotRenameTrailingTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateAndCheckoutBranch("green-main")
-		testCommand({ repoInit("main", Optional.Some("green-main")) })
+  @Test
+  fun cannotRenameTrailingTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateAndCheckoutBranch("green-main")
+    testCommand({ repoInit("main", Optional.Some("green-main")) })
 
-		testCommand({ branchRename("green-trunk") }) {
-			awaitFrame(
-				static = "Cannot rename a trunk branch.",
-				output = "",
-			)
-			assertThat(awaitResult()).isFalse()
-		}
+    testCommand({ branchRename("green-trunk") }) {
+      awaitFrame(static = "Cannot rename a trunk branch.", output = "")
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactlyInAnyOrder("main", "green-main")
-		}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactlyInAnyOrder("main", "green-main")
+    }
 
-		assertThat(gitBranches()).containsExactly(
-			"* green-main",
-			"main",
-		)
-	}
+    assertThat(gitBranches()).containsExactly("* green-main", "main")
+  }
 
-	@Test
-	fun renameUntracked() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun renameUntracked() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchRename("new-a") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchRename("new-a") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
 
-		assertThat(gitBranches()).containsExactly(
-			"main",
-			"* new-a",
-		)
-	}
+    assertThat(gitBranches()).containsExactly("main", "* new-a")
+  }
 }

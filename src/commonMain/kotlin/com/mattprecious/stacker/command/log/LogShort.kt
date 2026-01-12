@@ -11,45 +11,49 @@ import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 fun StackerDeps.logShort(): StackerCommand {
-	return LogShort(
-		configManager = configManager,
-		stackManager = stackManager,
-		useFancySymbols = useFancySymbols,
-		vc = vc,
-	)
+  return LogShort(
+    configManager = configManager,
+    stackManager = stackManager,
+    useFancySymbols = useFancySymbols,
+    vc = vc,
+  )
 }
 
 internal class LogShort(
-	private val configManager: ConfigManager,
-	private val stackManager: StackManager,
-	private val useFancySymbols: Boolean,
-	private val vc: VersionControl,
+  private val configManager: ConfigManager,
+  private val stackManager: StackManager,
+  private val useFancySymbols: Boolean,
+  private val vc: VersionControl,
 ) : StackerCommand() {
-	override suspend fun StackerCommandScope.work() {
-		requireInitialized(configManager)
-		val trunk = configManager.trunk
-		val trailingTrunk = configManager.trailingTrunk
+  override suspend fun StackerCommandScope.work() {
+    requireInitialized(configManager)
+    val trunk = configManager.trunk
+    val trailingTrunk = configManager.trailingTrunk
 
-		stackManager.getBase()?.prettyTree(
-			selected = stackManager.getBranch(vc.currentBranchName),
-			useFancySymbols = useFancySymbols,
-		)?.map {
-			val needsRestack = run needsRestack@{
-				val parent = it.branch.parent ?: return@needsRestack false
-				val parentSha = vc.getSha(parent.name)
-				return@needsRestack if (it.branch.name == trunk || it.branch.name == trailingTrunk) {
-					false
-				} else {
-					it.branch.parentSha != parentSha ||
-						!vc.isAncestor(branchName = it.branch.name, possibleAncestorName = parent.name)
-				}
-			}
+    stackManager
+      .getBase()
+      ?.prettyTree(
+        selected = stackManager.getBranch(vc.currentBranchName),
+        useFancySymbols = useFancySymbols,
+      )
+      ?.map {
+        val needsRestack = run needsRestack@{
+          val parent = it.branch.parent ?: return@needsRestack false
+          val parentSha = vc.getSha(parent.name)
+          return@needsRestack if (it.branch.name == trunk || it.branch.name == trailingTrunk) {
+            false
+          } else {
+            it.branch.parentSha != parentSha ||
+              !vc.isAncestor(branchName = it.branch.name, possibleAncestorName = parent.name)
+          }
+        }
 
-			if (needsRestack) {
-				"${it.pretty} (needs restack)"
-			} else {
-				it.pretty
-			}
-		}?.forEach(::printStatic)
-	}
+        if (needsRestack) {
+          "${it.pretty} (needs restack)"
+        } else {
+          it.pretty
+        }
+      }
+      ?.forEach(::printStatic)
+  }
 }

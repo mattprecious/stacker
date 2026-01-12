@@ -10,19 +10,18 @@ import com.jakewharton.mosaic.ui.Text
 val LocalPrinter = staticCompositionLocalOf<Printer> { throw AssertionError() }
 
 class Printer {
-	private val messages = SnapshotStateList<AnnotatedString>()
+  private val messages = SnapshotStateList<AnnotatedString>()
 
-	fun printStatic(message: String) {
-		messages += message.toAnnotatedString()
-	}
-	fun printStatic(message: AnnotatedString) {
-		messages += message
-	}
+  fun printStatic(message: String) {
+    messages += message.toAnnotatedString()
+  }
 
-	@Composable
-	fun Messages() {
-		Static(messages) {
-			Text(it)
-		}
-	}
+  fun printStatic(message: AnnotatedString) {
+    messages += message
+  }
+
+  @Composable
+  fun Messages() {
+    Static(messages) { Text(it) }
+  }
 }

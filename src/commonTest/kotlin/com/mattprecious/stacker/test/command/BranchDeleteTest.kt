@@ -19,195 +19,186 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchDeleteTest {
-	@Test
-	fun cannotDeleteTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
+  @Test
+  fun cannotDeleteTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
 
-		testCommand({ branchDelete("main") }) {
-			awaitFrame(
-				static = "Cannot delete a trunk branch.",
-				output = "",
-			)
-			assertThat(awaitResult()).isFalse()
-		}
+    testCommand({ branchDelete("main") }) {
+      awaitFrame(static = "Cannot delete a trunk branch.", output = "")
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
+  }
 
-	@Test
-	fun cannotDeleteTrailingTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateAndCheckoutBranch("green-main")
-		testCommand({ repoInit("main", Optional.Some("green-main")) })
+  @Test
+  fun cannotDeleteTrailingTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateAndCheckoutBranch("green-main")
+    testCommand({ repoInit("main", Optional.Some("green-main")) })
 
-		testCommand({ branchDelete("green-main") }) {
-			awaitFrame(
-				static = "Cannot delete a trunk branch.",
-				output = "",
-			)
-			assertThat(awaitResult()).isFalse()
-		}
+    testCommand({ branchDelete("green-main") }) {
+      awaitFrame(static = "Cannot delete a trunk branch.", output = "")
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main", "green-main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main", "green-main")
+    }
+  }
 
-	@Test
-	fun branchWithChildren() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
+  @Test
+  fun branchWithChildren() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
 
-		testCommand({ branchDelete("change-a") }) {
-			awaitFrame(
-				static = "Branch has children. Please retarget or untrack them.",
-				output = "",
-			)
-			assertThat(awaitResult()).isFalse()
-		}
+    testCommand({ branchDelete("change-a") }) {
+      awaitFrame(static = "Branch has children. Please retarget or untrack them.", output = "")
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main", "change-a", "change-b")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main", "change-a", "change-b")
+    }
+  }
 
-	@Test
-	fun currentBranch() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
+  @Test
+  fun currentBranch() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
 
-		testCommand({ branchDelete(null) }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDelete(null) }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main", "change-a")
-		}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main", "change-a")
+    }
 
-		testCommand({ branchDelete(null) }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDelete(null) }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
+    assertThat(gitCurrentBranch()).isEqualTo("main")
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
+  }
 
-	@Test
-	fun currentBranchUntracked() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun currentBranchUntracked() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchDelete(null) }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDelete(null) }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
+    assertThat(gitCurrentBranch()).isEqualTo("main")
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
+  }
 
-	@Test
-	fun currentBranchUntrackedWithTrailingTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateAndCheckoutBranch("green-main")
-		testCommand({ repoInit("main", Optional.Some("green-main")) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun currentBranchUntrackedWithTrailingTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateAndCheckoutBranch("green-main")
+    testCommand({ repoInit("main", Optional.Some("green-main")) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchDelete(null) }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDelete(null) }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("green-main")
+    assertThat(gitCurrentBranch()).isEqualTo("green-main")
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main", "green-main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main", "green-main")
+    }
+  }
 
-	@Test
-	fun notCurrentBranch() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
-		gitCheckoutBranch("main")
+  @Test
+  fun notCurrentBranch() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
+    gitCheckoutBranch("main")
 
-		testCommand({ branchDelete("change-b") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDelete("change-b") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
+    assertThat(gitCurrentBranch()).isEqualTo("main")
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main", "change-a")
-		}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main", "change-a")
+    }
 
-		testCommand({ branchDelete("change-a") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDelete("change-a") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
+    assertThat(gitCurrentBranch()).isEqualTo("main")
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
+  }
 
-	@Test
-	fun notCurrentBranchUntracked() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		gitCreateBranch("change-b")
+  @Test
+  fun notCurrentBranchUntracked() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    gitCreateBranch("change-b")
 
-		testCommand({ branchDelete("change-b") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDelete("change-b") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main", "change-a")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main", "change-a")
+    }
+  }
 }

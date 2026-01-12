@@ -12,50 +12,50 @@ import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 fun StackerDeps.branchBottom(): StackerCommand {
-	return BranchBottom(
-		configManager = configManager,
-		locker = locker,
-		stackManager = stackManager,
-		vc = vc,
-	)
+  return BranchBottom(
+    configManager = configManager,
+    locker = locker,
+    stackManager = stackManager,
+    vc = vc,
+  )
 }
 
 internal class BranchBottom(
-	private val configManager: ConfigManager,
-	private val locker: Locker,
-	private val stackManager: StackManager,
-	private val vc: VersionControl,
+  private val configManager: ConfigManager,
+  private val locker: Locker,
+  private val stackManager: StackManager,
+  private val vc: VersionControl,
 ) : StackerCommand() {
-	override suspend fun StackerCommandScope.work() {
-		requireInitialized(configManager)
-		requireNoLock(locker)
+  override suspend fun StackerCommandScope.work() {
+    requireInitialized(configManager)
+    requireNoLock(locker)
 
-		val trunk = configManager.trunk
-		val trailingTrunk = configManager.trailingTrunk
-		val currentBranchName = vc.currentBranchName
+    val trunk = configManager.trunk
+    val trailingTrunk = configManager.trailingTrunk
+    val currentBranchName = vc.currentBranchName
 
-		if (currentBranchName == trailingTrunk || currentBranchName == trunk) {
-			printStatic("Not in a stack.")
-			abort()
-		}
+    if (currentBranchName == trailingTrunk || currentBranchName == trunk) {
+      printStatic("Not in a stack.")
+      abort()
+    }
 
-		val currentBranch = stackManager.getBranch(currentBranchName)
-		if (currentBranch == null) {
-			printStaticError(
-				buildAnnotatedString {
-					append("Branch ")
-					this.branch { append(currentBranch) }
-					append(" is not tracked.")
-				},
-			)
-			abort()
-		}
+    val currentBranch = stackManager.getBranch(currentBranchName)
+    if (currentBranch == null) {
+      printStaticError(
+        buildAnnotatedString {
+          append("Branch ")
+          this.branch { append(currentBranch) }
+          append(" is not tracked.")
+        }
+      )
+      abort()
+    }
 
-		var bottom = currentBranch!!
-		while (bottom.parent!!.name != trailingTrunk && bottom.parent!!.name != trunk) {
-			bottom = bottom.parent!!
-		}
+    var bottom = currentBranch!!
+    while (bottom.parent!!.name != trailingTrunk && bottom.parent!!.name != trunk) {
+      bottom = bottom.parent!!
+    }
 
-		vc.checkout(bottom.name)
-	}
+    vc.checkout(bottom.name)
+  }
 }

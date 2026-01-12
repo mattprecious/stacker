@@ -12,40 +12,40 @@ import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 fun StackerDeps.branchDown(): StackerCommand {
-	return BranchDown(
-		configManager = configManager,
-		locker = locker,
-		stackManager = stackManager,
-		vc = vc,
-	)
+  return BranchDown(
+    configManager = configManager,
+    locker = locker,
+    stackManager = stackManager,
+    vc = vc,
+  )
 }
 
 internal class BranchDown(
-	private val configManager: ConfigManager,
-	private val locker: Locker,
-	private val stackManager: StackManager,
-	private val vc: VersionControl,
+  private val configManager: ConfigManager,
+  private val locker: Locker,
+  private val stackManager: StackManager,
+  private val vc: VersionControl,
 ) : StackerCommand() {
-	override suspend fun StackerCommandScope.work() {
-		requireInitialized(configManager)
-		requireNoLock(locker)
+  override suspend fun StackerCommandScope.work() {
+    requireInitialized(configManager)
+    requireNoLock(locker)
 
-		val branchName = vc.currentBranchName
-		val branch = stackManager.getBranch(branchName)
-		if (branch == null) {
-			printStaticError(
-				buildAnnotatedString {
-					append("Branch ")
-					this.branch { append(branchName) }
-					append(" is not tracked.")
-				},
-			)
-			abort()
-		}
+    val branchName = vc.currentBranchName
+    val branch = stackManager.getBranch(branchName)
+    if (branch == null) {
+      printStaticError(
+        buildAnnotatedString {
+          append("Branch ")
+          this.branch { append(branchName) }
+          append(" is not tracked.")
+        }
+      )
+      abort()
+    }
 
-		val parent = branch.parent
-		if (parent != null) {
-			vc.checkout(parent.name)
-		}
-	}
+    val parent = branch.parent
+    if (parent != null) {
+      vc.checkout(parent.name)
+    }
+  }
 }

@@ -10,18 +10,16 @@ import com.mattprecious.stacker.cli.repo.Repo
 import com.mattprecious.stacker.cli.stack.Stack
 import com.mattprecious.stacker.cli.upstack.Upstack
 
-internal class StackerCli(
-	stacker: StackerDeps,
-) : StackerCliktCommand("st") {
-	init {
-		subcommands(
-			Branch(stacker),
-			Downstack(stacker),
-			Log(stacker),
-			Rebase(stacker),
-			Repo(stacker),
-			Stack(stacker),
-			Upstack(stacker),
-		)
-	}
+internal class StackerCli(stacker: StackerDeps) : StackerCliktCommand("st") {
+  init {
+    subcommands(
+      Branch(stacker),
+      Downstack(stacker),
+      Log(stacker),
+      Rebase(stacker),
+      Repo(stacker),
+      Stack(stacker),
+      Upstack(stacker),
+    )
+  }
 }

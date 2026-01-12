@@ -6,10 +6,9 @@ import com.mattprecious.stacker.StackerDeps
 import com.mattprecious.stacker.cli.StackerCliktCommand
 import com.mattprecious.stacker.command.repo.repoSync
 
-internal class Sync(
-	private val stacker: StackerDeps,
-) : StackerCliktCommand(shortAlias = "s") {
-	private val ask: Boolean by option().flag()
+internal class Sync(private val stacker: StackerDeps) : StackerCliktCommand(shortAlias = "s") {
+  private val ask: Boolean by option().flag()
 
-	override val command get() = stacker.repoSync(ask)
+  override val command
+    get() = stacker.repoSync(ask)
 }

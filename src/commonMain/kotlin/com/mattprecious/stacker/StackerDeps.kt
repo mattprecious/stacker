@@ -8,10 +8,10 @@ import com.mattprecious.stacker.vc.VersionControl
 
 // TODO: DI framework.
 class StackerDeps(
-	val configManager: ConfigManager,
-	val locker: Locker,
-	val remote: Remote,
-	val stackManager: StackManager,
-	val useFancySymbols: Boolean,
-	val vc: VersionControl,
+  val configManager: ConfigManager,
+  val locker: Locker,
+  val remote: Remote,
+  val stackManager: StackManager,
+  val useFancySymbols: Boolean,
+  val vc: VersionControl,
 )

@@ -20,165 +20,157 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchTopTest {
-	@Test
-	fun untracked() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun untracked() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchTop() }) {
-			awaitFrame(
-				static = "Branch change-a is not tracked.",
-				output = "",
-			)
+    testCommand({ branchTop() }) {
+      awaitFrame(static = "Branch change-a is not tracked.", output = "")
 
-			assertThat(awaitResult()).isFalse()
-		}
-	}
+      assertThat(awaitResult()).isFalse()
+    }
+  }
 
-	@Test
-	fun singleBranch() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
+  @Test
+  fun singleBranch() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
 
-		testCommand({ branchTop() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
-	}
+    testCommand({ branchTop() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
+  }
 
-	@Test
-	fun linearStack() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateAndCheckoutBranch("green-main")
-		testCommand({ repoInit("main", Some("green-main")) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
-		gitCheckoutBranch("main")
+  @Test
+  fun linearStack() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateAndCheckoutBranch("green-main")
+    testCommand({ repoInit("main", Some("green-main")) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
+    gitCheckoutBranch("main")
 
-		testCommand({ branchTop() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchTop() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-b")
+    assertThat(gitCurrentBranch()).isEqualTo("change-b")
 
-		testCommand({ branchTop() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchTop() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-b")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("change-b")
+  }
 
-	@Test
-	fun fork() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
-		testCommand({ branchCreate("change-a") })
-		gitCheckoutBranch("main")
-		testCommand({ branchCreate("change-b") })
-		gitCheckoutBranch("main")
+  @Test
+  fun fork() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
+    testCommand({ branchCreate("change-a") })
+    gitCheckoutBranch("main")
+    testCommand({ branchCreate("change-b") })
+    gitCheckoutBranch("main")
 
-		testCommand({ branchTop() }) {
-			awaitFrame(
-				"""
+    testCommand({ branchTop() }) {
+      awaitFrame(
+        """
 				|Move up to:$s
 				|❯ change-a $s
 				|  change-b $s
-				""".trimMargin(),
-			)
-
-			sendKeyEvent(KeyEvent("Enter"))
-
-			awaitFrame(
-				static = "Move up to: change-a",
-				output = "",
-			)
-
-			assertThat(awaitResult()).isTrue()
-		}
-
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
-
-		gitCheckoutBranch("main")
-
-		testCommand({ branchTop() }) {
-			awaitFrame(
 				"""
+          .trimMargin()
+      )
+
+      sendKeyEvent(KeyEvent("Enter"))
+
+      awaitFrame(static = "Move up to: change-a", output = "")
+
+      assertThat(awaitResult()).isTrue()
+    }
+
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
+
+    gitCheckoutBranch("main")
+
+    testCommand({ branchTop() }) {
+      awaitFrame(
+        """
 				|Move up to:$s
 				|❯ change-a $s
 				|  change-b $s
-				""".trimMargin(),
-			)
-
-			sendKeyEvent(KeyEvent("ArrowDown"))
-
-			awaitFrame(
 				"""
+          .trimMargin()
+      )
+
+      sendKeyEvent(KeyEvent("ArrowDown"))
+
+      awaitFrame(
+        """
 				|Move up to:$s
 				|  change-a $s
 				|❯ change-b $s
-				""".trimMargin(),
-			)
-
-			sendKeyEvent(KeyEvent("Enter"))
-
-			awaitFrame(
-				static = "Move up to: change-b",
-				output = "",
-			)
-
-			assertThat(awaitResult()).isTrue()
-		}
-
-		assertThat(gitCurrentBranch()).isEqualTo("change-b")
-	}
-
-	@Test
-	fun multiFork() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
-		testCommand({ branchCreate("change-a") })
-		gitCheckoutBranch("main")
-		testCommand({ branchCreate("change-b") })
-		testCommand({ branchCreate("change-c") })
-		testCommand({ branchCreate("change-d") })
-		gitCheckoutBranch("change-c")
-		testCommand({ branchCreate("change-e") })
-		gitCheckoutBranch("change-c")
-		testCommand({ branchCreate("change-f") })
-		gitCheckoutBranch("main")
-		testCommand({ branchCreate("change-g") })
-		gitCheckoutBranch("main")
-
-		testCommand({ branchTop() }) {
-			awaitFrame(
 				"""
+          .trimMargin()
+      )
+
+      sendKeyEvent(KeyEvent("Enter"))
+
+      awaitFrame(static = "Move up to: change-b", output = "")
+
+      assertThat(awaitResult()).isTrue()
+    }
+
+    assertThat(gitCurrentBranch()).isEqualTo("change-b")
+  }
+
+  @Test
+  fun multiFork() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
+    testCommand({ branchCreate("change-a") })
+    gitCheckoutBranch("main")
+    testCommand({ branchCreate("change-b") })
+    testCommand({ branchCreate("change-c") })
+    testCommand({ branchCreate("change-d") })
+    gitCheckoutBranch("change-c")
+    testCommand({ branchCreate("change-e") })
+    gitCheckoutBranch("change-c")
+    testCommand({ branchCreate("change-f") })
+    gitCheckoutBranch("main")
+    testCommand({ branchCreate("change-g") })
+    gitCheckoutBranch("main")
+
+    testCommand({ branchTop() }) {
+      awaitFrame(
+        """
 				|Move up to:$s
 				|❯ change-a $s
 				|  change-d $s
 				|  change-e $s
 				|  change-f $s
 				|  change-g $s
-				""".trimMargin(),
-			)
+				"""
+          .trimMargin()
+      )
 
-			sendKeyEvent(KeyEvent("Enter"))
+      sendKeyEvent(KeyEvent("Enter"))
 
-			awaitFrame(
-				static = "Move up to: change-a",
-				output = "",
-			)
+      awaitFrame(static = "Move up to: change-a", output = "")
 
-			assertThat(awaitResult()).isTrue()
-		}
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
+  }
 }

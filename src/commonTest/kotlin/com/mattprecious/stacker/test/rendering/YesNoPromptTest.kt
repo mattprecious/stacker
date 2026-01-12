@@ -18,162 +18,137 @@ import com.mattprecious.stacker.rendering.YesNoPrompt
 import com.mattprecious.stacker.test.util.matches
 import com.mattprecious.stacker.test.util.sendText
 import com.mattprecious.stacker.test.util.setContentWithStatics
-import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlinx.coroutines.test.runTest
 
 @Burst
 class YesNoPromptTest {
-	@Test
-	fun invalidInputsAreIgnored() = runTest {
-		var result: Boolean? = null
+  @Test
+  fun invalidInputsAreIgnored() = runTest {
+    var result: Boolean? = null
 
-		runMosaicTest(MosaicSnapshots) {
-			var forceRecompose by mutableIntStateOf(0)
-			val first = setContentWithStatics {
-				LaunchedEffect(forceRecompose) {}
-				YesNoPrompt(
-					message = "Yes or no?",
-					default = null,
-					onSubmit = { result = it },
-				)
-			}
+    runMosaicTest(MosaicSnapshots) {
+      var forceRecompose by mutableIntStateOf(0)
+      val first = setContentWithStatics {
+        LaunchedEffect(forceRecompose) {}
+        YesNoPrompt(message = "Yes or no?", default = null, onSubmit = { result = it })
+      }
 
-			assertThat(first).matches("Yes or no? [y/n]: ")
+      assertThat(first).matches("Yes or no? [y/n]: ")
 
-			sendKeyEvent(KeyEvent("Enter"))
-			forceRecompose++
+      sendKeyEvent(KeyEvent("Enter"))
+      forceRecompose++
 
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
 
-			sendText("a")
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: a")
+      sendText("a")
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: a")
 
-			sendKeyEvent(KeyEvent("Enter"))
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
+      sendKeyEvent(KeyEvent("Enter"))
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
 
-			sendText("1")
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: 1")
+      sendText("1")
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: 1")
 
-			sendKeyEvent(KeyEvent("Enter"))
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
+      sendKeyEvent(KeyEvent("Enter"))
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
 
-			sendText("yes")
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: yes")
+      sendText("yes")
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: yes")
 
-			sendKeyEvent(KeyEvent("Enter"))
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
-		}
+      sendKeyEvent(KeyEvent("Enter"))
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
+    }
 
-		assertThat(result).isNull()
-	}
+    assertThat(result).isNull()
+  }
 
-	enum class ValidInputCase(
-		val input: String,
-		val result: Boolean,
-	) {
-		LowerY("y", true),
-		UpperY("Y", true),
-		LowerN("n", false),
-		UpperN("N", false),
-	}
+  enum class ValidInputCase(val input: String, val result: Boolean) {
+    LowerY("y", true),
+    UpperY("Y", true),
+    LowerN("n", false),
+    UpperN("N", false),
+  }
 
-	@Test
-	fun validInputs(
-		case: ValidInputCase,
-	) = runTest {
-		var result: Boolean? = null
+  @Test
+  fun validInputs(case: ValidInputCase) = runTest {
+    var result: Boolean? = null
 
-		runMosaicTest(MosaicSnapshots) {
-			val first = setContentWithStatics {
-				YesNoPrompt(
-					message = "Yes or no?",
-					default = null,
-					onSubmit = { result = it },
-				)
-			}
+    runMosaicTest(MosaicSnapshots) {
+      val first = setContentWithStatics {
+        YesNoPrompt(message = "Yes or no?", default = null, onSubmit = { result = it })
+      }
 
-			assertThat(first).matches("Yes or no? [y/n]: ")
+      assertThat(first).matches("Yes or no? [y/n]: ")
 
-			sendText(case.input)
+      sendText(case.input)
 
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ${case.input}")
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ${case.input}")
 
-			sendKeyEvent(KeyEvent("Enter"))
+      sendKeyEvent(KeyEvent("Enter"))
 
-			assertThat(awaitSnapshot()).matches(static = "Yes or no? [y/n]: ${case.input}")
-		}
+      assertThat(awaitSnapshot()).matches(static = "Yes or no? [y/n]: ${case.input}")
+    }
 
-		assertThat(result).isEqualTo(case.result)
-	}
+    assertThat(result).isEqualTo(case.result)
+  }
 
-	@Test
-	fun defaultTrue() = runTest {
-		var result: Boolean? = null
+  @Test
+  fun defaultTrue() = runTest {
+    var result: Boolean? = null
 
-		runMosaicTest(MosaicSnapshots) {
-			val first = setContentWithStatics {
-				YesNoPrompt(
-					message = "Yes or no?",
-					default = true,
-					onSubmit = { result = it },
-				)
-			}
+    runMosaicTest(MosaicSnapshots) {
+      val first = setContentWithStatics {
+        YesNoPrompt(message = "Yes or no?", default = true, onSubmit = { result = it })
+      }
 
-			assertThat(first).matches("Yes or no? [Y/n]: ")
+      assertThat(first).matches("Yes or no? [Y/n]: ")
 
-			sendKeyEvent(KeyEvent("Enter"))
+      sendKeyEvent(KeyEvent("Enter"))
 
-			assertThat(awaitSnapshot()).matches(static = "Yes or no? [Y/n]: ")
-		}
+      assertThat(awaitSnapshot()).matches(static = "Yes or no? [Y/n]: ")
+    }
 
-		assertThat(result).isNotNull().isTrue()
-	}
+    assertThat(result).isNotNull().isTrue()
+  }
 
-	@Test
-	fun defaultFalse() = runTest {
-		var result: Boolean? = null
+  @Test
+  fun defaultFalse() = runTest {
+    var result: Boolean? = null
 
-		runMosaicTest(MosaicSnapshots) {
-			val first = setContentWithStatics {
-				YesNoPrompt(
-					message = "Yes or no?",
-					default = false,
-					onSubmit = { result = it },
-				)
-			}
+    runMosaicTest(MosaicSnapshots) {
+      val first = setContentWithStatics {
+        YesNoPrompt(message = "Yes or no?", default = false, onSubmit = { result = it })
+      }
 
-			assertThat(first).matches("Yes or no? [y/N]: ")
+      assertThat(first).matches("Yes or no? [y/N]: ")
 
-			sendKeyEvent(KeyEvent("Enter"))
+      sendKeyEvent(KeyEvent("Enter"))
 
-			assertThat(awaitSnapshot()).matches(static = "Yes or no? [y/N]: ")
-		}
+      assertThat(awaitSnapshot()).matches(static = "Yes or no? [y/N]: ")
+    }
 
-		assertThat(result).isNotNull().isFalse()
-	}
+    assertThat(result).isNotNull().isFalse()
+  }
 
-	@Test
-	fun backspace() = runTest {
-		var result: Boolean? = null
+  @Test
+  fun backspace() = runTest {
+    var result: Boolean? = null
 
-		runMosaicTest(MosaicSnapshots) {
-			val first = setContentWithStatics {
-				YesNoPrompt(
-					message = "Yes or no?",
-					default = null,
-					onSubmit = { result = it },
-				)
-			}
+    runMosaicTest(MosaicSnapshots) {
+      val first = setContentWithStatics {
+        YesNoPrompt(message = "Yes or no?", default = null, onSubmit = { result = it })
+      }
 
-			assertThat(first).matches("Yes or no? [y/n]: ")
+      assertThat(first).matches("Yes or no? [y/n]: ")
 
-			sendText("y")
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: y")
+      sendText("y")
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: y")
 
-			sendKeyEvent(KeyEvent("Backspace"))
-			assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
-		}
+      sendKeyEvent(KeyEvent("Backspace"))
+      assertThat(awaitSnapshot()).matches("Yes or no? [y/n]: ")
+    }
 
-		assertThat(result).isNull()
-	}
+    assertThat(result).isNull()
+  }
 }

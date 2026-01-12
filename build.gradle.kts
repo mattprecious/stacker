@@ -103,11 +103,7 @@ sqldelight {
 spotless {
 	kotlin {
 		target("src/**/*.kt")
-		ktlint("0.48.2").editorConfigOverride(
-			mapOf(
-				"ktlint_standard_filename" to "disabled",
-			)
-		)
+		ktfmt(libs.ktfmt.get().version).googleStyle()
 	}
 }
 
