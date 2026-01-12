@@ -4,49 +4,27 @@ import com.mattprecious.stacker.collections.TreeNode
 import com.mattprecious.stacker.db.Branch
 
 interface StackManager {
-	val trackedBranchNames: List<String>
+  val trackedBranchNames: List<String>
 
-	fun getBase(): TreeNode<Branch>?
-	fun getBranch(branchName: String): TreeNode<Branch>?
+  fun getBase(): TreeNode<Branch>?
 
-	fun trackBranch(
-		branchName: String,
-		parentName: String?,
-		parentSha: String?,
-	)
+  fun getBranch(branchName: String): TreeNode<Branch>?
 
-	fun untrackBranch(
-		branch: Branch,
-	)
+  fun trackBranch(branchName: String, parentName: String?, parentSha: String?)
 
-	fun untrackBranches(
-		branches: Set<String>,
-	)
+  fun untrackBranch(branch: Branch)
 
-	fun renameBranch(
-		branch: Branch,
-		newName: String,
-	)
+  fun untrackBranches(branches: Set<String>)
 
-	fun updateParent(
-		branch: Branch,
-		parent: Branch,
-	) = updateParent(branch.name, parent.name)
+  fun renameBranch(branch: Branch, newName: String)
 
-	fun updateParent(
-		branch: String,
-		parent: String,
-	)
+  fun updateParent(branch: Branch, parent: Branch) = updateParent(branch.name, parent.name)
 
-	fun updateParentSha(
-		branch: Branch,
-		parentSha: String,
-	)
+  fun updateParent(branch: String, parent: String)
 
-	fun updatePrNumber(
-		branch: Branch,
-		prNumber: Long,
-	)
+  fun updateParentSha(branch: Branch, parentSha: String)
 
-	fun setHasAskedToDelete(branch: Branch)
+  fun updatePrNumber(branch: Branch, prNumber: Long)
+
+  fun setHasAskedToDelete(branch: Branch)
 }

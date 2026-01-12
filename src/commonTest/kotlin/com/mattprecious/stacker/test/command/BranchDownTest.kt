@@ -18,87 +18,84 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchDownTest {
-	@Test
-	fun untracked() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun untracked() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchDown() }) {
-			awaitFrame(
-				static = "Branch change-a is not tracked.",
-				output = "",
-			)
+    testCommand({ branchDown() }) {
+      awaitFrame(static = "Branch change-a is not tracked.", output = "")
 
-			assertThat(awaitResult()).isFalse()
-		}
-	}
+      assertThat(awaitResult()).isFalse()
+    }
+  }
 
-	@Test
-	fun singleBranch() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
+  @Test
+  fun singleBranch() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
 
-		testCommand({ branchDown() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
-	}
+    testCommand({ branchDown() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
+  }
 
-	@Test
-	fun linearStack() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateAndCheckoutBranch("green-main")
-		testCommand({ repoInit("main", Some("green-main")) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
+  @Test
+  fun linearStack() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateAndCheckoutBranch("green-main")
+    testCommand({ repoInit("main", Some("green-main")) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
 
-		testCommand({ branchDown() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDown() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
 
-		testCommand({ branchDown() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDown() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("green-main")
+    assertThat(gitCurrentBranch()).isEqualTo("green-main")
 
-		testCommand({ branchDown() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDown() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
+    assertThat(gitCurrentBranch()).isEqualTo("main")
 
-		testCommand({ branchDown() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDown() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("main")
+  }
 
-	@Test
-	fun fork() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
-		testCommand({ branchCreate("change-a") })
-		gitCheckoutBranch("main")
-		testCommand({ branchCreate("change-b") })
+  @Test
+  fun fork() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
+    testCommand({ branchCreate("change-a") })
+    gitCheckoutBranch("main")
+    testCommand({ branchCreate("change-b") })
 
-		testCommand({ branchDown() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchDown() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("main")
+  }
 }

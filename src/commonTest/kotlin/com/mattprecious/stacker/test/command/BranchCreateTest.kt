@@ -17,117 +17,117 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchCreateTest {
-	@Test
-	fun branchFromTrunk() = withTestEnvironment {
-		gitInit()
-		val mainSha = gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
+  @Test
+  fun branchFromTrunk() = withTestEnvironment {
+    gitInit()
+    val mainSha = gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
 
-		testCommand({ branchCreate("change-a") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchCreate("change-a") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList()).containsExactlyInAnyOrder(
-				Branch(
-					name = "main",
-					parent = null,
-					parentSha = null,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-				Branch(
-					name = "change-a",
-					parent = "main",
-					parentSha = mainSha.long,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-			)
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList())
+        .containsExactlyInAnyOrder(
+          Branch(
+            name = "main",
+            parent = null,
+            parentSha = null,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+          Branch(
+            name = "change-a",
+            parent = "main",
+            parentSha = mainSha.long,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+        )
+    }
+  }
 
-	@Test
-	fun branchFromNonTrunkBranch() = withTestEnvironment {
-		gitInit()
-		val mainSha = gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		val parentSha = gitCommit("Change A")
+  @Test
+  fun branchFromNonTrunkBranch() = withTestEnvironment {
+    gitInit()
+    val mainSha = gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    val parentSha = gitCommit("Change A")
 
-		testCommand({ branchCreate("change-b") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchCreate("change-b") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList()).containsExactlyInAnyOrder(
-				Branch(
-					name = "main",
-					parent = null,
-					parentSha = null,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-				Branch(
-					name = "change-a",
-					parent = "main",
-					parentSha = mainSha.long,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-				Branch(
-					name = "change-b",
-					parent = "change-a",
-					parentSha = parentSha.long,
-					prNumber = null,
-					hasAskedToDelete = false,
-				),
-			)
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList())
+        .containsExactlyInAnyOrder(
+          Branch(
+            name = "main",
+            parent = null,
+            parentSha = null,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+          Branch(
+            name = "change-a",
+            parent = "main",
+            parentSha = mainSha.long,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+          Branch(
+            name = "change-b",
+            parent = "change-a",
+            parentSha = parentSha.long,
+            prNumber = null,
+            hasAskedToDelete = false,
+          ),
+        )
+    }
+  }
 
-	@Test
-	fun branchFromUntrackedBranch() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun branchFromUntrackedBranch() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchCreate("change-b") }) {
-			awaitFrame(
-				static = "Cannot branch from change-a since it is not tracked. Please track with st branch track.",
-				output = "",
-			)
+    testCommand({ branchCreate("change-b") }) {
+      awaitFrame(
+        static =
+          "Cannot branch from change-a since it is not tracked. Please track with st branch track.",
+        output = "",
+      )
 
-			assertThat(awaitResult()).isFalse()
-		}
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
+  }
 
-	@Test
-	fun duplicateBranch() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		gitCreateBranch("change-a")
+  @Test
+  fun duplicateBranch() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    gitCreateBranch("change-a")
 
-		testCommand({ branchCreate("change-a") }) {
-			awaitFrame(
-				static = "Branch change-a already exists.",
-				output = "",
-			)
-			assertThat(awaitResult()).isFalse()
-		}
+    testCommand({ branchCreate("change-a") }) {
+      awaitFrame(static = "Branch change-a already exists.", output = "")
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
+  }
 }

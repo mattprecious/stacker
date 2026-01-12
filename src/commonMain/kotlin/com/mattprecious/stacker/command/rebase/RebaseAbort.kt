@@ -8,33 +8,29 @@ import com.mattprecious.stacker.lock.Locker
 import com.mattprecious.stacker.vc.VersionControl
 
 fun StackerDeps.rebaseAbort(): StackerCommand {
-	return RebaseAbort(
-		configManager = configManager,
-		locker = locker,
-		vc = vc,
-	)
+  return RebaseAbort(configManager = configManager, locker = locker, vc = vc)
 }
 
 internal class RebaseAbort(
-	private val configManager: ConfigManager,
-	private val locker: Locker,
-	private val vc: VersionControl,
+  private val configManager: ConfigManager,
+  private val locker: Locker,
+  private val vc: VersionControl,
 ) : StackerCommand() {
-	override suspend fun StackerCommandScope.work() {
-		requireInitialized(configManager)
+  override suspend fun StackerCommandScope.work() {
+    requireInitialized(configManager)
 
-		if (!locker.hasLock()) {
-			printStaticError("Nothing to abort.")
-			abort()
-		}
+    if (!locker.hasLock()) {
+      printStaticError("Nothing to abort.")
+      abort()
+    }
 
-		locker.cancelOperation { operation ->
-			when (operation) {
-				is Locker.Operation.Restack -> {
-					vc.abortRebase()
-					vc.checkout(operation.startingBranch)
-				}
-			}
-		}
-	}
+    locker.cancelOperation { operation ->
+      when (operation) {
+        is Locker.Operation.Restack -> {
+          vc.abortRebase()
+          vc.checkout(operation.startingBranch)
+        }
+      }
+    }
+  }
 }

@@ -19,139 +19,136 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchCheckoutTest {
-	@Test
-	fun single() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
+  @Test
+  fun single() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
 
-		testCommand({ branchCheckout(null) }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchCheckout(null) }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("main")
+  }
 
-	@Test
-	fun singleFromUntracked() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun singleFromUntracked() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchCheckout(null) }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchCheckout(null) }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("main")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("main")
+  }
 
-	@Test
-	fun simple() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
-		gitCheckoutBranch("main")
-		testCommand({ branchCreate("change-c") })
-		gitCheckoutBranch("change-a")
+  @Test
+  fun simple() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
+    gitCheckoutBranch("main")
+    testCommand({ branchCreate("change-c") })
+    gitCheckoutBranch("change-a")
 
-		testCommand({ branchCheckout(null) }) {
-			awaitFrame(
-				"""
+    testCommand({ branchCheckout(null) }) {
+      awaitFrame(
+        """
 				|Checkout a branch:$s
 				|  ○   change-b    $s
 				|❯ ○   change-a    $s
 				|  │ ○ change-c    $s
 				|  ○─┘ main        $s
-				""".trimMargin(),
-			)
-
-			sendKeyEvent(KeyEvent("ArrowUp"))
-			sendKeyEvent(KeyEvent("Enter"))
-
-			awaitFrame(
-				static = "Checkout a branch: change-b",
-				output = "",
-			)
-
-			assertThat(awaitResult()).isTrue()
-		}
-
-		assertThat(gitCurrentBranch()).isEqualTo("change-b")
-	}
-
-	@Test
-	fun simpleWithArgument() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
-		gitCheckoutBranch("main")
-		testCommand({ branchCreate("change-c") })
-		gitCheckoutBranch("change-a")
-
-		testCommand({ branchCheckout("change-c") }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
-
-		assertThat(gitCurrentBranch()).isEqualTo("change-c")
-	}
-
-	@Test
-	fun unknownBranch() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-
-		testCommand({ branchCheckout("change-c") }) {
-			awaitFrame(
-				static = "change-c does not match any branches known to git.",
-				output = "",
-			)
-
-			assertThat(awaitResult()).isFalse()
-		}
-
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
-	}
-
-	@Test
-	fun filteringIsEnabled() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
-		gitCheckoutBranch("main")
-		testCommand({ branchCreate("change-c") })
-		gitCheckoutBranch("change-a")
-
-		testCommand({ branchCheckout(null) }) {
-			awaitFrame(
 				"""
+          .trimMargin()
+      )
+
+      sendKeyEvent(KeyEvent("ArrowUp"))
+      sendKeyEvent(KeyEvent("Enter"))
+
+      awaitFrame(static = "Checkout a branch: change-b", output = "")
+
+      assertThat(awaitResult()).isTrue()
+    }
+
+    assertThat(gitCurrentBranch()).isEqualTo("change-b")
+  }
+
+  @Test
+  fun simpleWithArgument() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
+    gitCheckoutBranch("main")
+    testCommand({ branchCreate("change-c") })
+    gitCheckoutBranch("change-a")
+
+    testCommand({ branchCheckout("change-c") }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
+
+    assertThat(gitCurrentBranch()).isEqualTo("change-c")
+  }
+
+  @Test
+  fun unknownBranch() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+
+    testCommand({ branchCheckout("change-c") }) {
+      awaitFrame(static = "change-c does not match any branches known to git.", output = "")
+
+      assertThat(awaitResult()).isFalse()
+    }
+
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
+  }
+
+  @Test
+  fun filteringIsEnabled() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
+    gitCheckoutBranch("main")
+    testCommand({ branchCreate("change-c") })
+    gitCheckoutBranch("change-a")
+
+    testCommand({ branchCheckout(null) }) {
+      awaitFrame(
+        """
 				|Checkout a branch:$s
 				|  ○   change-b    $s
 				|❯ ○   change-a    $s
 				|  │ ○ change-c    $s
 				|  ○─┘ main        $s
-				""".trimMargin(),
-			)
-
-			sendText("-c")
-
-			awaitFrame(
 				"""
+          .trimMargin()
+      )
+
+      sendText("-c")
+
+      awaitFrame(
+        """
 				|Checkout a branch: -c
 				|❯ │ ○ change-c      $s
-				""".trimMargin(),
-			)
-		}
-	}
+				"""
+          .trimMargin()
+      )
+    }
+  }
 }

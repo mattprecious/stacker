@@ -18,57 +18,61 @@ import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 fun StackerDeps.stackSubmit(): StackerCommand {
-	return StackSubmit(
-		configManager = configManager,
-		locker = locker,
-		remote = remote,
-		stackManager = stackManager,
-		vc = vc,
-	)
+  return StackSubmit(
+    configManager = configManager,
+    locker = locker,
+    remote = remote,
+    stackManager = stackManager,
+    vc = vc,
+  )
 }
 
 internal class StackSubmit(
-	private val configManager: ConfigManager,
-	private val locker: Locker,
-	private val remote: Remote,
-	private val stackManager: StackManager,
-	private val vc: VersionControl,
+  private val configManager: ConfigManager,
+  private val locker: Locker,
+  private val remote: Remote,
+  private val stackManager: StackManager,
+  private val vc: VersionControl,
 ) : StackerCommand() {
-	override suspend fun StackerCommandScope.work() {
-		requireInitialized(configManager)
-		requireNoLock(locker)
+  override suspend fun StackerCommandScope.work() {
+    requireInitialized(configManager)
+    requireNoLock(locker)
 
-		val currentBranch = stackManager.getBranch(vc.currentBranchName)
-		if (currentBranch == null) {
-			printStaticError(
-				buildAnnotatedString {
-					append("Cannot create a pull request from ")
-					branch { append(vc.currentBranchName) }
-					append(" since it is not tracked. Please track with ")
-					code { append("st branch track") }
-					append(".")
-				},
-			)
-			abort()
-		}
+    val currentBranch = stackManager.getBranch(vc.currentBranchName)
+    if (currentBranch == null) {
+      printStaticError(
+        buildAnnotatedString {
+          append("Cannot create a pull request from ")
+          branch { append(vc.currentBranchName) }
+          append(" since it is not tracked. Please track with ")
+          code { append("st branch track") }
+          append(".")
+        }
+      )
+      abort()
+    }
 
-		if (currentBranch.name == configManager.trunk || currentBranch.name == configManager.trailingTrunk) {
-			printStaticError(
-				buildAnnotatedString {
-					append("Cannot create a pull request from trunk branch ")
-					branch { append(currentBranch.name) }
-					append(".")
-				},
-			)
-			abort()
-		}
+    if (
+      currentBranch.name == configManager.trunk || currentBranch.name == configManager.trailingTrunk
+    ) {
+      printStaticError(
+        buildAnnotatedString {
+          append("Cannot create a pull request from trunk branch ")
+          branch { append(currentBranch.name) }
+          append(".")
+        }
+      )
+      abort()
+    }
 
-		requireAuthenticated(remote)
+    requireAuthenticated(remote)
 
-		val branchesToSubmit = (currentBranch.ancestors.toList().asReversed() + currentBranch.all)
-			.filterNot { it.name == configManager.trunk || it.name == configManager.trailingTrunk }
+    val branchesToSubmit =
+      (currentBranch.ancestors.toList().asReversed() + currentBranch.all).filterNot {
+        it.name == configManager.trunk || it.name == configManager.trailingTrunk
+      }
 
-		vc.pushBranches(branchesToSubmit.map { it.name })
-		branchesToSubmit.forEach { it.submit(this, configManager, remote, stackManager, vc) }
-	}
+    vc.pushBranches(branchesToSubmit.map { it.name })
+    branchesToSubmit.forEach { it.submit(this, configManager, remote, stackManager, vc) }
+  }
 }

@@ -19,122 +19,113 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchBottomTest {
-	@Test
-	fun untracked() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun untracked() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchDown() }) {
-			awaitFrame(
-				static = "Branch change-a is not tracked.",
-				output = "",
-			)
+    testCommand({ branchDown() }) {
+      awaitFrame(static = "Branch change-a is not tracked.", output = "")
 
-			assertThat(awaitResult()).isFalse()
-		}
-	}
+      assertThat(awaitResult()).isFalse()
+    }
+  }
 
-	@Test
-	fun trunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
+  @Test
+  fun trunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
 
-		testCommand({ branchBottom() }) {
-			awaitFrame(
-				static = "Not in a stack.",
-				output = "",
-			)
+    testCommand({ branchBottom() }) {
+      awaitFrame(static = "Not in a stack.", output = "")
 
-			assertThat(awaitResult()).isFalse()
-		}
-	}
+      assertThat(awaitResult()).isFalse()
+    }
+  }
 
-	@Test
-	fun trailingTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateAndCheckoutBranch("green-main")
-		testCommand({ repoInit("main", Some("green-main")) })
+  @Test
+  fun trailingTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateAndCheckoutBranch("green-main")
+    testCommand({ repoInit("main", Some("green-main")) })
 
-		testCommand({ branchBottom() }) {
-			awaitFrame(
-				static = "Not in a stack.",
-				output = "",
-			)
+    testCommand({ branchBottom() }) {
+      awaitFrame(static = "Not in a stack.", output = "")
 
-			assertThat(awaitResult()).isFalse()
-		}
+      assertThat(awaitResult()).isFalse()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("green-main")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("green-main")
+  }
 
-	@Test
-	fun singleOnTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
-		testCommand({ branchCreate("change-a") })
+  @Test
+  fun singleOnTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
+    testCommand({ branchCreate("change-a") })
 
-		testCommand({ branchBottom() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchBottom() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
+  }
 
-	@Test
-	fun singleOnTrailingTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateAndCheckoutBranch("green-main")
-		testCommand({ repoInit("main", Some("green-main")) })
-		testCommand({ branchCreate("change-a") })
+  @Test
+  fun singleOnTrailingTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateAndCheckoutBranch("green-main")
+    testCommand({ repoInit("main", Some("green-main")) })
+    testCommand({ branchCreate("change-a") })
 
-		testCommand({ branchBottom() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchBottom() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
+  }
 
-	@Test
-	fun linearStack() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateAndCheckoutBranch("green-main")
-		testCommand({ repoInit("main", Some("green-main")) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
-		testCommand({ branchCreate("change-c") })
+  @Test
+  fun linearStack() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateAndCheckoutBranch("green-main")
+    testCommand({ repoInit("main", Some("green-main")) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
+    testCommand({ branchCreate("change-c") })
 
-		testCommand({ branchBottom() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchBottom() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
+  }
 
-	@Test
-	fun fork() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", None) })
-		testCommand({ branchCreate("change-a") })
-		gitCheckoutBranch("main")
-		testCommand({ branchCreate("change-b") })
-		testCommand({ branchCreate("change-c") })
+  @Test
+  fun fork() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", None) })
+    testCommand({ branchCreate("change-a") })
+    gitCheckoutBranch("main")
+    testCommand({ branchCreate("change-b") })
+    testCommand({ branchCreate("change-c") })
 
-		testCommand({ branchBottom() }) {
-			awaitFrame("")
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchBottom() }) {
+      awaitFrame("")
+      assertThat(awaitResult()).isTrue()
+    }
 
-		assertThat(gitCurrentBranch()).isEqualTo("change-b")
-	}
+    assertThat(gitCurrentBranch()).isEqualTo("change-b")
+  }
 }

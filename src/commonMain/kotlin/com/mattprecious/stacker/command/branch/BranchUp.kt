@@ -17,59 +17,61 @@ import com.mattprecious.stacker.vc.VersionControl
 import kotlinx.collections.immutable.toPersistentList
 
 fun StackerDeps.branchUp(): StackerCommand {
-	return BranchUp(
-		configManager = configManager,
-		locker = locker,
-		stackManager = stackManager,
-		vc = vc,
-	)
+  return BranchUp(
+    configManager = configManager,
+    locker = locker,
+    stackManager = stackManager,
+    vc = vc,
+  )
 }
 
 internal class BranchUp(
-	private val configManager: ConfigManager,
-	private val locker: Locker,
-	private val stackManager: StackManager,
-	private val vc: VersionControl,
+  private val configManager: ConfigManager,
+  private val locker: Locker,
+  private val stackManager: StackManager,
+  private val vc: VersionControl,
 ) : StackerCommand() {
-	override suspend fun StackerCommandScope.work() {
-		requireInitialized(configManager)
-		requireNoLock(locker)
+  override suspend fun StackerCommandScope.work() {
+    requireInitialized(configManager)
+    requireNoLock(locker)
 
-		val currentBranchName = vc.currentBranchName
-		val currentBranch = stackManager.getBranch(currentBranchName)
-		if (currentBranch == null) {
-			printStaticError(
-				buildAnnotatedString {
-					append("Branch ")
-					this.branch { append(currentBranchName) }
-					append(" is not tracked.")
-				},
-			)
-			abort()
-		}
+    val currentBranchName = vc.currentBranchName
+    val currentBranch = stackManager.getBranch(currentBranchName)
+    if (currentBranch == null) {
+      printStaticError(
+        buildAnnotatedString {
+          append("Branch ")
+          this.branch { append(currentBranchName) }
+          append(" is not tracked.")
+        }
+      )
+      abort()
+    }
 
-		val options = currentBranch.children
-		if (options.isEmpty()) return
+    val options = currentBranch.children
+    if (options.isEmpty()) return
 
-		val upBranch = if (options.size == 1) {
-			options.single().name
-		} else {
-			render { onResult ->
-				InteractivePrompt(
-					message = "Move up to",
-					state = remember {
-						PromptState(
-							options.toPersistentList(),
-							default = options.find { it.name == currentBranchName },
-							displayTransform = { it.name.toAnnotatedString() },
-							valueTransform = { it.name.toAnnotatedString() },
-						)
-					},
-					onSelected = { onResult(it.name) },
-				)
-			}
-		}
+    val upBranch =
+      if (options.size == 1) {
+        options.single().name
+      } else {
+        render { onResult ->
+          InteractivePrompt(
+            message = "Move up to",
+            state =
+              remember {
+                PromptState(
+                  options.toPersistentList(),
+                  default = options.find { it.name == currentBranchName },
+                  displayTransform = { it.name.toAnnotatedString() },
+                  valueTransform = { it.name.toAnnotatedString() },
+                )
+              },
+            onSelected = { onResult(it.name) },
+          )
+        }
+      }
 
-		vc.checkout(upBranch)
-	}
+    vc.checkout(upBranch)
+  }
 }

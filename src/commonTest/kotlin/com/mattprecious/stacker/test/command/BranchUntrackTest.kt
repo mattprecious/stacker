@@ -19,111 +19,100 @@ import com.mattprecious.stacker.test.util.withTestEnvironment
 import kotlin.test.Test
 
 class BranchUntrackTest {
-	@Test
-	fun notTracked() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		gitCreateAndCheckoutBranch("change-a")
+  @Test
+  fun notTracked() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    gitCreateAndCheckoutBranch("change-a")
 
-		testCommand({ branchUntrack(null) }) {
-			awaitFrame(
-				static = "Branch change-a is already not tracked.",
-				output = "",
-			)
+    testCommand({ branchUntrack(null) }) {
+      awaitFrame(static = "Branch change-a is already not tracked.", output = "")
 
-			assertThat(awaitResult()).isTrue()
-		}
+      assertThat(awaitResult()).isTrue()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
+  }
 
-	@Test
-	fun withChildren() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
-		testCommand({ branchCreate("change-b") })
+  @Test
+  fun withChildren() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
+    testCommand({ branchCreate("change-b") })
 
-		testCommand({ branchUntrack("change-a") }) {
-			awaitFrame(
-				static = "Branch change-a has children. Please retarget or untrack them.",
-				output = "",
-			)
+    testCommand({ branchUntrack("change-a") }) {
+      awaitFrame(
+        static = "Branch change-a has children. Please retarget or untrack them.",
+        output = "",
+      )
 
-			assertThat(awaitResult()).isFalse()
-		}
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactlyInAnyOrder("main", "change-a", "change-b")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactlyInAnyOrder("main", "change-a", "change-b")
+    }
+  }
 
-	@Test
-	fun singleBranch() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
-		testCommand({ branchCreate("change-a") })
+  @Test
+  fun singleBranch() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
+    testCommand({ branchCreate("change-a") })
 
-		testCommand({ branchUntrack(null) }) {
-			assertThat(awaitResult()).isTrue()
-		}
+    testCommand({ branchUntrack(null) }) { assertThat(awaitResult()).isTrue() }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
 
-		// Does not change branch.
-		assertThat(gitCurrentBranch()).isEqualTo("change-a")
-	}
+    // Does not change branch.
+    assertThat(gitCurrentBranch()).isEqualTo("change-a")
+  }
 
-	@Test
-	fun cannotUntrackTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		testCommand({ repoInit("main", Optional.None) })
+  @Test
+  fun cannotUntrackTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    testCommand({ repoInit("main", Optional.None) })
 
-		testCommand({ branchUntrack(null) }) {
-			awaitFrame(
-				static = "Cannot untrack trunk branch.",
-				output = "",
-			)
+    testCommand({ branchUntrack(null) }) {
+      awaitFrame(static = "Cannot untrack trunk branch.", output = "")
 
-			assertThat(awaitResult()).isFalse()
-		}
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main")
+    }
+  }
 
-	@Test
-	fun cannotUntrackTrailingTrunk() = withTestEnvironment {
-		gitInit()
-		gitCommit("Empty")
-		gitCreateBranch("green-main")
-		testCommand({ repoInit("main", Optional.Some("green-main")) })
+  @Test
+  fun cannotUntrackTrailingTrunk() = withTestEnvironment {
+    gitInit()
+    gitCommit("Empty")
+    gitCreateBranch("green-main")
+    testCommand({ repoInit("main", Optional.Some("green-main")) })
 
-		testCommand({ branchUntrack("green-main") }) {
-			awaitFrame(
-				static = "Cannot untrack trailing trunk branch.",
-				output = "",
-			)
+    testCommand({ branchUntrack("green-main") }) {
+      awaitFrame(static = "Cannot untrack trailing trunk branch.", output = "")
 
-			assertThat(awaitResult()).isFalse()
-		}
+      assertThat(awaitResult()).isFalse()
+    }
 
-		withDatabase {
-			assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
-				.containsExactly("main", "green-main")
-		}
-	}
+    withDatabase {
+      assertThat(it.branchQueries.selectAll().executeAsList().map { it.name })
+        .containsExactly("main", "green-main")
+    }
+  }
 }

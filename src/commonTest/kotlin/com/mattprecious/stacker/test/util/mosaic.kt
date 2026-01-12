@@ -18,36 +18,29 @@ val s = " "
 // Workaround for mosaic bug that is fixed in 0.17.
 val reset = "\u001B[0m"
 
-fun TestMosaic<Mosaic>.setContentWithStatics(
-	content: @Composable () -> Unit,
-): Mosaic {
-	return setContentAndSnapshot {
-		CompositionLocalProvider(
-			LocalPrinter provides Printer(),
-		) {
-			LocalPrinter.current.Messages()
-			content()
-		}
-	}
+fun TestMosaic<Mosaic>.setContentWithStatics(content: @Composable () -> Unit): Mosaic {
+  return setContentAndSnapshot {
+    CompositionLocalProvider(LocalPrinter provides Printer()) {
+      LocalPrinter.current.Messages()
+      content()
+    }
+  }
 }
 
-fun Assert<Mosaic>.matches(
-	output: String? = null,
-	static: String = "",
-) {
-	hasStaticsEqualTo(static)
-	output?.let(::hasOutputEqualTo)
+fun Assert<Mosaic>.matches(output: String? = null, static: String = "") {
+  hasStaticsEqualTo(static)
+  output?.let(::hasOutputEqualTo)
 }
 
 fun Assert<Mosaic>.hasOutputEqualTo(expected: String) {
-	prop("output") { it.paint().render(AnsiLevel.NONE) }.isEqualTo(expected)
+  prop("output") { it.paint().render(AnsiLevel.NONE) }.isEqualTo(expected)
 }
 
 fun Assert<Mosaic>.hasStaticsEqualTo(expected: String) {
-	prop("statics") { it.paintStatics().joinToString("\n") { it.render(AnsiLevel.NONE) } }
-		.isEqualTo(expected)
+  prop("statics") { it.paintStatics().joinToString("\n") { it.render(AnsiLevel.NONE) } }
+    .isEqualTo(expected)
 }
 
 fun TestMosaic<*>.sendText(text: String) {
-	text.forEach { sendKeyEvent(KeyEvent("$it")) }
+  text.forEach { sendKeyEvent(KeyEvent("$it")) }
 }

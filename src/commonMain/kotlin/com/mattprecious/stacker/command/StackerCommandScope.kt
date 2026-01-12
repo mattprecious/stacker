@@ -13,70 +13,66 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 
-class StackerCommandScope internal constructor(
-	private val printer: Printer,
-	private val workState: WorkState,
-) {
-	fun printStatic(message: String) {
-		printer.printStatic(message)
-	}
+class StackerCommandScope
+internal constructor(private val printer: Printer, private val workState: WorkState) {
+  fun printStatic(message: String) {
+    printer.printStatic(message)
+  }
 
-	fun printStatic(message: AnnotatedString) {
-		printer.printStatic(message)
-	}
+  fun printStatic(message: AnnotatedString) {
+    printer.printStatic(message)
+  }
 
-	fun printStaticError(message: String) {
-		// TODO: Red.
-		printer.printStatic(message)
-	}
+  fun printStaticError(message: String) {
+    // TODO: Red.
+    printer.printStatic(message)
+  }
 
-	fun printStaticError(message: AnnotatedString) {
-		// TODO: Red.
-		printer.printStatic(message)
-	}
+  fun printStaticError(message: AnnotatedString) {
+    // TODO: Red.
+    printer.printStatic(message)
+  }
 
-	suspend fun <R> render(content: @Composable (onResult: (R) -> Unit) -> Unit): R {
-		workState.state = StackerCommand.State.Rendering(content)
-		return snapshotFlow { workState.state }
-			.filterIsInstance<StackerCommand.State.DeliveringRenderResult<R>>()
-			.first()
-			.result
-			.also {
-				workState.state = StackerCommand.State.Working
-			}
-	}
+  suspend fun <R> render(content: @Composable (onResult: (R) -> Unit) -> Unit): R {
+    workState.state = StackerCommand.State.Rendering(content)
+    return snapshotFlow { workState.state }
+      .filterIsInstance<StackerCommand.State.DeliveringRenderResult<R>>()
+      .first()
+      .result
+      .also { workState.state = StackerCommand.State.Working }
+  }
 
-	suspend fun requireInitialized(configManager: ConfigManager) {
-		if (!configManager.repoInitialized) {
-			printStaticError(
-				buildAnnotatedString {
-					append("Stacker must be initialized first. Please run ")
-					code { append("st repo init") }
-					append(".")
-				},
-			)
-			abort()
-		}
-	}
+  suspend fun requireInitialized(configManager: ConfigManager) {
+    if (!configManager.repoInitialized) {
+      printStaticError(
+        buildAnnotatedString {
+          append("Stacker must be initialized first. Please run ")
+          code { append("st repo init") }
+          append(".")
+        }
+      )
+      abort()
+    }
+  }
 
-	suspend fun requireNoLock(locker: Locker) {
-		if (locker.hasLock()) {
-			printStaticError(
-				buildAnnotatedString {
-					append("A restack is currently in progress. Please run ")
-					code { append("st rebase --abort") }
-					append(" or resolve any conflicts and run ")
-					code { append("st rebase --continue") }
-					append(".")
-				},
-			)
-			abort()
-		}
-	}
+  suspend fun requireNoLock(locker: Locker) {
+    if (locker.hasLock()) {
+      printStaticError(
+        buildAnnotatedString {
+          append("A restack is currently in progress. Please run ")
+          code { append("st rebase --abort") }
+          append(" or resolve any conflicts and run ")
+          code { append("st rebase --continue") }
+          append(".")
+        }
+      )
+      abort()
+    }
+  }
 
-	suspend fun abort(): Nothing {
-		require(workState.state !is StackerCommand.State.TerminalState)
-		workState.state = StackerCommand.State.Aborted
-		awaitCancellation()
-	}
+  suspend fun abort(): Nothing {
+    require(workState.state !is StackerCommand.State.TerminalState)
+    workState.state = StackerCommand.State.Aborted
+    awaitCancellation()
+  }
 }
