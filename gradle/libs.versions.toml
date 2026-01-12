@@ -24,7 +24,7 @@ sqldelight-driver = { module = "app.cash.sqldelight:native-driver", version.ref 
 sqldelight-dialect = { module = "app.cash.sqldelight:sqlite-3-38-dialect", version.ref = "sqldelight" }
 
 [plugins]
-burst = "app.cash.burst:2.10.2"
+burst = "app.cash.burst:2.11.0"
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 spotless = "com.diffplug.spotless:8.0.0"
 sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }
