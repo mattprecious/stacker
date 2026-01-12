@@ -1,6 +1,6 @@
 [versions]
 coroutines = "1.10.2"
-kotlin = "2.2.20"
+kotlin = "2.2.21"
 ktor = "3.3.1"
 mosaic = "0.16.0"
 sqldelight = "2.1.0"
