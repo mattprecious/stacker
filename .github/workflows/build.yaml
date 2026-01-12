@@ -49,10 +49,10 @@ jobs:
           # TODO: Linking is not working on linux.
 #          - os: ubuntu-latest
 #            task: linkReleaseExecutableLinuxX64 linuxX64Test
-          - os: macOS-13
+          - os: macos-15-intel
             task: linkReleaseExecutableMacosX64 macosX64Test
             target: 'macosX64'
-          - os: macOS-14
+          - os: macos-latest
             task: linkReleaseExecutableMacosArm64 macosArm64Test
             target: 'macosArm64'
           # TODO: build on 'windows-latest'
