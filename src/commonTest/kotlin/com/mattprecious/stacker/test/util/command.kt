@@ -28,8 +28,9 @@ internal constructor(command: StackerCommand, private val mosaic: TestMosaic<Mos
   private val state = WorkState()
 
   init {
-    val snapshot =
-      mosaic.setContentAndSnapshot { command.Work(workState = state, onFinish = { result = it }) }
+    val snapshot = mosaic.setContentAndSnapshot {
+      command.Work(workState = state, onFinish = { result = it })
+    }
 
     // Because of our state machine internals, the first snapshot will always be blank.
     assertThat(snapshot).matches("")
