@@ -21,8 +21,9 @@ fun <K : Any, T : Any> treeOf(
   require(elements.isNotEmpty()) { "elements must not be empty." }
 
   val elementsByKey = elements.associateBy(keySelector)
-  val parents =
-    elementsByKey.mapValues { elements.indexOf(elementsByKey[parentSelector(it.value)]) }
+  val parents = elementsByKey.mapValues {
+    elements.indexOf(elementsByKey[parentSelector(it.value)])
+  }
   val children = elements.groupBy(parentSelector) { elements.indexOf(it) }
 
   require(children[null]!!.size == 1) {

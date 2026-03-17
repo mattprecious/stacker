@@ -63,19 +63,18 @@ internal class RepoSync(
           Remote.PrStatus.Open -> return
         }
 
-      val delete =
-        commandScope.render { onResult ->
-          YesNoPrompt(
-            message =
-              buildAnnotatedString {
-                append("PR for ")
-                branch { append(name) }
-                append(" has been $prompt, would you like to delete it?")
-              },
-            default = null,
-            onSubmit = { onResult(it) },
-          )
-        }
+      val delete = commandScope.render { onResult ->
+        YesNoPrompt(
+          message =
+            buildAnnotatedString {
+              append("PR for ")
+              branch { append(name) }
+              append(" has been $prompt, would you like to delete it?")
+            },
+          default = null,
+          onSubmit = { onResult(it) },
+        )
+      }
 
       if (delete == true) {
         if (vc.currentBranchName == name) {
