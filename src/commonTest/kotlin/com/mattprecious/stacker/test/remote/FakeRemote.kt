@@ -1,5 +1,7 @@
 package com.mattprecious.stacker.remote
 
+import kotlinx.coroutines.flow.Flow
+
 class FakeRemote : Remote {
   override val isAuthenticated: Boolean
     get() = TODO("Not yet implemented")
@@ -10,7 +12,7 @@ class FakeRemote : Remote {
   override val hasRepoAccess: Boolean
     get() = TODO("Not yet implemented")
 
-  override fun setToken(token: String): Boolean {
+  override fun requestAccessCode(): Flow<Remote.AccessCodeState> {
     TODO("Not yet implemented")
   }
 

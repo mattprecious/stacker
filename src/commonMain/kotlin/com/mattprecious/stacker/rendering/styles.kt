@@ -12,12 +12,18 @@ private val branchStyle = SpanStyle(color = Color(189, 147, 249), textStyle = It
 
 private val codeStyle = SpanStyle(color = Color(97, 175, 239))
 
+private val oneTimeCodeStyle = SpanStyle(textStyle = TextStyle.Bold)
+
 fun AnnotatedString.Builder.branch(content: AnnotatedString.Builder.() -> Unit) {
   withStyle(branchStyle, content)
 }
 
 fun AnnotatedString.Builder.code(content: AnnotatedString.Builder.() -> Unit) {
   withStyle(codeStyle, content)
+}
+
+fun AnnotatedString.Builder.oneTimeCode(content: AnnotatedString.Builder.() -> Unit) {
+  withStyle(oneTimeCodeStyle, content)
 }
 
 fun AnnotatedString.Builder.promptItem(

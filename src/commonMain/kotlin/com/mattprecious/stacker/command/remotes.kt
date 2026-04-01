@@ -1,24 +1,40 @@
 package com.mattprecious.stacker.command
 
-import com.github.ajalt.mordant.terminal.ConversionResult
+import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.mattprecious.stacker.collections.TreeNode
 import com.mattprecious.stacker.config.ConfigManager
 import com.mattprecious.stacker.db.Branch
 import com.mattprecious.stacker.remote.Remote
-import com.mattprecious.stacker.rendering.Prompt
+import com.mattprecious.stacker.rendering.oneTimeCode
 import com.mattprecious.stacker.stack.StackManager
 import com.mattprecious.stacker.vc.VersionControl
 
 internal suspend fun StackerCommandScope.requireAuthenticated(remote: Remote) {
   if (!remote.isAuthenticated) {
-    val token = render { onResult ->
-      Prompt(message = "Please enter a GitHub access token", hideInput = true, onSubmit = onResult)
-    }
-
-    when {
-      token.isBlank() -> ConversionResult.Invalid("Cannot be blank.")
-      remote.setToken(token) -> ConversionResult.Valid(token)
-      else -> ConversionResult.Invalid("Invalid token.")
+    remote.requestAccessCode().collect {
+      when (it) {
+        is Remote.AccessCodeState.WaitingForApproval -> {
+          printStatic(
+            buildAnnotatedString {
+              appendLine("GitHub authentication required.")
+              append("Enter one-time code ")
+              oneTimeCode { append(it.userCode) }
+              append(" on this page: ")
+              append(it.verificationUrl)
+            }
+          )
+        }
+        Remote.AccessCodeState.Denied -> {
+          printStaticError("Authorization request was cancelled.")
+          abort()
+        }
+        Remote.AccessCodeState.TimedOut -> {
+          printStaticError("Authorization request timed out.")
+          abort()
+        }
+        Remote.AccessCodeState.Finished,
+        Remote.AccessCodeState.Requesting -> {}
+      }
     }
   }
 

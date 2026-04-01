@@ -1,15 +1,20 @@
 package com.mattprecious.stacker.remote
 
 import com.mattprecious.stacker.config.ConfigManager
+import com.mattprecious.stacker.remote.Remote.AccessCodeState
 import com.mattprecious.stacker.remote.Remote.PrInfo
 import com.mattprecious.stacker.remote.Remote.PrResult
 import com.mattprecious.stacker.remote.github.CreatePull
 import com.mattprecious.stacker.remote.github.GitHubError
+import com.mattprecious.stacker.remote.github.LoginDeviceCodeResponse
+import com.mattprecious.stacker.remote.github.LoginOauthAccessTokenResponse
 import com.mattprecious.stacker.remote.github.Pull
 import com.mattprecious.stacker.remote.github.UpdatePull
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.accept
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
@@ -19,8 +24,15 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMessageBuilder
 import io.ktor.http.contentType
+import io.ktor.http.headers
 import io.ktor.http.isSuccess
+import io.ktor.http.parameters
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.io.IOException
 
 class GitHubRemote(
@@ -41,8 +53,79 @@ class GitHubRemote(
   override val hasRepoAccess: Boolean
     get() = runBlocking { client.get("$host/repos/$repoName") { auth() }.status.isSuccess() }
 
-  override fun setToken(token: String): Boolean {
-    return isTokenValid(token).also { if (it) configManager.githubToken = token }
+  override fun requestAccessCode(): Flow<AccessCodeState> {
+    return flow {
+      emit(AccessCodeState.Requesting)
+
+      val deviceCodeResponse =
+        client
+          .submitForm(
+            url = "$oauthHost/login/device/code",
+            formParameters =
+              parameters {
+                append("client_id", oauthClientId)
+                append("scope", "repo")
+              },
+          ) {
+            headers { accept(ContentType.Application.Json) }
+          }
+          .bodyOrThrow<LoginDeviceCodeResponse>()
+
+      emit(
+        AccessCodeState.WaitingForApproval(
+          verificationUrl = deviceCodeResponse.verification_uri,
+          userCode = deviceCodeResponse.user_code,
+        )
+      )
+
+      withTimeout(deviceCodeResponse.expires_in.seconds) {
+        var interval = deviceCodeResponse.interval.seconds
+        while (true) {
+          delay(interval)
+
+          val accessTokenResponse =
+            client
+              .submitForm(
+                url = "$oauthHost/login/oauth/access_token",
+                formParameters =
+                  parameters {
+                    append("client_id", oauthClientId)
+                    append("device_code", deviceCodeResponse.device_code)
+                    append("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
+                  },
+              ) {
+                headers { accept(ContentType.Application.Json) }
+              }
+              .bodyOrThrow<LoginOauthAccessTokenResponse>()
+
+          when (accessTokenResponse.error) {
+            LoginOauthAccessTokenResponse.Error.AuthorizationPending -> {}
+            LoginOauthAccessTokenResponse.Error.AccessDenied -> {
+              emit(AccessCodeState.Denied)
+              break
+            }
+            LoginOauthAccessTokenResponse.Error.ExpiredToken -> {
+              emit(AccessCodeState.TimedOut)
+              break
+            }
+            LoginOauthAccessTokenResponse.Error.SlowDown -> {
+              interval += 5.seconds
+            }
+            LoginOauthAccessTokenResponse.Error.UnsupportedGrantType,
+            LoginOauthAccessTokenResponse.Error.IncorrectClientCredentials,
+            LoginOauthAccessTokenResponse.Error.IncorrectDeviceCode,
+            LoginOauthAccessTokenResponse.Error.DeviceFlowDisabled -> {
+              throw IllegalStateException()
+            }
+            null -> {
+              configManager.githubToken = accessTokenResponse.access_token
+              emit(AccessCodeState.Finished)
+              break
+            }
+          }
+        }
+      }
+    }
   }
 
   override fun openOrRetargetPullRequest(
@@ -147,3 +230,6 @@ class GitHubRemote(
 }
 
 private const val host = "https://api.github.com"
+
+private const val oauthHost = "https://github.com"
+private const val oauthClientId = "Ov23lisT0WAk4R6WYZaG"
