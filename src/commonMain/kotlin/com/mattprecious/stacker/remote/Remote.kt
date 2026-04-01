@@ -1,11 +1,13 @@
 package com.mattprecious.stacker.remote
 
+import kotlinx.coroutines.flow.Flow
+
 interface Remote {
   val isAuthenticated: Boolean
   val repoName: String?
   val hasRepoAccess: Boolean
 
-  fun setToken(token: String): Boolean
+  fun requestAccessCode(): Flow<AccessCodeState>
 
   fun getPrStatus(branchName: String): PrStatus
 
@@ -14,6 +16,19 @@ interface Remote {
     targetName: String,
     prInfo: () -> PrInfo,
   ): PrResult
+
+  sealed interface AccessCodeState {
+    data object Requesting : AccessCodeState
+
+    data class WaitingForApproval(val verificationUrl: String, val userCode: String) :
+      AccessCodeState
+
+    data object Denied : AccessCodeState
+
+    data object TimedOut : AccessCodeState
+
+    data object Finished : AccessCodeState
+  }
 
   data class PrInfo(val title: String, val body: String?)
 

@@ -1,5 +1,7 @@
 package com.mattprecious.stacker.remote
 
+import kotlinx.coroutines.flow.Flow
+
 class NoRemote : Remote {
   override val isAuthenticated: Boolean
     get() = throw NotImplementedError()
@@ -10,7 +12,7 @@ class NoRemote : Remote {
   override val hasRepoAccess: Boolean
     get() = throw NotImplementedError()
 
-  override fun setToken(token: String): Boolean {
+  override fun requestAccessCode(): Flow<Remote.AccessCodeState> {
     throw NotImplementedError()
   }
 
