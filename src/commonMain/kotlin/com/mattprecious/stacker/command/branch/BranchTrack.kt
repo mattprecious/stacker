@@ -92,5 +92,15 @@ internal class BranchTrack(
     val parentSha = vc.getSha(parent)
 
     stackManager.trackBranch(branchName, parent, parentSha)
+
+    printStatic(
+      buildAnnotatedString {
+        append("Branch ")
+        branch { append(branchName) }
+        append(" is now tracked with parent branch ")
+        branch { append(parent) }
+        append(".")
+      }
+    )
   }
 }

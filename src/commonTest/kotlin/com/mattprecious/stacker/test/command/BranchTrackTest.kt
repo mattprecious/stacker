@@ -58,7 +58,7 @@ class BranchTrackTest {
     gitCommit("Change A")
 
     testCommand({ branchTrack(null) }) {
-      awaitFrame("")
+      awaitFrame(static = "Branch change-a is now tracked with parent branch main.", output = "")
       assertThat(awaitResult()).isTrue()
     }
 
@@ -90,7 +90,9 @@ class BranchTrackTest {
     testCommand({ repoInit("main", Optional.None) })
     gitCreateAndCheckoutBranch("change-a")
     val parentSha = gitCommit("Change A")
-    testCommand({ branchTrack(null) })
+    testCommand({ branchTrack(null) }) {
+      awaitFrame(static = "Branch change-a is now tracked with parent branch main.", output = "")
+    }
     gitCreateAndCheckoutBranch("change-b")
     gitCommit("Change B")
 
@@ -107,7 +109,15 @@ class BranchTrackTest {
       sendKeyEvent(KeyEvent("ArrowUp"))
       sendKeyEvent(KeyEvent("Enter"))
 
-      awaitFrame(static = "Choose a parent branch for change-b: change-a", output = "")
+      awaitFrame(
+        static =
+          """
+          Choose a parent branch for change-b: change-a
+          Branch change-b is now tracked with parent branch change-a.
+          """
+            .trimIndent(),
+        output = "",
+      )
 
       assertThat(awaitResult()).isTrue()
     }
@@ -147,13 +157,15 @@ class BranchTrackTest {
     testCommand({ repoInit("main", Optional.None) })
     gitCreateAndCheckoutBranch("change-a")
     gitCommit("Change A")
-    testCommand({ branchTrack(null) })
+    testCommand({ branchTrack(null) }) {
+      awaitFrame(static = "Branch change-a is now tracked with parent branch main.", output = "")
+    }
     gitCheckoutBranch("main")
     gitCreateAndCheckoutBranch("change-b")
     gitCommit("Change B")
 
     testCommand({ branchTrack(null) }) {
-      awaitFrame("")
+      awaitFrame(static = "Branch change-b is now tracked with parent branch main.", output = "")
       assertThat(awaitResult()).isTrue()
     }
 
