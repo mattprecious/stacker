@@ -350,7 +350,8 @@ class GitVersionControl(scope: MemScope, private val fs: FileSystem, private val
     val head = withAllocPointerTo {
       checkError(
         functionName = "git_annotated_commit_from_revspec",
-        result = git_annotated_commit_from_revspec(it.ptr, repo, branchName.asRemoteBranchRevSpec()),
+        result =
+          git_annotated_commit_from_revspec(it.ptr, repo, branchName.asRemoteBranchRevSpec()),
       )
     }
 
