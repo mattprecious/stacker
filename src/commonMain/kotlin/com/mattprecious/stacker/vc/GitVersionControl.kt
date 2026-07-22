@@ -407,38 +407,38 @@ class GitVersionControl(scope: MemScope, private val fs: FileSystem, private val
 
   private fun MemScope.getCommitForBranch(branchName: String): git_commit {
     return withAllocPointerTo {
-        checkError(
-          functionName = "git_commit_lookup",
-          result = git_commit_lookup(it.pointer, repo, getCommitId(branchName).pointer),
-        )
-      }
+      checkError(
+        functionName = "git_commit_lookup",
+        result = git_commit_lookup(it.pointer, repo, getCommitId(branchName).pointer),
+      )
+    }
       .pointed!!
   }
 
   private fun MemScope.getHead(): git_reference {
     return withAllocPointerTo {
-        checkError("git_repository_head", git_repository_head(it.ptr, repo))
-      }
+      checkError("git_repository_head", git_repository_head(it.ptr, repo))
+    }
       .pointed!!
   }
 
   private fun MemScope.getBranch(branchName: String): git_reference {
     return withAllocPointerTo {
-        checkError(
-          functionName = "git_reference_lookup",
-          result = git_reference_lookup(it.ptr, repo, branchName.asBranchRevSpec()),
-        )
-      }
+      checkError(
+        functionName = "git_reference_lookup",
+        result = git_reference_lookup(it.ptr, repo, branchName.asBranchRevSpec()),
+      )
+    }
       .pointed!!
   }
 
   /** Should be freed with [git_remote_free]. */
   private fun MemScope.getOrigin(): git_remote? {
     return withAllocPointerTo {
-        val code = git_remote_lookup(it.ptr, repo, "origin")
-        if (code == ReturnCodes.ENOTFOUND) return null
-        checkError("git_remote_lookup", code)
-      }
+      val code = git_remote_lookup(it.ptr, repo, "origin")
+      if (code == ReturnCodes.ENOTFOUND) return null
+      checkError("git_remote_lookup", code)
+    }
       .pointed!!
   }
 
@@ -557,20 +557,20 @@ class GitVersionControl(scope: MemScope, private val fs: FileSystem, private val
 
   private fun MemScope.getAnnotatedCommit(branchName: String): git_annotated_commit {
     return withAllocPointerTo {
-        checkError(
-          functionName = "git_annotated_commit_from_revspec",
-          result = git_annotated_commit_from_revspec(it.ptr, repo, branchName.asBranchRevSpec()),
-        )
-      }
+      checkError(
+        functionName = "git_annotated_commit_from_revspec",
+        result = git_annotated_commit_from_revspec(it.ptr, repo, branchName.asBranchRevSpec()),
+      )
+    }
       .pointed!!
   }
 
   private fun MemScope.getRebase(): git_rebase? {
     return withAllocPointerTo {
-        val code = git_rebase_open(it.ptr, repo, null)
-        if (code == ReturnCodes.ENOTFOUND) return null
-        checkError("git_rebase_open", code)
-      }
+      val code = git_rebase_open(it.ptr, repo, null)
+      if (code == ReturnCodes.ENOTFOUND) return null
+      checkError("git_rebase_open", code)
+    }
       .pointed
   }
 
