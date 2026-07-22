@@ -60,18 +60,17 @@ abstract class StackerCommand {
 
     // Mosaic will wait for all effects to finish before exiting. Finished and Aborted signal that
     // we should terminate this collect in order to tear down.
-    val currentState =
-      remember {
-          snapshotFlow { workState.state }
-            .transformWhile {
-              // We need to emit the terminal state so that the LaunchedEffect below can be
-              // interrupted.
-              emit(it)
-              it !is State.TerminalState
-            }
+    val currentState = remember {
+      snapshotFlow { workState.state }
+        .transformWhile {
+          // We need to emit the terminal state so that the LaunchedEffect below can be
+          // interrupted.
+          emit(it)
+          it !is State.TerminalState
         }
-        .collectAsState(workState.state)
-        .value
+    }
+      .collectAsState(workState.state)
+      .value
 
     printer.Messages()
 

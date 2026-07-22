@@ -118,17 +118,17 @@ class Environment {
     val stream = popen("$command 2>&1", "r") ?: fail("Command ($command) failed.")
 
     return buildString {
-        val buffer = ByteArray(4096)
-        while (true) {
-          val input = fgets(buffer.refTo(0), buffer.size, stream) ?: break
-          append(input.toKString())
-        }
-
-        val status = pclose(stream)
-        if (status != 0) {
-          fail("Command ($command) failed with status: $status.")
-        }
+      val buffer = ByteArray(4096)
+      while (true) {
+        val input = fgets(buffer.refTo(0), buffer.size, stream) ?: break
+        append(input.toKString())
       }
+
+      val status = pclose(stream)
+      if (status != 0) {
+        fail("Command ($command) failed with status: $status.")
+      }
+    }
       .trim()
   }
 
